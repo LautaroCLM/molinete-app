@@ -455,3 +455,14 @@ max_client_conn = 200
 
 [remotes.production.storage.vector]
 enabled = false
+
+# Servidor de correo propio (Gmail). Las credenciales vienen de variables de entorno
+# que carga scripts/configurar-gmail.ps1, así que no quedan escritas en este archivo.
+[remotes.production.auth.email.smtp]
+enabled = true
+host = "smtp.gmail.com"
+port = 465
+user = "env(GMAIL_USER)"
+pass = "env(GMAIL_APP_PASSWORD)"
+admin_email = "env(GMAIL_USER)"
+sender_name = "Molinete"
