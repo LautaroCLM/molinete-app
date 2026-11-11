@@ -35,7 +35,7 @@ export default async function CartelQRPage() {
             <strong>Si pagás por clase</strong>, acordate de abonar en recepción.
           </li>
         </ol>
-        <div className="mt-auto flex items-center gap-[2mm] text-[3.5mm] text-[#5c6573] [--logo-hole:#ffffff] [--logo-ring:#2b4fd8]">
+        <div className="mt-auto flex items-center gap-[2mm] text-[3.5mm] text-[#5c6573] [--logo-hole:#ffffff] [--logo-ring:#15803d]">
           <LogoMarca className="size-[6mm] text-[#161a22]" />
           Molinete
         </div>

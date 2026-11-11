@@ -11,7 +11,7 @@ export function AuthLayout({ titulo, bajada, children }: { titulo: string; bajad
           <p className="mt-4 text-lg text-sidebar-foreground">Cuotas, asistencias, caja y stock de tu gimnasio en un solo lugar.</p>
         </div>
         <LogoMarca className="pointer-events-none absolute -top-24 -right-24 size-[26rem] text-white/[0.04] [--logo-ring:rgba(255,255,255,0.06)]" />
-        <LogoMarca className="pointer-events-none absolute right-40 bottom-48 size-40 text-white/[0.05] [--logo-ring:rgba(109,134,236,0.35)]" />
+        <LogoMarca className="pointer-events-none absolute right-40 bottom-48 size-40 text-white/[0.05] [--logo-ring:rgba(52,200,138,0.35)]" />
       </aside>
       <main className="flex items-center justify-center px-4 py-12 sm:px-8">
         <div className="w-full max-w-sm">

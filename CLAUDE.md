@@ -49,3 +49,14 @@ SaaS multi-gimnasio en español (Argentina, pesos). Next.js 16 + Supabase. Estad
 - Desarrollo local: Supabase en Docker con puertos 554xx (`npm run db:start`, `npm run seed`). Usuarios demo en el README.
 - Texto de interfaz en español rioplatense (voseo); fechas y moneda con `src/lib/format.ts`.
 - Entorno: PowerShell 5.1 trata la salida de error de comandos nativos (p. ej. el banner de `vercel`) como error; usar `$ErrorActionPreference = "Continue"` y verificar `$LASTEXITCODE`. Si la ventana de Claude está oculta, los screenshots fallan: usar `get_page_text` o `javascript_tool`.
+
+## Diseño (equipo de skills; sin solapamientos)
+Un rol por skill; usar solo las que correspondan a la tarea:
+- Dirección artística y composición (nuevo o rediseño): `frontend-design`.
+- Investigación de paletas, tipografías, patrones y UX: `ui-ux-pro-max` (consultar, no decide la identidad).
+- Auditoría, jerarquía, pulido y consistencia de lo ya construido: `impeccable`.
+- Animación, transiciones y microinteracciones: `emil-design-eng`.
+- Revisión de calidad frontend (responsive, semántica, buenas prácticas): `web-design-guidelines`.
+- Accesibilidad (nombres, teclado, foco, contraste, formularios): `fixing-accessibility`.
+Orden típico: dirección (frontend-design, apoyada en ui-ux-pro-max) → implementar → impeccable → emil-design-eng → web-design-guidelines → fixing-accessibility.
+Reglas: una sola dirección visual para toda la app, definida en tokens (`globals.css`/Tailwind) y componentes shadcn existentes; si dos skills discrepan manda la dirección artística acordada con el usuario. Respetar `prefers-reduced-motion`. No tocar lógica de negocio al rediseñar. Verificar con `typecheck` + `eslint` y revisión visual en desktop, tablet y móvil.
