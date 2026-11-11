@@ -8,7 +8,7 @@
 -- =====================================================================
 
 alter table public.gyms
-  add column qr_token text not null unique default encode(gen_random_bytes(9), 'hex'),
+  add column qr_token text not null unique default encode(extensions.gen_random_bytes(9), 'hex'),
   add column qr_activo boolean not null default true;
 
 -- Celulares vinculados a un socio
@@ -136,7 +136,7 @@ create or replace function public.qr_regenerar()
 returns text language plpgsql security definer set search_path = public as $$
 declare
   yo perfiles := _yo();
-  v_token text := encode(gen_random_bytes(9), 'hex');
+  v_token text := encode(extensions.gen_random_bytes(9), 'hex');
 begin
   if yo.rol <> 'dueno' then raise exception 'SIN_PERMISO'; end if;
   update gyms set qr_token = v_token where id = yo.gym_id;
