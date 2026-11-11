@@ -13,11 +13,10 @@ Actualizar solo ante cambios significativos (no registrar comandos). Última act
 - App: https://molinete-pi.vercel.app (Vercel, cuenta lautaroclm, región gru1).
 - Base: Supabase proyecto `molinete`, ref `qnlydppzwskamjytacfm` (sa-east-1). Arrancó vacía, sin datos demo.
 - Config de Auth de producción: sección `[remotes.production]` de `supabase/config.toml`; SMTP de Gmail configurado (remitente molinete361@gmail.com) y plantillas en español aplicadas.
-- Git: repo local en `main`, sin remoto.
+- Git: rama `main`, remoto `origin` = https://github.com/LautaroCLM/molinete-app.git (todo subido).
 
 ## Pendiente / problemas abiertos
 - **Hacer administrador al dueño del negocio en producción**: el panel `/admin`, las migraciones y el cierre del registro público están publicados (2026-11-11; registro externo rechazado con 422 `signup_disabled`). Falta crear su usuario en Supabase Auth y correr el SQL de `plataforma_admins` (ver README).
-- Cambios sin commitear en git (panel admin, CLAUDE.md, PROJECT_STATUS.md); esperan autorización.
 - **Límite de emails de Auth**: Supabase respondió 429 `over_email_send_rate_limit` en producción. Afecta invitaciones y recuperación de contraseña; revisar/subir el límite en Supabase → Authentication → Rate Limits.
 - Probar de punta a punta en producción: alta de un gimnasio, invitación de un usuario, recuperación de contraseña.
 - Posible usuario de prueba sin confirmar en Auth (intentos de registro con konix2412@gmail.com): revisar y borrar en Authentication → Users.
