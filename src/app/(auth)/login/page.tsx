@@ -5,6 +5,7 @@ export const metadata = { title: "Ingresar" }
 
 const AVISOS: Record<string, string> = {
   inactivo: "Tu usuario fue desactivado. Hablá con el dueño del gimnasio.",
+  singym: "Tu usuario no está asociado a ningún gimnasio. Pedile el acceso a quien te dio el servicio.",
   enlace: "El enlace venció o ya se usó. Pedí uno nuevo.",
 }
 

@@ -67,15 +67,13 @@ export const getSesion = cache(async (): Promise<Sesion> => {
   } = await sb.auth.getUser()
   if (!user) redirect("/login")
 
-  let { data: perfil } = await sb.from("perfiles").select("*, gym:gyms(*)").eq("id", user.id).maybeSingle()
+  const { data: perfil } = await sb.from("perfiles").select("*, gym:gyms(*)").eq("id", user.id).maybeSingle()
 
-  // Alta pendiente: se registró (p. ej. con confirmación de email) y todavía no tiene gimnasio.
-  if (!perfil && typeof user.user_metadata?.nombre_gym === "string") {
-    const m = user.user_metadata
-    await sb.rpc("crear_gimnasio", { p_nombre_gym: m.nombre_gym, p_nombre: m.nombre ?? "", p_apellido: m.apellido ?? "" })
-    ;({ data: perfil } = await sb.from("perfiles").select("*, gym:gyms(*)").eq("id", user.id).maybeSingle())
+  if (!perfil || !perfil.gym) {
+    // El administrador de la plataforma no tiene gimnasio: va a su panel.
+    const { data: esAdmin } = await sb.rpc("es_superadmin")
+    redirect(esAdmin === true ? "/admin" : "/auth/salir?motivo=singym")
   }
-  if (!perfil || !perfil.gym) redirect("/auth/salir")
   if (!perfil.activo) redirect("/auth/salir?motivo=inactivo")
 
   const { gym, ...resto } = perfil
@@ -447,6 +445,8 @@ export async function getDashboard() {
     porHora,
     stockBajo: productos.filter((p) => p.activo && p.stock <= p.stockMinimo),
     cajasViejas: cajasAbiertas.filter((c) => parseISO(c.caja.apertura) < hoy),
+    efectivoEnCaja: cajasAbiertas.reduce((t, c) => t + c.efectivoEsperado, 0),
+    cantidadCajasAbiertas: cajasAbiertas.length,
   }
 }
 

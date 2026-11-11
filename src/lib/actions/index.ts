@@ -10,7 +10,6 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import type { z } from "zod"
 import { supabaseServer } from "@/lib/supabase/server"
-import { supabaseAdmin } from "@/lib/supabase/admin"
 import { getSesion } from "@/lib/data"
 import { puede, type Permiso } from "@/lib/permissions"
 import {
@@ -25,14 +24,11 @@ import {
   movimientoSchema,
   planSchema,
   productoSchema,
-  registroSchema,
   reglasSchema,
   socioSchema,
-  usuarioInvitacionSchema,
   ventaSchema,
   type ResultadoAccion,
 } from "@/lib/schemas"
-import type { Rol } from "@/types/domain"
 
 // ---------- Utilidades ----------
 const ERRORES: Record<string, string> = {
@@ -93,34 +89,6 @@ export async function iniciarSesion(datos: unknown, volver = "/"): Promise<Resul
   if (error) return { ok: false, error: "El email o la contraseña no son correctos." }
   await sb.rpc("registrar_acceso")
   redirect(volver.startsWith("/") && !volver.startsWith("//") ? volver : "/")
-}
-
-export async function registrarGimnasio(datos: unknown): Promise<ResultadoAccion> {
-  const r = registroSchema.safeParse(datos)
-  if (!r.success) return invalido(r)!
-  const sb = await supabaseServer()
-  const { data, error } = await sb.auth.signUp({
-    email: r.data.email,
-    password: r.data.password,
-    options: {
-      // Si el proyecto pide confirmar el email, el gimnasio se crea en el primer ingreso con estos datos.
-      data: { nombre_gym: r.data.nombreGym, nombre: r.data.nombre, apellido: r.data.apellido },
-      emailRedirectTo: `${await origen()}/auth/confirmar?next=/`,
-    },
-  })
-  if (error) {
-    if (error.code === "user_already_exists") return { ok: false, error: "Ya existe una cuenta con ese email. Ingresá desde el login." }
-    if (error.code === "weak_password") return { ok: false, error: "Elegí una contraseña más segura." }
-    return { ok: false, error: "No pudimos crear la cuenta. Probá de nuevo." }
-  }
-  if (!data.session) return { ok: true } // hay que confirmar el email
-  const { error: e2 } = await sb.rpc("crear_gimnasio", {
-    p_nombre_gym: r.data.nombreGym,
-    p_nombre: r.data.nombre,
-    p_apellido: r.data.apellido,
-  })
-  if (e2) return { ok: false, error: traducir(e2) }
-  redirect("/")
 }
 
 export async function recuperarContrasena(email: string): Promise<ResultadoAccion> {
@@ -387,74 +355,6 @@ export async function cambiarEstadoPlan(id: string, activo: boolean): Promise<Re
 }
 
 // ---------- Usuarios ----------
-export async function invitarUsuario(datos: unknown): Promise<ResultadoAccion> {
-  const r = usuarioInvitacionSchema.safeParse(datos)
-  if (!r.success) return invalido(r)!
-  try {
-    const { gym } = await exigir("usuarios.gestionar")
-    const admin = supabaseAdmin()
-    const [nombre, ...resto] = r.data.nombre.split(" ")
-    const { data, error } = await admin.auth.admin.inviteUserByEmail(r.data.email, {
-      data: { nombre: r.data.nombre },
-      redirectTo: `${await origen()}/bienvenida`,
-    })
-    if (error) {
-      if (error.code === "email_exists" || error.message.includes("already been registered"))
-        return { ok: false, error: "Ese email ya tiene una cuenta en Molinete." }
-      return { ok: false, error: "No pudimos enviar la invitación. Probá de nuevo." }
-    }
-    const { error: e2 } = await admin.from("perfiles").insert({
-      id: data.user.id,
-      gym_id: gym.id,
-      nombre,
-      apellido: resto.join(" "),
-      email: r.data.email,
-      rol: r.data.rol,
-      invitacion_pendiente: true,
-    })
-    if (e2) return { ok: false, error: traducir(e2) }
-    const sb = await supabaseServer()
-    await admin.from("auditoria").insert({
-      gym_id: gym.id,
-      usuario_id: (await sb.auth.getUser()).data.user?.id ?? null,
-      accion: "Invitó usuario",
-      detalle: `${r.data.email} como ${r.data.rol === "dueno" ? "Dueño" : "Recepción"}`,
-    })
-  } catch (e) {
-    return { ok: false, error: traducir(e as Error) }
-  }
-  refrescar()
-  return { ok: true }
-}
-
-export async function reenviarInvitacion(usuarioId: string): Promise<ResultadoAccion> {
-  try {
-    const { gym } = await exigir("usuarios.gestionar")
-    const admin = supabaseAdmin()
-    const { data: perfil } = await admin.from("perfiles").select("email, gym_id, invitacion_pendiente").eq("id", usuarioId).single()
-    if (!perfil || perfil.gym_id !== gym.id || !perfil.invitacion_pendiente) return { ok: false, error: "Esa invitación ya fue aceptada." }
-    const { error } = await admin.auth.resetPasswordForEmail(perfil.email, { redirectTo: `${await origen()}/bienvenida` })
-    if (error) return { ok: false, error: "No pudimos reenviar la invitación." }
-  } catch (e) {
-    return { ok: false, error: traducir(e as Error) }
-  }
-  return { ok: true }
-}
-
-export async function cambiarRol(usuarioId: string, rol: Rol): Promise<ResultadoAccion> {
-  try {
-    const { usuario } = await exigir("usuarios.gestionar")
-    if (usuarioId === usuario.id) return { ok: false, error: "No podés cambiar tu propio rol." }
-    const sb = await supabaseServer()
-    const { error } = await sb.from("perfiles").update({ rol }).eq("id", usuarioId)
-    if (error) return { ok: false, error: traducir(error) }
-  } catch (e) {
-    return { ok: false, error: traducir(e as Error) }
-  }
-  refrescar()
-  return { ok: true }
-}
-
 export async function cambiarEstadoUsuario(usuarioId: string, activo: boolean): Promise<ResultadoAccion> {
   try {
     const { usuario } = await exigir("usuarios.gestionar")

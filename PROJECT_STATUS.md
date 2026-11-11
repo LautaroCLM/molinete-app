@@ -1,0 +1,35 @@
+# Molinete: estado del proyecto
+
+Actualizar solo ante cambios significativos (no registrar comandos). Última actualización: 2026-11-11.
+
+## Implementado
+- **Panel** (dueño y recepción): inicio, socios, asistencias, caja, inventario, reportes (solo dueño) y configuración (solo dueño). Modo claro y oscuro, desktop-first, preparado para PWA (manifest e ícono).
+- **Base de datos** (Supabase): esquema multi-gimnasio con RLS, reglas de dinero y stock en funciones SQL atómicas, auditoría automática. Migraciones en `supabase/migrations` (7, todas aplicadas en local y en la nube).
+- **Autenticación**: login, recuperación de contraseña, invitación de usuarios por email. **Sin registro público**: el administrador de la plataforma crea gimnasios, dueños y empleados (con contraseña) desde el panel `/admin`; el dueño no crea usuarios, solo los ve y los desactiva.
+- **Ingreso con QR**: página pública `/q/<token>`, celular recordado, solo nombre de pila y estado de cuota; configuración y cartel imprimible en Configuración → Ingreso con QR.
+- **Seguridad verificada**: `npm run verificar` (41 chequeos: permisos por rol, aislamiento entre gimnasios, QR, panel de administración).
+
+## Publicación
+- App: https://molinete-pi.vercel.app (Vercel, cuenta lautaroclm, región gru1).
+- Base: Supabase proyecto `molinete`, ref `qnlydppzwskamjytacfm` (sa-east-1). Arrancó vacía, sin datos demo.
+- Config de Auth de producción: sección `[remotes.production]` de `supabase/config.toml`; SMTP de Gmail configurado (remitente molinete361@gmail.com) y plantillas en español aplicadas.
+- Git: repo local en `main`, sin remoto.
+
+## Pendiente / problemas abiertos
+- **Hacer administrador al dueño del negocio en producción**: el panel `/admin`, las migraciones y el cierre del registro público están publicados (2026-11-11; registro externo rechazado con 422 `signup_disabled`). Falta crear su usuario en Supabase Auth y correr el SQL de `plataforma_admins` (ver README).
+- Cambios sin commitear en git (panel admin, CLAUDE.md, PROJECT_STATUS.md); esperan autorización.
+- **Límite de emails de Auth**: Supabase respondió 429 `over_email_send_rate_limit` en producción. Afecta invitaciones y recuperación de contraseña; revisar/subir el límite en Supabase → Authentication → Rate Limits.
+- Probar de punta a punta en producción: alta de un gimnasio, invitación de un usuario, recuperación de contraseña.
+- Posible usuario de prueba sin confirmar en Auth (intentos de registro con konix2412@gmail.com): revisar y borrar en Authentication → Users.
+- Tras las pruebas: borrar de la base en la nube el gimnasio y los usuarios de prueba.
+- Anular un cobro no revierte el vencimiento del socio; anular una venta no devuelve el stock (el dueño corrige a mano).
+- Subir logo del gimnasio (requiere Storage).
+- Dominio propio (hoy `molinete-pi.vercel.app`); al cambiarlo, actualizar `site_url` en `config.toml` y aplicarlo.
+- El freno de intentos del QR es por gimnasio, no por IP.
+
+## Decisiones técnicas relevantes
+- Next.js 16 (App Router, `proxy.ts`), Tailwind 4 + shadcn/ui, Recharts, zod; `cacheComponents` desactivado (todo depende de la sesión).
+- El servidor fija la zona horaria de Argentina en `src/instrumentation.ts`.
+- Roles: dueño y recepcionista. Recepción no ve totales, reportes, configuración ni auditoría, y no anula movimientos.
+- Gastos de administración (alquiler, sueldos, servicios) los carga el dueño sin caja de turno.
+- Los movimientos no se borran: se anulan con motivo.

@@ -3,7 +3,7 @@
 App web multi-gimnasio (SaaS) para socios, cuotas, asistencias, caja, inventario y reportes.
 Nombre provisorio: **Molinete**.
 
-**Estado: Etapas 1, 2 y 3 completas.** Interfaz, base de datos (Supabase), login, registro de gimnasios, invitaciones por email, reglas de negocio e ingreso de socios con QR.
+**Estado: Etapas 1, 2 y 3 completas.** Interfaz, base de datos (Supabase), login, alta de gimnasios por el administrador, invitaciones por email, reglas de negocio e ingreso de socios con QR.
 
 ## Cómo correrlo (desarrollo)
 
@@ -28,8 +28,27 @@ La contraseña es la misma para todos: `Molinete2026`.
 | martin@fuerzasur.com.ar | Dueño | No tiene caja abierta |
 | sofia@fuerzasur.com.ar | Recepción | Tiene la caja abierta |
 | lucas@fuerzasur.com.ar | Recepción | Dejó la caja de ayer sin cerrar |
+| admin@molinete.test | Administrador de la plataforma | Entra a `/admin` |
 
-También podés crear un gimnasio nuevo desde `/registro`.
+No hay registro público: **los gimnasios y sus usuarios los da de alta el administrador de la plataforma** desde `/admin` (ver abajo).
+
+### Panel de administración (`/admin`)
+Solo lo ve el administrador de la plataforma (vos). Desde ahí:
+- **Nuevo gimnasio:** cargás los datos del gimnasio (nombre, dirección, localidad, teléfono, email), el dueño y los empleados, cada uno con su email y su contraseña (hay un botón para generar una). Al terminar muestra los datos de acceso listos para copiar y pasarle al cliente.
+- **Lista de gimnasios:** socios, usuarios y último ingreso de cada uno.
+- **Detalle de un gimnasio:** agregar usuarios (empleados u otro dueño), restablecer contraseñas y desactivar o reactivar usuarios.
+
+No hay registro público y el dueño **no puede crear usuarios**: sus empleados los das de alta vos. El dueño sí puede ver su equipo y desactivar o reactivar usuarios.
+
+**Cómo se hace administrador un usuario** (una sola vez, con tu propio email):
+1. En Supabase → Authentication → Users → Add user: tu email y contraseña, con **Auto Confirm User**.
+2. En el SQL Editor:
+
+```sql
+insert into plataforma_admins (user_id) select id from auth.users where email = 'tu@email.com';
+```
+
+Al ingresar con ese usuario vas directo a `/admin`. En local, el administrador de prueba es `admin@molinete.test`.
 
 ### Herramientas locales
 - **Studio** (ver y editar tablas): <http://127.0.0.1:55423>
@@ -84,7 +103,7 @@ scripts/
   verificar-seguridad.ts   Chequeos de RLS y permisos
 src/
   proxy.ts                 Refresca la sesión y manda al login a quien no la tenga
-  app/(auth)/              Ingreso, registro, recuperar contraseña, bienvenida (invitados)
+  app/(auth)/              Ingreso, recuperar contraseña, bienvenida (invitados)
   app/auth/                Enlaces de los emails y cierre de sesión
   app/(panel)/             Pantallas del panel
   lib/supabase/            Clientes: con sesión (server.ts) y administrador (admin.ts, solo servidor)

@@ -6,5 +6,5 @@ export async function GET(request: NextRequest) {
   const sb = await supabaseServer()
   await sb.auth.signOut()
   const motivo = request.nextUrl.searchParams.get("motivo")
-  return NextResponse.redirect(new URL(motivo === "inactivo" ? "/login?aviso=inactivo" : "/login", request.nextUrl))
+  return NextResponse.redirect(new URL(motivo === "inactivo" || motivo === "singym" ? `/login?aviso=${motivo}` : "/login", request.nextUrl))
 }

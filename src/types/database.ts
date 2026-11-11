@@ -275,6 +275,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"plataforma_admins": {
+                  Row: {
+                    "created_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"productos": {
                   Row: {
                     "activo": boolean,"categoria": string,"costo": number,"created_at": string,"gym_id": string,"id": string,"nombre": string,"precio": number,"stock": number,"stock_minimo": number
@@ -401,6 +415,9 @@ isOneToOne: false
 "abrir_caja":
 { Args: { "p_monto_inicial": number,"p_observaciones"?: string }; Returns: string
                            },
+"agregar_empleado_admin":
+{ Args: { "p_apellido"?: string,"p_email": string,"p_gym": string,"p_nombre": string,"p_rol"?: string }; Returns: undefined
+                           },
 "ajustar_stock":
 { Args: { "p_cantidad": number,"p_nota": string,"p_producto": string,"p_tipo": string }; Returns: number
                            },
@@ -421,10 +438,13 @@ isOneToOne: false
 "cobrar":
 { Args: { "p_medio": string,"p_monto": number,"p_plan": string,"p_socio": string }; Returns: Json
                            },
-"crear_gimnasio":
-{ Args: { "p_apellido": string,"p_nombre": string,"p_nombre_gym": string }; Returns: string
+"crear_gimnasio_admin":
+{ Args: { "p_apellido"?: string,"p_direccion"?: string,"p_email": string,"p_email_gym"?: string,"p_localidad"?: string,"p_nombre": string,"p_nombre_gym": string,"p_telefono"?: string }; Returns: string
                            },
 "es_dueno":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"es_superadmin":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "mi_gym":

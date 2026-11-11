@@ -81,12 +81,6 @@ export const ajusteStockSchema = z.object({
   nota: z.string().trim().min(3, "Contá el motivo."),
 })
 
-export const usuarioInvitacionSchema = z.object({
-  nombre: z.string().trim().min(2, "Ingresá el nombre."),
-  email: z.email("El email no parece válido."),
-  rol: z.enum(["dueno", "recepcionista"]),
-})
-
 export const planSchema = z.object({
   nombre: z.string().trim().min(2, "Ingresá el nombre del plan."),
   tipo: z.enum(["mensual", "por_clase", "semanal", "paquete", "pase_diario"]),
@@ -119,12 +113,25 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Ingresá tu contraseña."),
 })
 
-export const registroSchema = z.object({
-  nombreGym: z.string().trim().min(2, "Ingresá el nombre del gimnasio."),
-  nombre: z.string().trim().min(2, "Ingresá tu nombre."),
-  apellido: z.string().trim().min(2, "Ingresá tu apellido."),
+export const contrasenaSchema = z.object({ password })
+
+// ---------- Administración de la plataforma ----------
+const credenciales = {
+  nombre: z.string().trim().min(2, "Ingresá el nombre."),
+  apellido: z.string().trim().default(""),
   email: z.email("Ingresá un email válido."),
   password,
-})
+}
+export const usuarioAdminSchema = z.object({ ...credenciales, rol: z.enum(["dueno", "recepcionista"]).default("recepcionista") })
 
-export const contrasenaSchema = z.object({ password })
+export const altaGimnasioSchema = z.object({
+  gimnasio: z.object({
+    nombre: z.string().trim().min(2, "Ingresá el nombre del gimnasio."),
+    direccion: z.string().trim().default(""),
+    localidad: z.string().trim().default(""),
+    telefono: z.string().trim().default(""),
+    email: z.union([z.literal(""), z.email("El email del gimnasio no parece válido.")]).default(""),
+  }),
+  dueno: z.object(credenciales),
+  empleados: z.array(z.object(credenciales)).max(20, "Máximo 20 empleados por alta."),
+})

@@ -10,6 +10,7 @@
  *   martin@fuerzasur.com.ar  Dueño
  *   sofia@fuerzasur.com.ar   Recepción (con caja abierta)
  *   lucas@fuerzasur.com.ar   Recepción (dejó la caja de ayer sin cerrar)
+ *   admin@molinete.test      Administrador de la plataforma (entra a /admin)
  */
 import { config } from "dotenv"
 import { randomUUID } from "node:crypto"
@@ -37,6 +38,8 @@ const EMAILS: Record<string, string> = {
   usr_nahuel: "nahuel@fuerzasur.com.ar",
 }
 
+const ADMIN_EMAIL = "admin@molinete.test" // administrador de la plataforma (acceso a /admin)
+
 const ids = new Map<string, string>()
 const uuid = (mockId: string) => {
   if (!ids.has(mockId)) ids.set(mockId, randomUUID())
@@ -58,7 +61,7 @@ async function main() {
   await sb.from("gyms").delete().eq("id", GYM_ID)
   const { data: lista } = await sb.auth.admin.listUsers({ perPage: 1000 })
   for (const u of lista?.users ?? []) {
-    if (u.email && Object.values(EMAILS).includes(u.email)) await sb.auth.admin.deleteUser(u.id)
+    if (u.email && (Object.values(EMAILS).includes(u.email) || u.email === ADMIN_EMAIL)) await sb.auth.admin.deleteUser(u.id)
   }
 
   console.log("Creando usuarios…")
@@ -72,6 +75,12 @@ async function main() {
     if (error) throw new Error(`usuario ${EMAILS[u.id]}: ${error.message}`)
     ids.set(u.id, data.user.id)
   }
+
+  const { data: adm, error: ea } = await sb.auth.admin.createUser({ email: ADMIN_EMAIL, password: CONTRASENA, email_confirm: true })
+  if (ea) throw new Error(`administrador: ${ea.message}`)
+  await sb.from("plataforma_admins").delete().eq("user_id", adm.user.id)
+  const { error: ep } = await sb.from("plataforma_admins").insert({ user_id: adm.user.id })
+  if (ep) throw ep
 
   console.log("Cargando el gimnasio Fuerza Sur…")
   const g = mock.gym

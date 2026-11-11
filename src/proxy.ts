@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 
 /** Rutas que no requieren sesión. */
-const PUBLICAS = ["/login", "/registro", "/recuperar", "/auth", "/q"]
+const PUBLICAS = ["/login", "/recuperar", "/auth", "/q"]
 
 /**
  * Refresca la sesión de Supabase en cada request y manda al login a quien no la tenga.
@@ -39,7 +39,7 @@ export async function proxy(request: NextRequest) {
     url.search = pathname === "/" ? "" : `?volver=${encodeURIComponent(pathname)}`
     return NextResponse.redirect(url)
   }
-  if (user && (pathname === "/login" || pathname === "/registro")) {
+  if (user && (pathname === "/login")) {
     const url = request.nextUrl.clone()
     url.pathname = "/"
     url.search = ""

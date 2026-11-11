@@ -78,11 +78,22 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <Tablero className={verTotales ? "mb-6 sm:grid-cols-3 lg:grid-cols-4" : "mb-6 sm:grid-cols-3"}>
+      <Tablero className="mb-6 sm:grid-cols-3">
         {verTotales ? (
           <>
-            <Indicador destacado etiqueta="Ingresos de hoy" valor={pesos(d.ingresos.dia)} detalle={resumenMedios(d.ingresos.diaPorMedio)} />
+            <Indicador destacado className="sm:row-span-1" etiqueta="Ingresos de hoy" valor={pesos(d.ingresos.dia)} detalle={resumenMedios(d.ingresos.diaPorMedio)} />
             <Indicador etiqueta={`Ingresos de ${mesNombre}`} valor={pesos(d.ingresos.mes)} detalle={`Egresos: ${pesos(d.ingresos.mesEgresos)}`} />
+            <Indicador
+              etiqueta={`Ganancia de ${mesNombre}`}
+              valor={pesos(d.ingresos.mes - d.ingresos.mesEgresos)}
+              tono={d.ingresos.mes - d.ingresos.mesEgresos >= 0 ? "ok" : "bad"}
+              detalle="Ingresos menos egresos"
+            />
+            <Indicador
+              etiqueta="En caja ahora"
+              valor={pesos(d.efectivoEnCaja)}
+              detalle={d.cantidadCajasAbiertas === 0 ? "No hay cajas abiertas" : `Efectivo de ${d.cantidadCajasAbiertas} ${d.cantidadCajasAbiertas === 1 ? "caja abierta" : "cajas abiertas"}`}
+            />
             <Indicador etiqueta="Ingresos totales" valor={pesos(d.ingresos.total)} detalle="Desde que usás Molinete" />
           </>
         ) : (

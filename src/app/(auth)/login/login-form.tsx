@@ -55,12 +55,6 @@ export function LoginForm({ volver, aviso }: { volver: string; aviso?: string })
       <Button type="submit" size="lg" disabled={pendiente} className="mt-2">
         {pendiente ? "Ingresando…" : "Ingresar"}
       </Button>
-      <p className="mt-4 text-center text-sm text-muted-foreground">
-        ¿Tenés un gimnasio y todavía no usás Molinete?{" "}
-        <Link href="/registro" className="font-medium text-primary hover:underline">
-          Creá tu cuenta
-        </Link>
-      </p>
     </form>
   )
 }
