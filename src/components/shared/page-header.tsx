@@ -39,7 +39,7 @@ export function Panel({
   contenidoClassName?: string
 }) {
   return (
-    <section className={cn("rounded-xl border bg-card text-card-foreground", className)}>
+    <section className={cn("surface rounded-xl border bg-card text-card-foreground", className)}>
       {(titulo || accion) && (
         <header className="flex items-start justify-between gap-3 px-5 pt-4 pb-3">
           <div className="min-w-0">

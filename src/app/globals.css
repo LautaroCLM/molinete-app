@@ -87,6 +87,10 @@
   --border: #dce2de;
   --input: #d0d8d3;
   --ring: #15803d;
+  --card-hi: #ffffff;
+  --brand-from: #129a57;
+  --brand-to: #0f7a42;
+  --brand-glow: rgba(21, 128, 61, 0.35);
   --chart-1: #15803d;
   --chart-2: #4a8fb8;
   --chart-3: #c58a00;
@@ -116,25 +120,29 @@
 }
 
 .dark {
-  --background: #0a0c0b;
+  --background: #0b100e;
   --foreground: #e6ebe8;
-  --card: #111413;
+  --card: #121815;
+  --card-hi: #18211d;
   --card-foreground: #e6ebe8;
-  --popover: #141816;
+  --popover: #161d19;
   --popover-foreground: #e6ebe8;
-  --primary: #34c88a;
-  --primary-foreground: #04130c;
-  --secondary: #1a1f1d;
+  --primary: #2fd68f;
+  --primary-foreground: #03150c;
+  --secondary: #1b2420;
   --secondary-foreground: #e6ebe8;
-  --muted: #161a18;
+  --muted: #17201c;
   --muted-foreground: #8d9a94;
-  --accent: #12261c;
-  --accent-foreground: #7fe0ac;
+  --accent: #13301f;
+  --accent-foreground: #86efb8;
   --destructive: #ef6b72;
-  --border: #1f2623;
-  --input: #2a332f;
-  --ring: #34c88a;
-  --chart-1: #34c88a;
+  --border: #24302a;
+  --input: #2f3b35;
+  --ring: #2fd68f;
+  --brand-from: #3be8a4;
+  --brand-to: #11a66b;
+  --brand-glow: rgba(47, 214, 143, 0.45);
+  --chart-1: #2fd68f;
   --chart-2: #6fa8c9;
   --chart-3: #e0b84a;
   --chart-4: #a094e0;
@@ -151,13 +159,13 @@
   --off: #9aa6a0;
   --off-soft: #1c211f;
 
-  --sidebar: #070908;
+  --sidebar: #08100c;
   --sidebar-foreground: #9fabA5;
   --sidebar-primary: #34c88a;
   --sidebar-primary-foreground: #04130c;
-  --sidebar-accent: #12261c;
+  --sidebar-accent: #12301f;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #151a18;
+  --sidebar-border: #17211c;
   --sidebar-ring: #34c88a;
 }
 
@@ -167,6 +175,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(60rem 28rem at 85% -8%, color-mix(in srgb, var(--brand-from) 9%, transparent), transparent 70%),
+      radial-gradient(40rem 24rem at -5% 0%, color-mix(in srgb, var(--brand-to) 7%, transparent), transparent 70%);
+    background-attachment: fixed;
     font-feature-settings: "tnum" 1;
   }
   button:not(:disabled),
@@ -179,6 +191,17 @@
 }
 
 @layer utilities {
+  /* Degradado de marca (botones, indicador destacado) */
+  .bg-brand {
+    background-image: linear-gradient(135deg, var(--brand-from), var(--brand-to));
+  }
+  .glow-brand {
+    box-shadow: 0 8px 24px -8px var(--brand-glow);
+  }
+  /* Superficie de tarjeta con degradado suave */
+  .surface {
+    background-image: linear-gradient(160deg, var(--card-hi), var(--card) 65%);
+  }
   /* Números grandes tipo tablero de gimnasio */
   .num-display {
     font-family: var(--font-barlow-condensed);

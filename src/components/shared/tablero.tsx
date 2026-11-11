@@ -8,7 +8,7 @@ export function Tablero({ children, className }: { children: React.ReactNode; cl
   return (
     <div
       className={cn(
-        "grid grid-cols-2 overflow-hidden rounded-xl border bg-card",
+        "surface grid grid-cols-2 overflow-hidden rounded-xl border bg-card",
         "[&>*]:border-b [&>*]:border-r [&>*]:-mb-px [&>*]:-mr-px",
         className,
       )}
@@ -37,7 +37,7 @@ export function Indicador({
     <div
       className={cn(
         "flex min-w-0 flex-col gap-1.5 px-5 py-4",
-        destacado && "col-span-2 justify-between bg-primary py-5 text-primary-foreground sm:col-span-1 sm:row-span-2",
+        destacado && "bg-brand glow-brand col-span-2 justify-between py-5 text-primary-foreground sm:col-span-1 sm:row-span-2",
         className,
       )}
     >
