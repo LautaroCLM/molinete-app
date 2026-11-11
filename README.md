@@ -1,0 +1,104 @@
+# Molinete: gestión para gimnasios
+
+App web multi-gimnasio (SaaS) para socios, cuotas, asistencias, caja, inventario y reportes.
+Nombre provisorio: **Molinete**.
+
+**Estado: Etapas 1, 2 y 3 completas.** Interfaz, base de datos (Supabase), login, registro de gimnasios, invitaciones por email, reglas de negocio e ingreso de socios con QR.
+
+## Cómo correrlo (desarrollo)
+
+Requiere Node 20 o más nuevo y Docker Desktop abierto.
+
+```bash
+npm install
+npm run db:start
+npm run seed
+npm run dev
+```
+
+- `npm run db:start` levanta Supabase en tu PC. Usa los puertos **554xx** para no chocar con otros proyectos de Supabase.
+- `npm run seed` carga el gimnasio de demostración "Fuerza Sur".
+- Después abrí <http://localhost:3000>.
+
+### Usuarios de prueba
+La contraseña es la misma para todos: `Molinete2026`.
+
+| Email | Rol | Situación |
+|---|---|---|
+| martin@fuerzasur.com.ar | Dueño | No tiene caja abierta |
+| sofia@fuerzasur.com.ar | Recepción | Tiene la caja abierta |
+| lucas@fuerzasur.com.ar | Recepción | Dejó la caja de ayer sin cerrar |
+
+También podés crear un gimnasio nuevo desde `/registro`.
+
+### Herramientas locales
+- **Studio** (ver y editar tablas): <http://127.0.0.1:55423>
+- **Mailpit** (bandeja donde llegan los emails de invitación y de recuperación): <http://127.0.0.1:55424>
+
+### Scripts
+| Script | Qué hace |
+|---|---|
+| `npm run db:start` / `db:stop` | Prende o apaga Supabase local |
+| `npm run db:reset` | Borra la base, aplica las migraciones y vuelve a cargar la demo |
+| `npm run seed` | Recarga el gimnasio de demostración |
+| `npm run verificar` | Corre 32 chequeos de seguridad: permisos por rol, aislamiento entre gimnasios e ingreso con QR (también genera un QR nuevo para la demo) |
+| `npm run db:tipos` | Regenera `src/types/database.ts` después de cambiar el esquema |
+
+### Atajos de teclado
+`Ctrl K` busca un socio · `F2` registra una llegada · `F3` cobra · `F4` vende productos.
+
+## Ingreso con QR (Etapa 3)
+- **Para el dueño:** en Configuración → Ingreso con QR está el código, el enlace, el botón "Imprimir cartel" (A4), la opción de pausar el ingreso con QR y la de generar un QR nuevo, que invalida el anterior.
+- **Para el socio:** escanea el QR y abre `/q/<código>`, una página pública sin login.
+  - La primera vez escribe su DNI. El celular guarda solo un código de dispositivo, nunca el DNI.
+  - Las siguientes veces entra solo con escanear.
+- **Qué ve el socio:** su nombre de pila y el estado de la cuota (días que le quedan, por vencer, vencida o paquete de clases). A quien paga por clase le aparece "Acordate de abonar en recepción".
+- **Qué no hace:** no registra pagos. Tampoco cuenta dos veces si el socio vuelve a escanear dentro de las 3 horas.
+- **Protección:**
+  - Las funciones públicas devuelven solo esos datos.
+  - Un celular vinculado a un gimnasio no sirve en otro.
+  - Después de 20 DNIs inexistentes en 10 minutos, se frenan los intentos por un rato.
+- **En la recepción:** las llegadas por QR aparecen en Asistencias con la etiqueta "QR".
+
+## Cómo está armado
+
+### Seguridad
+- **Separación entre gimnasios:** cada tabla lleva `gym_id`, y Row Level Security hace que cada usuario vea solo los datos de su gimnasio, aunque llame a la API directamente.
+- **Recepción:**
+  - Solo ve sus propios movimientos y cajas.
+  - No ve totales generales, reportes, configuración ni auditoría.
+  - No puede anular movimientos ni cambiar a mano un vencimiento o el stock.
+- **Dinero y stock:** cobrar, vender, abrir y cerrar caja, cargar gastos, anular movimientos y ajustar stock son funciones de Postgres que corren en una sola transacción. Cada una valida el rol, que haya una caja abierta y el gimnasio, y deja registro en la auditoría.
+- **Movimientos:** nunca se borran; se anulan con motivo.
+- **Auditoría:** se registra sola, con triggers, en altas y cambios de socios, planes, productos, usuarios y configuración.
+
+### Estructura
+
+```
+supabase/
+  migrations/              Esquema, RLS, funciones de negocio y auditoría
+  templates/               Emails de invitación y recuperación (en español)
+  config.toml              Configuración local (puertos 554xx)
+scripts/
+  seed.ts                  Carga la demo reutilizando el generador de src/mocks
+  verificar-seguridad.ts   Chequeos de RLS y permisos
+src/
+  proxy.ts                 Refresca la sesión y manda al login a quien no la tenga
+  app/(auth)/              Ingreso, registro, recuperar contraseña, bienvenida (invitados)
+  app/auth/                Enlaces de los emails y cierre de sesión
+  app/(panel)/             Pantallas del panel
+  lib/supabase/            Clientes: con sesión (server.ts) y administrador (admin.ts, solo servidor)
+  lib/data/                Lecturas: las pantallas solo leen desde acá
+  lib/actions/             Escrituras (acciones del servidor)
+  lib/domain/cuota.ts      Estado de la cuota (igual que calcular_vencimiento en SQL)
+  types/database.ts        Tipos generados desde la base
+```
+
+## Pendiente para producción
+- Crear un proyecto en supabase.com, aplicar las migraciones (`npx supabase link` y `npx supabase db push`) y cargar las variables de `.env.example` en el hosting.
+- Definir `NEXT_PUBLIC_SITE_URL` con el dominio real: es la dirección que va dentro del QR.
+- El freno de intentos del QR es por gimnasio: alguien que pruebe muchos DNIs puede trabar por 10 minutos la primera vinculación de otros socios (los ya vinculados no se ven afectados). Si pasa, conviene limitar también por IP en el hosting.
+- Configurar un servicio de email (SMTP) en Supabase para que las invitaciones lleguen a casillas reales.
+- Zona horaria: el servidor calcula "hoy" con su propia zona. Hay que configurar la del hosting en `America/Argentina/Buenos_Aires` o mover ese cálculo a la zona del gimnasio.
+- **Anular un cobro no revierte el vencimiento del socio, y anular una venta no devuelve el stock.** El dueño puede corregirlos a mano.
+- Subir el logo del gimnasio (requiere Storage).
