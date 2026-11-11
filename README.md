@@ -94,11 +94,19 @@ src/
   types/database.ts        Tipos generados desde la base
 ```
 
-## Pendiente para producción
-- Crear un proyecto en supabase.com, aplicar las migraciones (`npx supabase link` y `npx supabase db push`) y cargar las variables de `.env.example` en el hosting.
-- Definir `NEXT_PUBLIC_SITE_URL` con el dominio real: es la dirección que va dentro del QR.
-- El freno de intentos del QR es por gimnasio: alguien que pruebe muchos DNIs puede trabar por 10 minutos la primera vinculación de otros socios (los ya vinculados no se ven afectados). Si pasa, conviene limitar también por IP en el hosting.
-- Configurar un servicio de email (SMTP) en Supabase para que las invitaciones lleguen a casillas reales.
-- Zona horaria: el servidor calcula "hoy" con su propia zona. Hay que configurar la del hosting en `America/Argentina/Buenos_Aires` o mover ese cálculo a la zona del gimnasio.
+## Publicación
+- **App:** https://molinete-pi.vercel.app (Vercel, región São Paulo). Se publica con `vercel deploy --prod`.
+- **Base:** proyecto `molinete` en Supabase (São Paulo). Las migraciones se aplican con `npx supabase db push --remote`.
+- **Variables en Vercel:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y `SUPABASE_SECRET_KEY`. Se cargan con `scripts/cargar-env-vercel.ps1`.
+- **Configuración de Auth en la nube:** está en la sección `[remotes.production]` de `supabase/config.toml` y se aplica con `npx supabase config push --remote`.
+- **Zona horaria:** `src/instrumentation.ts` fija la de Argentina en el servidor.
+
+## Pendiente
+- **Emails:** hoy Supabase usa su servidor de prueba, que solo envía a miembros de tu cuenta y con límite de 2 por hora.
+  - Para que lleguen a cualquier recepcionista hace falta configurar un servidor de correo propio (SMTP, por ejemplo Gmail con contraseña de aplicación) en Supabase → Authentication → Emails → SMTP Settings.
+  - Después hay que descomentar las plantillas en español de `config.toml` y aplicarlas con `config push`.
+  - **Hasta entonces las invitaciones de usuarios no funcionan.** El email de confirmación de cuenta y "olvidé mi contraseña" sí funcionan, pero con el texto por defecto en inglés.
 - **Anular un cobro no revierte el vencimiento del socio, y anular una venta no devuelve el stock.** El dueño puede corregirlos a mano.
-- Subir el logo del gimnasio (requiere Storage).
+- **Subir el logo del gimnasio** (requiere Storage).
+- **Dominio propio:** hoy es `molinete-pi.vercel.app`. Al cambiarlo hay que actualizar `site_url` en `config.toml` y volver a aplicarlo.
+- **El freno de intentos del QR es por gimnasio**, no por IP. Alguien podría trabar por 10 minutos la primera vinculación de otros socios (los ya vinculados no se ven afectados).

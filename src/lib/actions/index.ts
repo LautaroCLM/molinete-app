@@ -125,7 +125,7 @@ export async function registrarGimnasio(datos: unknown): Promise<ResultadoAccion
 
 export async function recuperarContrasena(email: string): Promise<ResultadoAccion> {
   const sb = await supabaseServer()
-  await sb.auth.resetPasswordForEmail(email, { redirectTo: `${await origen()}/bienvenida` })
+  await sb.auth.resetPasswordForEmail(email, { redirectTo: `${await origen()}/auth/confirmar?next=/bienvenida` })
   // Siempre OK: no revelamos si el email existe.
   return { ok: true }
 }
