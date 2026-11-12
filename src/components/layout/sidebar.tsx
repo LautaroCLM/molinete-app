@@ -30,7 +30,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               activo && "bg-gradient-to-r from-[color-mix(in_srgb,var(--brand-from)_22%,transparent)] to-transparent text-sidebar-accent-foreground",
             )}
           >
-            {activo && <span aria-hidden className="absolute top-2 bottom-2 -left-3 w-1 rounded-r-full bg-brand" />}
+            {activo && <span aria-hidden className="bar-in absolute top-2 bottom-2 -left-3 w-1 rounded-r-full bg-brand" />}
             <Icono className={cn("size-[1.15rem] shrink-0 opacity-70 group-hover:opacity-100", activo && "text-[var(--brand-from)] opacity-100")} />
             {item.label}
           </Link>

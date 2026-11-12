@@ -69,6 +69,9 @@
 }
 
 :root {
+  /* Movimiento */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --background: #f4f6f5;
   --foreground: #101412;
   --card: #ffffff;
@@ -212,11 +215,57 @@
   }
 }
 
+
+/* ---------- Animaciones ---------- */
+@keyframes enter-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes enter-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes bar-in {
+  from { opacity: 0; transform: scaleY(0.3); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@layer utilities {
+  /* Entrada suave de un bloque */
+  .enter { animation: enter-up 280ms var(--ease-out) both; }
+  .enter-fade { animation: enter-fade 180ms ease-out both; }
+  .bar-in { transform-origin: center; animation: bar-in 220ms var(--ease-out) both; }
+  /* Hijos que entran en cascada (máx. 12, 45 ms entre cada uno) */
+  .stagger > * { animation: enter-up 320ms var(--ease-out) both; }
+  .stagger > :nth-child(1) { animation-delay: 0ms; }
+  .stagger > :nth-child(2) { animation-delay: 45ms; }
+  .stagger > :nth-child(3) { animation-delay: 90ms; }
+  .stagger > :nth-child(4) { animation-delay: 135ms; }
+  .stagger > :nth-child(5) { animation-delay: 180ms; }
+  .stagger > :nth-child(6) { animation-delay: 225ms; }
+  .stagger > :nth-child(7) { animation-delay: 270ms; }
+  .stagger > :nth-child(8) { animation-delay: 315ms; }
+  .stagger > :nth-child(9) { animation-delay: 360ms; }
+  .stagger > :nth-child(10) { animation-delay: 405ms; }
+  .stagger > :nth-child(11) { animation-delay: 450ms; }
+  .stagger > :nth-child(12) { animation-delay: 495ms; }
+  .shimmer {
+    background-image: linear-gradient(100deg, var(--muted) 30%, var(--secondary) 50%, var(--muted) 70%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s linear infinite;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
   }
 }

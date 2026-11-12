@@ -62,12 +62,11 @@ function chequear<T>(r: { data: T | null; error: unknown }): T {
 // ---------- Sesión ----------
 export const getSesion = cache(async (): Promise<Sesion> => {
   const sb = await db()
-  const {
-    data: { user },
-  } = await sb.auth.getUser()
-  if (!user) redirect("/login")
+  const { data: claims } = await sb.auth.getClaims()
+  const uid = claims?.claims?.sub
+  if (!uid) redirect("/login")
 
-  const { data: perfil } = await sb.from("perfiles").select("*, gym:gyms(*)").eq("id", user.id).maybeSingle()
+  const { data: perfil } = await sb.from("perfiles").select("*, gym:gyms(*)").eq("id", uid).maybeSingle()
 
   if (!perfil || !perfil.gym) {
     // El administrador de la plataforma no tiene gimnasio: va a su panel.

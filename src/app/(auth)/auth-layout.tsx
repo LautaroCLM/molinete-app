@@ -14,7 +14,7 @@ export function AuthLayout({ titulo, bajada, children }: { titulo: string; bajad
         <LogoMarca className="pointer-events-none absolute right-40 bottom-48 size-40 text-white/[0.05] [--logo-ring:rgba(52,200,138,0.35)]" />
       </aside>
       <main className="flex items-center justify-center px-4 py-12 sm:px-8">
-        <div className="w-full max-w-sm">
+        <div className="enter w-full max-w-sm">
           <div className="mb-10 lg:hidden [--logo-hole:var(--background)]">
             <Logo />
           </div>

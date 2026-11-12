@@ -26,9 +26,9 @@ export async function proxy(request: NextRequest) {
     },
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // getClaims valida el token localmente (sin viajar a Supabase en cada navegación).
+  const { data: claims } = await supabase.auth.getClaims()
+  const user = claims?.claims?.sub ? claims.claims : null
 
   const { pathname } = request.nextUrl
   const publica = PUBLICAS.some((p) => pathname === p || pathname.startsWith(`${p}/`))

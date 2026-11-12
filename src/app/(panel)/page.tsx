@@ -114,7 +114,7 @@ export default async function DashboardPage() {
         <Indicador etiqueta="Cuotas vencidas" valor={num(d.vencidos.length)} tono="bad" />
       </Tablero>
 
-      <div className="mb-6 grid gap-6 xl:grid-cols-[1.6fr_1fr]">
+      <div className="stagger mb-6 grid gap-6 xl:grid-cols-[1.6fr_1fr]">
         {verTotales ? (
           <Panel titulo={`Ingresos de ${mesNombre}`} descripcion="Por día. La barra más oscura es hoy.">
             <GraficoIngresosMes datos={d.ingresosPorDia} />
@@ -127,7 +127,7 @@ export default async function DashboardPage() {
         </Panel>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="stagger grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <Panel
           titulo="Cuotas por vencer"
           descripcion="Próximos 7 días"

@@ -8,7 +8,7 @@ export function Tablero({ children, className }: { children: React.ReactNode; cl
   return (
     <div
       className={cn(
-        "surface grid grid-cols-2 overflow-hidden rounded-xl border bg-card",
+        "surface stagger grid grid-cols-2 overflow-hidden rounded-xl border bg-card",
         "[&>*]:border-b [&>*]:border-r [&>*]:-mb-px [&>*]:-mr-px",
         className,
       )}
