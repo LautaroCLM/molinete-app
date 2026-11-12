@@ -1,3 +1,4 @@
+import { SocioAvatar } from "@/components/shared/socio-avatar"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ArrowLeft, Banknote, DoorOpen, Pencil, Phone, Mail, CalendarDays, IdCard, StickyNote } from "lucide-react"
@@ -43,13 +44,16 @@ export default async function SocioPage({
       </Link>
 
       <div className="flex flex-col gap-4 pb-6 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <h1 className="font-display text-4xl font-semibold tracking-tight">
-            {socio.nombre} {socio.apellido}
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            {socio.plan?.nombre} · socio desde el {fecha(socio.fechaAlta)}
-          </p>
+        <div className="flex min-w-0 items-center gap-4">
+          <SocioAvatar id={socio.id} nombre={socio.nombre} apellido={socio.apellido} className="size-16 text-xl" />
+          <div className="min-w-0">
+            <h1 className="font-display text-4xl font-semibold tracking-tight">
+              {socio.nombre} {socio.apellido}
+            </h1>
+            <p className="mt-1 text-muted-foreground">
+              {socio.plan?.nombre} · socio desde el {fecha(socio.fechaAlta)}
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <BotonAccion accion={{ tipo: "llegada", socioId: socio.id }} variant={debe ? "outline" : "default"} size="lg">

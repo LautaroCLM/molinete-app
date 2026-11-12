@@ -1,3 +1,4 @@
+import { SocioAvatar } from "@/components/shared/socio-avatar"
 import Link from "next/link"
 import { PackageOpen, Wallet, DoorOpen, ChevronRight } from "lucide-react"
 import { PageHeader, Panel } from "@/components/shared/page-header"
@@ -178,6 +179,7 @@ function ListaSocios({ socios, accion }: { socios: SocioLista[]; accion: string 
     <ul className="divide-y">
       {socios.map((s) => (
         <li key={s.id} className="flex items-center gap-3 px-3 py-2.5">
+          <SocioAvatar id={s.id} nombre={s.nombre} apellido={s.apellido} />
           <Link href={`/clientes/${s.id}`} className="min-w-0 flex-1 hover:underline">
             <p className="truncate text-sm font-semibold">
               {s.nombre} {s.apellido}
@@ -214,6 +216,7 @@ function UltimasLlegadas({ llegadas }: { llegadas: Awaited<ReturnType<typeof get
           {llegadas.map((a) => (
             <li key={a.id} className="flex items-center gap-3 px-3 py-2.5">
               <span className="w-11 shrink-0 text-sm font-semibold tabular-nums text-muted-foreground">{hora(a.fecha)}</span>
+              <SocioAvatar id={a.socio.id} nombre={a.socio.nombre} apellido={a.socio.apellido} className="size-7 text-[0.65rem]" />
               <Link href={`/clientes/${a.socio.id}`} className="min-w-0 flex-1 truncate text-sm font-medium hover:underline">
                 {a.socio.nombre} {a.socio.apellido}
               </Link>

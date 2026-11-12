@@ -1,5 +1,6 @@
 "use client"
 
+import { SocioAvatar } from "@/components/shared/socio-avatar"
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -72,11 +73,14 @@ export function SociosTabla({ socios, filtroInicial }: { socios: SocioConEstado[
         accessorFn: (s) => `${s.apellido} ${s.nombre}`,
         header: "Socio",
         cell: ({ row: { original: s } }) => (
-          <Link href={`/clientes/${s.id}`} className="block min-w-0 hover:underline">
-            <span className="block truncate font-semibold">
-              {s.apellido}, {s.nombre}
+          <Link href={`/clientes/${s.id}`} className="flex min-w-0 items-center gap-3 hover:underline">
+            <SocioAvatar id={s.id} nombre={s.nombre} apellido={s.apellido} />
+            <span className="min-w-0">
+              <span className="block truncate font-semibold">
+                {s.apellido}, {s.nombre}
+              </span>
+              <span className="text-xs text-muted-foreground">DNI {dni(s.dni)}</span>
             </span>
-            <span className="text-xs text-muted-foreground">DNI {dni(s.dni)}</span>
           </Link>
         ),
       },

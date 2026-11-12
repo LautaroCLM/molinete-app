@@ -18,6 +18,7 @@ import {
   type ResumenCaja,
   type Totales,
 } from "@/lib/data"
+import { MenuExportar } from "@/components/shared/menu-exportar"
 import { puede } from "@/lib/permissions"
 import { CATEGORIAS_MOVIMIENTO, MEDIOS_PAGO } from "@/lib/labels"
 import { fecha, fechaHora, hora, pesos } from "@/lib/format"
@@ -37,7 +38,11 @@ export default async function CajaPage({ searchParams }: { searchParams: Promise
 
   return (
     <>
-      <PageHeader titulo="Caja" descripcion={esDueno ? "Ingresos, egresos y cajas de cada turno." : "Tu caja del turno: cobros, ventas y gastos."} />
+      <PageHeader
+        titulo="Caja"
+        descripcion={esDueno ? "Ingresos, egresos y cajas de cada turno." : "Tu caja del turno: cobros, ventas y gastos."}
+        acciones={esDueno ? <MenuExportar tipo="caja" opciones={[{ label: "Hoy", params: "rango=hoy" }, { label: "Este mes", params: "rango=mes" }, { label: "Mes anterior", params: "rango=mes_anterior" }, { label: "Todo el historial", params: "rango=todo" }]} /> : undefined}
+      />
       {esDueno && (
         <TabsLink
           activo={vista}

@@ -1,3 +1,4 @@
+import { SocioAvatar } from "@/components/shared/socio-avatar"
 import Link from "next/link"
 import { addDays, format, isToday, parseISO, startOfDay, subDays, endOfDay, isValid } from "date-fns"
 import { ChevronLeft, ChevronRight, DoorOpen, QrCode } from "lucide-react"
@@ -7,13 +8,16 @@ import { PageHeader, Panel, EmptyState } from "@/components/shared/page-header"
 import { Tablero, Indicador } from "@/components/shared/tablero"
 import { EstadoBadge } from "@/components/shared/estado-badge"
 import { BotonAccion } from "@/components/shared/boton-accion"
-import { contarAsistencias, getAsistencias } from "@/lib/data"
+import { MenuExportar } from "@/components/shared/menu-exportar"
+import { contarAsistencias, getAsistencias, getSesion } from "@/lib/data"
+import { puede } from "@/lib/permissions"
 import { fechaLarga, hora, num } from "@/lib/format"
 
 export const metadata = { title: "Asistencias" }
 
 export default async function AsistenciasPage({ searchParams }: { searchParams: Promise<{ dia?: string }> }) {
   const { dia } = await searchParams
+  const { usuario } = await getSesion()
   const parsed = dia ? parseISO(dia) : new Date()
   const elegido = startOfDay(isValid(parsed) ? parsed : new Date())
   const esHoy = isToday(elegido)
@@ -42,9 +46,12 @@ export default async function AsistenciasPage({ searchParams }: { searchParams: 
         titulo="Asistencias"
         descripcion="Quién vino y a qué hora."
         acciones={
-          <BotonAccion accion={{ tipo: "llegada" }} size="lg">
-            <DoorOpen /> Registrar llegada
-          </BotonAccion>
+          <>
+            {puede(usuario.rol, "reportes.ver") && <MenuExportar tipo="asistencias" opciones={[{ label: "Hoy", params: "rango=hoy" }, { label: "Este mes", params: "rango=mes" }, { label: "Mes anterior", params: "rango=mes_anterior" }, { label: "Todo el historial", params: "rango=todo" }]} />}
+            <BotonAccion accion={{ tipo: "llegada" }} size="lg">
+              <DoorOpen /> Registrar llegada
+            </BotonAccion>
+          </>
         }
       />
 
@@ -101,7 +108,8 @@ export default async function AsistenciasPage({ searchParams }: { searchParams: 
                 <TableRow key={a.id}>
                   <TableCell className="pl-5 font-semibold tabular-nums">{hora(a.fecha)}</TableCell>
                   <TableCell>
-                    <Link href={`/clientes/${a.socio.id}`} className="font-medium hover:underline">
+                    <Link href={`/clientes/${a.socio.id}`} className="inline-flex items-center gap-2.5 font-medium hover:underline">
+                      <SocioAvatar id={a.socio.id} nombre={a.socio.nombre} apellido={a.socio.apellido} className="size-7 text-[0.65rem]" />
                       {a.socio.apellido}, {a.socio.nombre}
                     </Link>
                   </TableCell>

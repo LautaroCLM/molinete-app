@@ -1,5 +1,6 @@
 "use client"
 
+import { SocioAvatar } from "@/components/shared/socio-avatar"
 import { useMemo, useState, useTransition } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -100,11 +101,14 @@ function FormCobro({ socio, volver }: { socio: SocioIndice; volver: () => void }
   return (
     <form onSubmit={enviar} className="flex flex-col gap-5" noValidate>
       <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-3">
-        <div className="min-w-0">
-          <p className="truncate font-semibold">
-            {socio.nombre} {socio.apellido}
-          </p>
-          <p className="text-xs text-muted-foreground">DNI {dni(socio.dni)}</p>
+        <div className="flex min-w-0 items-center gap-3">
+          <SocioAvatar id={socio.id} nombre={socio.nombre} apellido={socio.apellido} />
+          <div className="min-w-0">
+            <p className="truncate font-semibold">
+              {socio.nombre} {socio.apellido}
+            </p>
+            <p className="text-xs text-muted-foreground">DNI {dni(socio.dni)}</p>
+          </div>
         </div>
         <EstadoBadge estado={socio.estado}>{socio.resumen}</EstadoBadge>
       </div>

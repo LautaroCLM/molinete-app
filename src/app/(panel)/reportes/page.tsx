@@ -1,3 +1,4 @@
+import { SocioAvatar } from "@/components/shared/socio-avatar"
 import Link from "next/link"
 import { MessageCircle } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -116,7 +117,8 @@ export default async function ReportesPage({ searchParams }: { searchParams: Pro
               {r.dejaronDeVenir.slice(0, 12).map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="pl-5">
-                    <Link href={`/clientes/${s.id}`} className="font-medium hover:underline">
+                    <Link href={`/clientes/${s.id}`} className="inline-flex items-center gap-2.5 font-medium hover:underline">
+                      <SocioAvatar id={s.id} nombre={s.nombre} apellido={s.apellido} className="size-7 text-[0.65rem]" />
                       {s.nombre} {s.apellido}
                     </Link>
                   </TableCell>

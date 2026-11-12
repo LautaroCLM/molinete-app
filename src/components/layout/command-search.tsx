@@ -1,5 +1,6 @@
 "use client"
 
+import { SocioAvatar } from "@/components/shared/socio-avatar"
 import { createContext, useContext, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { DoorOpen, Banknote, ShoppingBag, UserPlus, Wallet } from "lucide-react"
@@ -88,6 +89,7 @@ function Paleta({ cerrar }: { cerrar: () => void }) {
           <CommandGroup heading="Socios">
             {resultados.map((s) => (
               <CommandItem key={s.id} value={`socio-${s.id}`} onSelect={() => ir(`/clientes/${s.id}`)} className="gap-3 py-2.5">
+                <SocioAvatar id={s.id} nombre={s.nombre} apellido={s.apellido} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">
                     {s.apellido}, {s.nombre}

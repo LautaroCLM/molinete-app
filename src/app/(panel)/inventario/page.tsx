@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PageHeader, Panel } from "@/components/shared/page-header"
 import { TabsLink } from "@/components/shared/tabs-link"
 import { BotonAccion } from "@/components/shared/boton-accion"
+import { MenuExportar } from "@/components/shared/menu-exportar"
 import { ProductosTabla } from "@/features/inventario/productos-tabla"
 import { getMovimientosStock, getProductos, getSesion } from "@/lib/data"
 import { puede } from "@/lib/permissions"
@@ -24,9 +25,12 @@ export default async function InventarioPage({ searchParams }: { searchParams: P
         titulo="Inventario"
         descripcion="Productos a la venta, stock y reposiciones."
         acciones={
-          <BotonAccion accion={{ tipo: "venta" }} size="lg">
-            <ShoppingBag /> Vender productos
-          </BotonAccion>
+          <>
+            {puede(usuario.rol, "reportes.ver") && <MenuExportar tipo="inventario" opciones={[{ label: "Inventario completo" }]} />}
+            <BotonAccion accion={{ tipo: "venta" }} size="lg">
+              <ShoppingBag /> Vender productos
+            </BotonAccion>
+          </>
         }
       />
       <TabsLink

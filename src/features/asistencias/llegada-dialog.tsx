@@ -1,5 +1,6 @@
 "use client"
 
+import { SocioAvatar } from "@/components/shared/socio-avatar"
 import { useState, useTransition } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -96,13 +97,16 @@ function Ficha({
     <div className="flex flex-col gap-4">
       <div className={cn("relative overflow-hidden rounded-xl p-5", e.fondo)}>
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-xl font-semibold">
-              {socio.nombre} {socio.apellido}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              DNI {dni(socio.dni)} · {socio.plan}
-            </p>
+          <div className="flex min-w-0 items-center gap-3">
+            <SocioAvatar id={socio.id} nombre={socio.nombre} apellido={socio.apellido} className="size-12 text-base" />
+            <div className="min-w-0">
+              <p className="truncate text-xl font-semibold">
+                {socio.nombre} {socio.apellido}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                DNI {dni(socio.dni)} · {socio.plan}
+              </p>
+            </div>
           </div>
           <Disco estado={socio.estado} className="size-9 border-[9px]" />
         </div>

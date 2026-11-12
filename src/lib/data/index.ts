@@ -200,17 +200,15 @@ async function usuariosPorId() {
 }
 
 // ---------- Asistencias ----------
-export async function getAsistencias(opciones: { desde?: Date; hasta?: Date; limite?: number } = {}) {
+export async function getAsistencias(opciones: { desde?: Date; hasta?: Date; limite?: number; completo?: boolean } = {}) {
   const sb = await db()
   const desde = opciones.desde ?? startOfDay(new Date())
-  let q = sb
-    .from("asistencias")
-    .select("*")
-    .gte("fecha", desde.toISOString())
-    .order("fecha", { ascending: false })
-    .limit(opciones.limite ?? 500)
-  if (opciones.hasta) q = q.lte("fecha", opciones.hasta.toISOString())
-  const [filas, socios, usuarios] = await Promise.all([q.then(chequear), getSociosBase(), usuariosPorId()])
+  const pedir = () => {
+    const q = sb.from("asistencias").select("*").gte("fecha", desde.toISOString()).order("fecha", { ascending: false })
+    return opciones.hasta ? q.lte("fecha", opciones.hasta.toISOString()) : q
+  }
+  const filasP = opciones.completo ? todas((d, h) => pedir().range(d, h)) : pedir().limit(opciones.limite ?? 500).then(chequear)
+  const [filas, socios, usuarios] = await Promise.all([filasP, getSociosBase(), usuariosPorId()])
   const socioDe = new Map(socios.map((s) => [s.id, s]))
   return filas
     .filter((a) => socioDe.has(a.socio_id))
@@ -313,13 +311,17 @@ export interface MovimientoDetalle extends Movimiento {
   anuladoPor: Usuario | undefined
 }
 
-export async function getMovimientos(opciones: { cajaId?: string; desde?: Date; hasta?: Date; limite?: number } = {}): Promise<MovimientoDetalle[]> {
+export async function getMovimientos(opciones: { cajaId?: string; desde?: Date; hasta?: Date; limite?: number; completo?: boolean } = {}): Promise<MovimientoDetalle[]> {
   const sb = await db()
-  let q = sb.from("movimientos").select("*").order("fecha", { ascending: false }).limit(opciones.limite ?? 500)
-  if (opciones.cajaId) q = q.eq("caja_id", opciones.cajaId)
-  if (opciones.desde) q = q.gte("fecha", opciones.desde.toISOString())
-  if (opciones.hasta) q = q.lte("fecha", opciones.hasta.toISOString())
-  const [filas, usuarios] = await Promise.all([q.then(chequear), usuariosPorId()])
+  const pedir = () => {
+    let q = sb.from("movimientos").select("*").order("fecha", { ascending: false })
+    if (opciones.cajaId) q = q.eq("caja_id", opciones.cajaId)
+    if (opciones.desde) q = q.gte("fecha", opciones.desde.toISOString())
+    if (opciones.hasta) q = q.lte("fecha", opciones.hasta.toISOString())
+    return q
+  }
+  const filasP = opciones.completo ? todas((d, h) => pedir().range(d, h)) : pedir().limit(opciones.limite ?? 500).then(chequear)
+  const [filas, usuarios] = await Promise.all([filasP, usuariosPorId()])
   return filas.map((f) => {
     const m = mapMovimiento(f)
     return { ...m, usuario: usuarios.get(m.usuarioId), anuladoPor: m.anulacion ? usuarios.get(m.anulacion.usuarioId) : undefined }
