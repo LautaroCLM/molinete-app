@@ -126,6 +126,15 @@ export async function desvincularDispositivo(dispositivo: string) {
 }
 
 // ---------- Perfil del socio (con PIN) ----------
+export interface RutinaPerfil {
+  id: string
+  nombre: string
+  descripcion: string
+  /** Índice (desde 0) del día que le toca hoy, por rotación. */
+  hoy: number
+  dias: { nombre: string; ejercicios: { nombre: string; series: string; repeticiones: string; descanso: string; nota: string }[] }[]
+}
+
 export interface PerfilSocio {
   socioId: string
   nombre: string
@@ -141,6 +150,8 @@ export interface PerfilSocio {
   asistencias: string[]
   /** Cuántas veces vino en los últimos 30 días. */
   ultimos30: number
+  /** Rutinas asignadas (las más recientes primero). */
+  rutinas: RutinaPerfil[]
   /** Últimos pagos, sin montos. */
   pagos: { fecha: string; plan: string | null; hasta: string | null }[]
   dni: string | null
@@ -163,6 +174,7 @@ interface CrudoPerfil extends Crudo {
   fecha_alta?: string
   asistencias?: string[]
   pagos?: { fecha: string; plan: string | null; hasta: string | null }[]
+  rutinas?: RutinaPerfil[]
   dni?: string | null
   telefono?: string | null
   email?: string | null
@@ -205,6 +217,7 @@ function aPerfil(r: CrudoPerfil | null): ResultadoPerfil {
       asistencias: r.asistencias ?? [],
       ultimos30: (r.asistencias ?? []).filter((a) => new Date(a).getTime() >= Date.now() - 30 * 24 * 3600e3).length,
       pagos: r.pagos ?? [],
+      rutinas: r.rutinas ?? [],
       dni: r.dni ?? null,
       telefono: r.telefono ?? null,
       email: r.email ?? null,

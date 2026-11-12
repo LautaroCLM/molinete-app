@@ -199,6 +199,55 @@ async function main() {
   const quedan = await admin.from("socio_pins").select("socio_id").eq("socio_id", juan.id)
   chequeo("el PIN viejo se borró", (quedan.data ?? []).length === 0)
 
+  console.log("\nRutinas")
+  const dia = (n: string) => ({ nombre: n, ejercicios: [{ nombre: "Sentadilla", series: "4", repeticiones: "8-10", descanso: "90 s", nota: "" }] })
+  const nueva = await sofia.rpc("guardar_rutina", { p_rutina: { nombre: "Rutina de prueba", descripcion: "", dias: [dia("Día A"), dia("Día B"), dia("Día C")] } })
+  const rutinaId = nueva.data as string
+  chequeo("recepción puede armar una rutina", !nueva.error && !!rutinaId, nueva.error?.message)
+  const sinDias = await sofia.rpc("guardar_rutina", { p_rutina: { nombre: "Vacía", dias: [] } })
+  chequeo("una rutina sin días se rechaza", !!sinDias.error && sinDias.error.message.includes("RUTINA_INVALIDA"))
+  chequeo("el dueño del mismo gimnasio la ve", ((await dueno.from("rutinas").select("id").eq("id", rutinaId)).data ?? []).length === 1)
+  chequeo("el dueño de otro gimnasio no la ve", ((await otro.from("rutinas").select("id").eq("id", rutinaId)).data ?? []).length === 0)
+  const ajena = await otro.rpc("guardar_rutina", { p_rutina: { id: rutinaId, nombre: "Pisada", dias: [dia("X")] } })
+  chequeo("el dueño de otro gimnasio no puede editarla", !!ajena.error)
+  const ajenaAsig = await otro.rpc("asignar_rutina", { p_socio: juan.id, p_rutina: rutinaId })
+  chequeo("ni asignarla a socios que no son suyos", !!ajenaAsig.error)
+  chequeo("sin sesión no se pueden usar las funciones", !!(await anon.rpc("guardar_rutina", { p_rutina: { nombre: "x", dias: [dia("A")] } })).error)
+  chequeo("sin sesión no se leen las tablas", ((await anon.from("rutina_ejercicios").select("id")).data ?? []).length === 0)
+  const directa = await sofia.from("rutinas").insert({ gym_id: gymDemo.id, nombre: "Directa" })
+  chequeo("no se puede escribir directo en la tabla", !!directa.error)
+  const asig = await sofia.rpc("asignar_rutina", { p_socio: juan.id, p_rutina: rutinaId })
+  chequeo("recepción asigna la rutina a un socio", !asig.error, asig.error?.message)
+
+  // Perfil del socio: qué día le toca hoy por rotación de asistencias
+  const vinc3 = (await anon.rpc("qr_vincular", { p_token: tokenNuevo, p_dni: "40112908" })).data as { dispositivo: string }
+  const arg3 = { p_token: tokenNuevo, p_dispositivo: vinc3.dispositivo }
+  const perfil3 = ((await anon.rpc("qr_pin_crear" as never, { ...arg3, p_pin: "4821" } as never)).data as unknown) as { ok?: boolean; rutinas?: { id: string; hoy: number; dias: { nombre: string; ejercicios: unknown[] }[] }[] }
+  chequeo("el perfil trae la rutina asignada con sus días", perfil3?.ok === true && perfil3.rutinas?.[0]?.id === rutinaId && perfil3.rutinas[0].dias.length === 3 && perfil3.rutinas[0].dias[0].ejercicios.length === 1)
+  await admin.from("socio_rutinas").update({ asignada_en: new Date(Date.now() - 400 * 86400e3).toISOString() }).eq("socio_id", juan.id).eq("rutina_id", rutinaId)
+  const fechas = ((await admin.from("asistencias").select("fecha").eq("socio_id", juan.id)).data ?? []).map((a) => a.fecha)
+  const aDia = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(new Date(iso))
+  const hoyAR = aDia(new Date().toISOString())
+  const antesHoy = new Set(fechas.map(aDia).filter((d) => d < hoyAR)).size
+  const perfil4 = ((await anon.rpc("qr_perfil" as never, { ...arg3, p_pin: "4821" } as never)).data as unknown) as { rutinas?: { hoy: number }[] }
+  chequeo("«hoy te toca» rota por los días distintos en que vino", perfil4.rutinas?.[0]?.hoy === antesHoy % 3, `esperado ${antesHoy % 3}, recibido ${perfil4.rutinas?.[0]?.hoy}`)
+
+  await sofia.rpc("archivar_rutina", { p_rutina: rutinaId, p_activo: false })
+  const perfil5 = ((await anon.rpc("qr_perfil" as never, { ...arg3, p_pin: "4821" } as never)).data as unknown) as { rutinas?: unknown[] }
+  chequeo("una rutina archivada deja de verse en el perfil", (perfil5.rutinas ?? []).length === 0)
+  await sofia.rpc("archivar_rutina", { p_rutina: rutinaId, p_activo: true })
+  const quitada = await sofia.rpc("quitar_rutina", { p_socio: juan.id, p_rutina: rutinaId })
+  const perfil6 = ((await anon.rpc("qr_perfil" as never, { ...arg3, p_pin: "4821" } as never)).data as unknown) as { rutinas?: unknown[] }
+  chequeo("al quitarla desaparece del perfil", !quitada.error && (perfil6.rutinas ?? []).length === 0)
+  const copia = await sofia.rpc("duplicar_rutina", { p_rutina: rutinaId })
+  const ejCopia = await admin.from("rutina_ejercicios").select("id, dia_id").in("dia_id", ((await admin.from("rutina_dias").select("id").eq("rutina_id", copia.data as string)).data ?? []).map((d) => d.id))
+  chequeo("duplicar copia los días y ejercicios", !copia.error && (ejCopia.data ?? []).length === 3)
+
+  // Limpieza de lo creado en este bloque
+  await admin.from("rutinas").delete().eq("gym_id", gymDemo.id).in("id", [rutinaId, copia.data as string])
+  await admin.from("socio_pins").delete().eq("socio_id", juan.id)
+  await admin.from("socio_dispositivos").delete().eq("socio_id", juan.id)
+
   console.log("\nAnular cobros y ventas")
   const planMensual = (await admin.from("planes").select("id, precio").eq("gym_id", gymDemo.id).eq("tipo", "mensual").eq("activo", true).limit(1).single()).data!
   const sociosTodos = (await admin.from("socios").select("id").eq("gym_id", gymDemo.id).eq("activo", true).not("vencimiento", "is", null).limit(1).single()).data!

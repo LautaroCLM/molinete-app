@@ -25,6 +25,7 @@ import {
   planSchema,
   productoSchema,
   reglasSchema,
+  rutinaSchema,
   socioSchema,
   ventaSchema,
   type ResultadoAccion,
@@ -42,6 +43,7 @@ const ERRORES: Record<string, string> = {
   PLAN_INEXISTENTE: "El plan no existe o está desactivado.",
   PRODUCTO_INEXISTENTE: "El producto no existe o está desactivado.",
   YA_ANULADO: "Ese movimiento ya estaba anulado.",
+  RUTINA_INEXISTENTE: "La rutina no existe o está archivada.",
   ANULAR_ANTES_EL_ULTIMO_COBRO: "Ese socio tiene un cobro posterior. Anulá primero el último cobro y después este.",
   YA_TIENE_GIMNASIO: "Tu usuario ya pertenece a un gimnasio.",
   CUOTA_SOLO_POR_COBRO: "El vencimiento cambia solo al cobrar. Pedile al dueño si hay que corregirlo.",
@@ -57,6 +59,7 @@ function traducir(error: { message?: string; code?: string; details?: string | n
     return "Ese dato ya existe."
   }
   if (error.code === "42501") return ERRORES.SIN_PERMISO
+  if (msg.includes("RUTINA_INVALIDA") && error.details) return error.details
   const clave = Object.keys(ERRORES).find((k) => msg.includes(k))
   if (clave === "SIN_STOCK" && error.details) return `${ERRORES.SIN_STOCK} de ${error.details}.`
   return clave ? ERRORES[clave] : "Algo salió mal. Probá de nuevo."
@@ -346,6 +349,60 @@ export async function restablecerPin(socioId: string): Promise<ResultadoAccion> 
     await getSesion()
     const sb = await supabaseServer()
     const { error } = await sb.rpc("socio_restablecer_pin", { p_socio: socioId })
+    if (error) return { ok: false, error: traducir(error) }
+  } catch (e) {
+    return { ok: false, error: traducir(e as Error) }
+  }
+  refrescar()
+  return { ok: true }
+}
+
+// ---------- Rutinas (dueño y recepción) ----------
+export async function guardarRutina(datos: unknown, id?: string): Promise<ResultadoAccion<{ id: string }>> {
+  const r = rutinaSchema.safeParse(datos)
+  if (!r.success) return invalido(r)!
+  try {
+    await getSesion()
+    const sb = await supabaseServer()
+    const { data, error } = await sb.rpc("guardar_rutina", { p_rutina: { ...r.data, id: id ?? null } })
+    if (error) return { ok: false, error: traducir(error) }
+    refrescar()
+    return { ok: true, data: { id: data as string } }
+  } catch (e) {
+    return { ok: false, error: traducir(e as Error) }
+  }
+}
+
+export async function archivarRutina(id: string, activo: boolean): Promise<ResultadoAccion> {
+  return llamarRutina("archivar_rutina", { p_rutina: id, p_activo: activo })
+}
+
+export async function duplicarRutina(id: string): Promise<ResultadoAccion<{ id: string }>> {
+  try {
+    await getSesion()
+    const sb = await supabaseServer()
+    const { data, error } = await sb.rpc("duplicar_rutina", { p_rutina: id })
+    if (error) return { ok: false, error: traducir(error) }
+    refrescar()
+    return { ok: true, data: { id: data as string } }
+  } catch (e) {
+    return { ok: false, error: traducir(e as Error) }
+  }
+}
+
+export async function asignarRutina(socioId: string, rutinaId: string): Promise<ResultadoAccion> {
+  return llamarRutina("asignar_rutina", { p_socio: socioId, p_rutina: rutinaId })
+}
+
+export async function quitarRutina(socioId: string, rutinaId: string): Promise<ResultadoAccion> {
+  return llamarRutina("quitar_rutina", { p_socio: socioId, p_rutina: rutinaId })
+}
+
+async function llamarRutina(fn: "archivar_rutina" | "asignar_rutina" | "quitar_rutina", args: Record<string, unknown>): Promise<ResultadoAccion> {
+  try {
+    await getSesion()
+    const sb = await supabaseServer()
+    const { error } = await sb.rpc(fn as never, args as never)
     if (error) return { ok: false, error: traducir(error) }
   } catch (e) {
     return { ok: false, error: traducir(e as Error) }

@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ArrowLeft, Delete, IdCard, Mail, Phone, ShieldCheck } from "lucide-react"
+import { ArrowLeft, Delete, Dumbbell, IdCard, Mail, Phone, ShieldCheck } from "lucide-react"
 import { Disco, ESTILO_ESTADO } from "@/components/shared/estado-badge"
 import { SocioAvatar } from "@/components/shared/socio-avatar"
 import { CalendarioAsistencias } from "@/features/socios/calendario-asistencias"
 import { fecha } from "@/lib/format"
-import type { PerfilSocio } from "@/lib/actions/qr"
+import type { PerfilSocio, RutinaPerfil } from "@/lib/actions/qr"
 import { cn } from "@/lib/utils"
 
 /** Pantalla del PIN: elegirlo (primera vez, dos veces) o ingresarlo. */
@@ -181,6 +181,8 @@ export function PerfilVista({ perfil, onVolver }: { perfil: PerfilSocio; onVolve
       </section>
       {perfil.recordatorio && <p className="rounded-xl border-2 border-dashed px-4 py-3 text-center font-semibold">{perfil.recordatorio}</p>}
 
+      {perfil.rutinas.length > 0 && <SeccionRutinas rutinas={perfil.rutinas} />}
+
       <section className="rounded-2xl border bg-card p-5">
         <h2 className="font-semibold">Tus asistencias</h2>
         <p className="mt-0.5 text-sm text-muted-foreground">
@@ -226,5 +228,92 @@ export function PerfilVista({ perfil, onVolver }: { perfil: PerfilSocio; onVolve
         </section>
       )}
     </div>
+  )
+}
+
+/** Rutinas del socio: arranca en el día que le toca hoy y puede mirar cualquier otro. */
+function SeccionRutinas({ rutinas }: { rutinas: RutinaPerfil[] }) {
+  const [ri, setRi] = useState(0)
+  const rutina = rutinas[ri] ?? rutinas[0]
+  // Día elegido por rutina: sin elegir, el que le toca hoy.
+  const [elegidos, setElegidos] = useState<Record<string, number>>({})
+  const di = Math.min(elegidos[rutina.id] ?? rutina.hoy, Math.max(rutina.dias.length - 1, 0))
+  const dia = rutina.dias[di]
+  const esHoy = di === rutina.hoy
+
+  return (
+    <section className="rounded-2xl border bg-card p-5">
+      <h2 className="flex items-center gap-2 font-semibold">
+        <Dumbbell className="size-4 text-primary" /> Tu rutina
+      </h2>
+
+      {rutinas.length > 1 && (
+        <div className="mt-3 flex flex-wrap gap-2" role="tablist" aria-label="Tus rutinas">
+          {rutinas.map((r, i) => (
+            <button
+              key={r.id}
+              role="tab"
+              aria-selected={i === ri}
+              onClick={() => setRi(i)}
+              className={cn("rounded-full border px-3 py-1.5 text-sm font-medium transition-colors", i === ri ? "border-primary bg-primary/15 text-foreground" : "text-muted-foreground hover:text-foreground")}
+            >
+              {r.nombre}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <p className="mt-3 font-medium">{rutina.nombre}</p>
+      {rutina.descripcion && <p className="text-sm text-muted-foreground">{rutina.descripcion}</p>}
+
+      {rutina.dias.length > 0 && dia ? (
+        <>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Hoy te toca: <strong className="text-foreground">{rutina.dias[rutina.hoy]?.nombre}</strong>
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2" role="tablist" aria-label="Días de la rutina">
+            {rutina.dias.map((d, i) => (
+              <button
+                key={i}
+                role="tab"
+                aria-selected={i === di}
+                onClick={() => setElegidos((e) => ({ ...e, [rutina.id]: i }))}
+                className={cn("rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors", i === di ? "border-primary bg-primary/15 text-foreground" : "text-muted-foreground hover:text-foreground")}
+              >
+                {d.nombre}
+                {i === rutina.hoy && <span className="ml-1.5 rounded-full bg-primary px-1.5 py-0.5 text-[0.65rem] font-bold text-primary-foreground">HOY</span>}
+              </button>
+            ))}
+          </div>
+
+          <p className="mt-4 text-sm font-semibold">
+            {dia.nombre}
+            {!esHoy && <span className="ml-2 font-normal text-muted-foreground">(no es el de hoy)</span>}
+          </p>
+          {dia.ejercicios.length === 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">Este día todavía no tiene ejercicios cargados.</p>
+          ) : (
+            <ol className="mt-2 flex flex-col gap-2">
+              {dia.ejercicios.map((e, i) => (
+                <li key={i} className="rounded-xl bg-muted/50 px-3.5 py-3">
+                  <p className="font-medium">
+                    <span className="mr-2 text-muted-foreground tabular-nums">{i + 1}.</span>
+                    {e.nombre}
+                  </p>
+                  {(e.series || e.repeticiones || e.descanso) && (
+                    <p className="mt-0.5 text-sm text-muted-foreground tabular-nums">
+                      {[e.series && `${e.series} series`, e.repeticiones && `${e.repeticiones} reps`, e.descanso && `descanso ${e.descanso}`].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                  {e.nota && <p className="mt-1 text-sm">{e.nota}</p>}
+                </li>
+              ))}
+            </ol>
+          )}
+        </>
+      ) : (
+        <p className="mt-3 text-sm text-muted-foreground">Esta rutina todavía no tiene días cargados.</p>
+      )}
+    </section>
   )
 }

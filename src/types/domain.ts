@@ -180,3 +180,25 @@ export interface Sesion {
   usuario: Usuario
   gym: Gym
 }
+
+// ---------- Rutinas ----------
+export interface EjercicioRutina {
+  nombre: string
+  series: string
+  repeticiones: string
+  descanso: string
+  nota: string
+}
+
+export interface DiaRutina {
+  nombre: string
+  ejercicios: EjercicioRutina[]
+}
+
+export interface Rutina {
+  id: ID
+  nombre: string
+  descripcion: string
+  activo: boolean
+  dias: DiaRutina[]
+}

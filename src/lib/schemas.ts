@@ -135,3 +135,27 @@ export const altaGimnasioSchema = z.object({
   dueno: z.object(credenciales),
   empleados: z.array(z.object(credenciales)).max(20, "Máximo 20 empleados por alta."),
 })
+
+const texto = (max: number, mensaje: string) => z.string().trim().max(max, mensaje).default("")
+
+export const ejercicioRutinaSchema = z.object({
+  nombre: z.string().trim().min(1, "Cada ejercicio necesita un nombre.").max(80, "El nombre del ejercicio es muy largo."),
+  series: texto(40, "Las series son muy largas."),
+  repeticiones: texto(40, "Las repeticiones son muy largas."),
+  descanso: texto(40, "El descanso es muy largo."),
+  nota: texto(300, "La nota es muy larga (hasta 300 letras)."),
+})
+
+export const rutinaSchema = z.object({
+  nombre: z.string().trim().min(2, "Ingresá el nombre de la rutina.").max(80, "El nombre es muy largo (hasta 80 letras)."),
+  descripcion: texto(300, "La descripción es muy larga (hasta 300 letras)."),
+  dias: z
+    .array(
+      z.object({
+        nombre: z.string().trim().min(1, "Cada día necesita un nombre.").max(60, "El nombre del día es muy largo."),
+        ejercicios: z.array(ejercicioRutinaSchema).max(40, "Cada día admite hasta 40 ejercicios."),
+      }),
+    )
+    .min(1, "La rutina necesita al menos un día.")
+    .max(14, "La rutina admite hasta 14 días."),
+})

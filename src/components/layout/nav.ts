@@ -4,6 +4,7 @@ import {
   CalendarCheck2,
   Wallet,
   Package,
+  Dumbbell,
   ChartColumnBig,
   Settings,
   type LucideIcon,
@@ -23,6 +24,7 @@ export const NAV: ItemNav[] = [
   { href: "/asistencias", label: "Asistencias", icono: CalendarCheck2 },
   { href: "/caja", label: "Caja", icono: Wallet },
   { href: "/inventario", label: "Inventario", icono: Package },
+  { href: "/rutinas", label: "Rutinas", icono: Dumbbell },
   { href: "/reportes", label: "Reportes", icono: ChartColumnBig, permiso: "reportes.ver" },
   { href: "/configuracion", label: "Configuración", icono: Settings, permiso: "configuracion.ver" },
 ]

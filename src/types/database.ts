@@ -341,6 +341,78 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"rutina_dias": {
+                  Row: {
+                    "gym_id": string,"id": string,"nombre": string,"orden": number,"rutina_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "gym_id": string,"id"?: string,"nombre": string,"orden": number,"rutina_id": string
+                  }
+                  Update: {
+                    "gym_id"?: string,"id"?: string,"nombre"?: string,"orden"?: number,"rutina_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "rutina_dias_gym_id_fkey"
+      columns: ["gym_id"]
+isOneToOne: false
+      referencedRelation: "gyms"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "rutina_dias_rutina_id_fkey"
+      columns: ["rutina_id"]
+isOneToOne: false
+      referencedRelation: "rutinas"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"rutina_ejercicios": {
+                  Row: {
+                    "descanso": string,"dia_id": string,"gym_id": string,"id": string,"nombre": string,"nota": string,"orden": number,"repeticiones": string,"series": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "descanso"?: string,"dia_id": string,"gym_id": string,"id"?: string,"nombre": string,"nota"?: string,"orden": number,"repeticiones"?: string,"series"?: string
+                  }
+                  Update: {
+                    "descanso"?: string,"dia_id"?: string,"gym_id"?: string,"id"?: string,"nombre"?: string,"nota"?: string,"orden"?: number,"repeticiones"?: string,"series"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "rutina_ejercicios_dia_id_fkey"
+      columns: ["dia_id"]
+isOneToOne: false
+      referencedRelation: "rutina_dias"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "rutina_ejercicios_gym_id_fkey"
+      columns: ["gym_id"]
+isOneToOne: false
+      referencedRelation: "gyms"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"rutinas": {
+                  Row: {
+                    "activo": boolean,"created_at": string,"descripcion": string,"gym_id": string,"id": string,"nombre": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "activo"?: boolean,"created_at"?: string,"descripcion"?: string,"gym_id": string,"id"?: string,"nombre": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "activo"?: boolean,"created_at"?: string,"descripcion"?: string,"gym_id"?: string,"id"?: string,"nombre"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "rutinas_gym_id_fkey"
+      columns: ["gym_id"]
+isOneToOne: false
+      referencedRelation: "gyms"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"socio_dispositivos": {
                   Row: {
                     "created_at": string,"gym_id": string,"socio_id": string,"token": string,"ultimo_uso": string
@@ -389,6 +461,44 @@ isOneToOne: false
       foreignKeyName: "socio_pins_socio_id_fkey"
       columns: ["socio_id"]
 isOneToOne: true
+      referencedRelation: "socios"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"socio_rutinas": {
+                  Row: {
+                    "asignada_en": string,"asignada_por": string | null,"gym_id": string,"id": string,"rutina_id": string,"socio_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "asignada_en"?: string,"asignada_por"?: string | null,"gym_id": string,"id"?: string,"rutina_id": string,"socio_id": string
+                  }
+                  Update: {
+                    "asignada_en"?: string,"asignada_por"?: string | null,"gym_id"?: string,"id"?: string,"rutina_id"?: string,"socio_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "socio_rutinas_asignada_por_fkey"
+      columns: ["asignada_por"]
+isOneToOne: false
+      referencedRelation: "perfiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "socio_rutinas_gym_id_fkey"
+      columns: ["gym_id"]
+isOneToOne: false
+      referencedRelation: "gyms"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "socio_rutinas_rutina_id_fkey"
+      columns: ["rutina_id"]
+isOneToOne: false
+      referencedRelation: "rutinas"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "socio_rutinas_socio_id_fkey"
+      columns: ["socio_id"]
+isOneToOne: false
       referencedRelation: "socios"
       referencedColumns: ["id"]
     }
@@ -470,6 +580,12 @@ isOneToOne: false
 "anular_movimiento":
 { Args: { "p_motivo": string,"p_movimiento": string }; Returns: undefined
                            },
+"archivar_rutina":
+{ Args: { "p_activo": boolean,"p_rutina": string }; Returns: undefined
+                           },
+"asignar_rutina":
+{ Args: { "p_rutina": string,"p_socio": string }; Returns: undefined
+                           },
 "asistencias_dia_hora":
 { Args: { "p_desde": string }; Returns: {
               "cantidad": number,"dow": number,"hora": number
@@ -487,11 +603,17 @@ isOneToOne: false
 "crear_gimnasio_admin":
 { Args: { "p_apellido"?: string,"p_direccion"?: string,"p_email": string,"p_email_gym"?: string,"p_localidad"?: string,"p_nombre": string,"p_nombre_gym": string,"p_telefono"?: string }; Returns: string
                            },
+"duplicar_rutina":
+{ Args: { "p_rutina": string }; Returns: string
+                           },
 "es_dueno":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "es_superadmin":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"guardar_rutina":
+{ Args: { "p_rutina": Json }; Returns: string
                            },
 "mi_gym":
 { Args: Record<PropertyKey, never>; Returns: string
@@ -529,6 +651,9 @@ isOneToOne: false
                            },
 "qr_vincular":
 { Args: { "p_dni": string,"p_token": string }; Returns: Json
+                           },
+"quitar_rutina":
+{ Args: { "p_rutina": string,"p_socio": string }; Returns: undefined
                            },
 "registrar_acceso":
 { Args: Record<PropertyKey, never>; Returns: undefined

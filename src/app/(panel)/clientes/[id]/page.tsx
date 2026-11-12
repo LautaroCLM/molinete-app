@@ -1,3 +1,4 @@
+import { RutinasSocio } from "@/features/socios/rutinas-socio"
 import { PinSocio } from "@/features/socios/pin-socio"
 import { SocioAvatar } from "@/components/shared/socio-avatar"
 import Link from "next/link"
@@ -12,7 +13,7 @@ import { BotonAccion } from "@/components/shared/boton-accion"
 import { CalendarioAsistencias } from "@/features/socios/calendario-asistencias"
 import { BajaSocioBoton } from "@/features/socios/baja-socio"
 import { AbrirCobro } from "@/features/cobros/abrir-cobro"
-import { getSocio, socioTienePin } from "@/lib/data"
+import { getRutinas, getRutinasDeSocio, getSocio, socioTienePin } from "@/lib/data"
 import { dni, fecha, fechaHora, hace, pesos } from "@/lib/format"
 import { ESTADOS_CUOTA, MEDIOS_PAGO } from "@/lib/labels"
 import { cn } from "@/lib/utils"
@@ -34,7 +35,7 @@ export default async function SocioPage({
   const data = await getSocio(id)
   if (!data) notFound()
   const { socio, pagos, asistencias, ultimos30 } = data
-  const tienePin = await socioTienePin(id)
+  const [tienePin, rutinasAsignadas, rutinasTodas] = await Promise.all([socioTienePin(id), getRutinasDeSocio(id), getRutinas()])
   const e = ESTILO_ESTADO[socio.estado.estado]
   const debe = socio.estado.estado === "vencido" || socio.estado.estado === "en_gracia"
 
@@ -98,6 +99,12 @@ export default async function SocioPage({
               {socio.observaciones && <Dato icono={<StickyNote />} etiqueta="Observaciones" valor={socio.observaciones} />}
             </dl>
           </Panel>
+
+          <RutinasSocio
+            socioId={socio.id}
+            asignadas={rutinasAsignadas}
+            disponibles={rutinasTodas.filter((r) => r.activo).map((r) => ({ id: r.id, nombre: r.nombre }))}
+          />
 
           <BajaSocioBoton id={socio.id} nombre={`${socio.nombre} ${socio.apellido}`} activo={socio.activo} />
         </div>

@@ -35,6 +35,7 @@ import type {
   Sesion,
   Socio,
   Usuario,
+  Rutina,
 } from "@/types/domain"
 
 export type { EstadoSocio }
@@ -194,6 +195,88 @@ export async function socioTienePin(id: string): Promise<boolean> {
   const sb = await db()
   const { data } = await sb.rpc("socio_tiene_pin", { p_socio: id })
   return data === true
+}
+
+// ---------- Rutinas ----------
+export interface RutinaResumen {
+  id: string
+  nombre: string
+  descripcion: string
+  activo: boolean
+  dias: number
+  ejercicios: number
+  socios: number
+}
+
+type FilaRutina = {
+  id: string
+  nombre: string
+  descripcion: string
+  activo: boolean
+  rutina_dias: { orden: number; nombre: string; rutina_ejercicios: { orden: number; nombre: string; series: string; repeticiones: string; descanso: string; nota: string }[] }[]
+}
+
+function mapRutina(r: FilaRutina): Rutina {
+  return {
+    id: r.id,
+    nombre: r.nombre,
+    descripcion: r.descripcion,
+    activo: r.activo,
+    dias: [...r.rutina_dias]
+      .sort((a, b) => a.orden - b.orden)
+      .map((d) => ({
+        nombre: d.nombre,
+        ejercicios: [...d.rutina_ejercicios]
+          .sort((a, b) => a.orden - b.orden)
+          .map((e) => ({ nombre: e.nombre, series: e.series, repeticiones: e.repeticiones, descanso: e.descanso, nota: e.nota })),
+      })),
+  }
+}
+
+const SELECT_RUTINA = "id, nombre, descripcion, activo, rutina_dias(orden, nombre, rutina_ejercicios(orden, nombre, series, repeticiones, descanso, nota))"
+
+export async function getRutinas(): Promise<RutinaResumen[]> {
+  const sb = await db()
+  const [filas, asignadas] = await Promise.all([
+    sb.from("rutinas").select(SELECT_RUTINA).order("created_at", { ascending: false }).then(chequear),
+    sb.from("socio_rutinas").select("rutina_id").then(chequear),
+  ])
+  const cuenta = new Map<string, number>()
+  for (const a of asignadas) cuenta.set(a.rutina_id, (cuenta.get(a.rutina_id) ?? 0) + 1)
+  return (filas as unknown as FilaRutina[]).map((f) => {
+    const r = mapRutina(f)
+    return {
+      id: r.id,
+      nombre: r.nombre,
+      descripcion: r.descripcion,
+      activo: r.activo,
+      dias: r.dias.length,
+      ejercicios: r.dias.reduce((s, d) => s + d.ejercicios.length, 0),
+      socios: cuenta.get(r.id) ?? 0,
+    }
+  })
+}
+
+export async function getRutina(id: string): Promise<Rutina | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null
+  const sb = await db()
+  const { data, error } = await sb.from("rutinas").select(SELECT_RUTINA).eq("id", id).maybeSingle()
+  if (error) throw error
+  return data ? mapRutina(data as unknown as FilaRutina) : null
+}
+
+/** Rutinas asignadas a un socio (las más recientes primero). */
+export async function getRutinasDeSocio(socioId: string): Promise<{ id: string; nombre: string; asignadaEn: string; activo: boolean }[]> {
+  const sb = await db()
+  const filas = await sb
+    .from("socio_rutinas")
+    .select("asignada_en, rutina:rutinas(id, nombre, activo)")
+    .eq("socio_id", socioId)
+    .order("asignada_en", { ascending: false })
+    .then(chequear)
+  return (filas as unknown as { asignada_en: string; rutina: { id: string; nombre: string; activo: boolean } | null }[])
+    .filter((f) => f.rutina)
+    .map((f) => ({ id: f.rutina!.id, nombre: f.rutina!.nombre, asignadaEn: f.asignada_en, activo: f.rutina!.activo }))
 }
 
 // ---------- Usuarios ----------
