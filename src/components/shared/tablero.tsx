@@ -46,7 +46,7 @@ export function Indicador({
       </span>
       <span
         className={cn(
-          "num-display truncate text-[1.9rem]",
+          "num-display truncate text-[1.5rem] sm:text-[1.9rem]",
           destacado && "text-[2.75rem] sm:mt-auto",
           tono === "ok" && "text-ok",
           tono === "warn" && "text-warn",

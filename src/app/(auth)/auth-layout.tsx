@@ -1,3 +1,4 @@
+import { BotonInstalarApp } from "@/components/layout/boton-instalar"
 import { Logo, LogoDisco } from "@/components/layout/logo"
 
 /** Marco de las pantallas de ingreso: panel de marca a la izquierda y formulario a la derecha. */
@@ -21,6 +22,7 @@ export function AuthLayout({ titulo, bajada, children }: { titulo: string; bajad
           <h1 className="font-display text-4xl font-semibold tracking-tight">{titulo}</h1>
           <p className="mt-2 text-muted-foreground">{bajada}</p>
           {children}
+          <BotonInstalarApp className="mt-6 w-full" />
         </div>
       </main>
     </div>

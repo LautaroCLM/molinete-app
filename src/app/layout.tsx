@@ -3,6 +3,7 @@ import { Barlow, Barlow_Condensed } from "next/font/google"
 import { ThemeProvider } from "@/components/layout/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
+import { RegistroPWA } from "@/components/layout/registro-pwa"
 import "./globals.css"
 
 const barlow = Barlow({
@@ -25,8 +26,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f4f6" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f1218" },
+    { media: "(prefers-color-scheme: light)", color: "#f4f6f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b100e" },
   ],
 }
 
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <TooltipProvider delayDuration={300}>
             {children}
+            <RegistroPWA />
             <Toaster position="bottom-right" richColors closeButton />
           </TooltipProvider>
         </ThemeProvider>

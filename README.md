@@ -154,3 +154,12 @@ vercel deploy --prod
 El instalador para clientes nuevos queda en `public\desktop\Molinete-Setup.exe` (y en https://molinete-pi.vercel.app/desktop/Molinete-Setup.exe). Windows muestra "Windows protegió tu PC" porque no está firmado con certificado: **Más información > Ejecutar de todas formas**.
 
 La clave que firma las actualizaciones está en `%USERPROFILE%\.molinete\updater.key`. **Guardá una copia fuera de la PC**: si se pierde, las apps ya instaladas no podrán actualizarse y habría que reinstalarlas. No se sube al repositorio.
+
+
+## App para el celular (Android)
+
+La web es una PWA instalable: no hay APK ni tienda. En Chrome para Android, entrá a https://molinete-pi.vercel.app, abrí el menú de Chrome y tocá **Instalar app** (también aparece "Instalar la app" en el menú del usuario y en la pantalla de ingreso). Queda con su ícono, en pantalla completa, y se actualiza sola.
+
+- `public/sw.js`: service worker. Las páginas siempre salen de la red; sin conexión muestra `public/offline.html`. Solo guarda archivos estáticos con hash.
+- `src/app/manifest.ts`: nombre, colores e íconos (incluye `public/icon-maskable-512.png`).
+- En iPhone se agrega desde Safari: Compartir > Agregar a pantalla de inicio.

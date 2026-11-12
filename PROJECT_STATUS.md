@@ -14,6 +14,7 @@ Actualizar solo ante cambios significativos (no registrar comandos). Última act
 - **Exportar a Excel** (solo dueño): socios, caja, inventario y asistencias.
 - **Diseño**: negro con verde, degradados, animaciones sutiles (respetan "reducir movimiento"), modo oscuro por defecto.
 - **Aviso de nueva versión**: si se publica la web con la pantalla abierta, aparece "Hay una nueva actualización" → Actualizar (`/api/version`).
+- **App para Android** (PWA instalable): service worker, pantalla sin conexión, íconos y botón "Instalar la app". Ver README.
 - **App de escritorio para Windows** (`desktop/`, Tauri): ventana que carga la web publicada, con aviso de actualización del instalador. Ver README.
 
 ## Publicación

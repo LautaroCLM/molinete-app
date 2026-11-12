@@ -1,5 +1,6 @@
 "use client"
 
+import { ItemInstalarApp } from "@/components/layout/boton-instalar"
 import { GymAvatar } from "@/components/layout/gym-avatar"
 import { useState } from "react"
 import { useTheme } from "next-themes"
@@ -156,6 +157,7 @@ function MenuUsuario() {
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <ItemInstalarApp />
         <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Apariencia</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={theme ?? "system"} onValueChange={setTheme}>
           <DropdownMenuRadioItem value="light">
