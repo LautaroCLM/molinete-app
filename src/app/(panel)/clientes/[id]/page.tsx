@@ -1,3 +1,4 @@
+import { PinSocio } from "@/features/socios/pin-socio"
 import { SocioAvatar } from "@/components/shared/socio-avatar"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -11,7 +12,7 @@ import { BotonAccion } from "@/components/shared/boton-accion"
 import { CalendarioAsistencias } from "@/features/socios/calendario-asistencias"
 import { BajaSocioBoton } from "@/features/socios/baja-socio"
 import { AbrirCobro } from "@/features/cobros/abrir-cobro"
-import { getSocio } from "@/lib/data"
+import { getSocio, socioTienePin } from "@/lib/data"
 import { dni, fecha, fechaHora, hace, pesos } from "@/lib/format"
 import { ESTADOS_CUOTA, MEDIOS_PAGO } from "@/lib/labels"
 import { cn } from "@/lib/utils"
@@ -33,6 +34,7 @@ export default async function SocioPage({
   const data = await getSocio(id)
   if (!data) notFound()
   const { socio, pagos, asistencias, ultimos30 } = data
+  const tienePin = await socioTienePin(id)
   const e = ESTILO_ESTADO[socio.estado.estado]
   const debe = socio.estado.estado === "vencido" || socio.estado.estado === "en_gracia"
 
@@ -92,6 +94,7 @@ export default async function SocioPage({
               <Dato icono={<Phone />} etiqueta="Teléfono" valor={socio.telefono || "Sin cargar"} />
               <Dato icono={<Mail />} etiqueta="Email" valor={socio.email || "Sin cargar"} />
               <Dato icono={<CalendarDays />} etiqueta="Alta" valor={fecha(socio.fechaAlta)} />
+              <PinSocio socioId={socio.id} nombre={socio.nombre} tienePin={tienePin} />
               {socio.observaciones && <Dato icono={<StickyNote />} etiqueta="Observaciones" valor={socio.observaciones} />}
             </dl>
           </Panel>

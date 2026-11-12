@@ -189,6 +189,13 @@ export async function getSocio(id: string) {
   return { socio, pagos, asistencias, ultimos30 }
 }
 
+/** ¿El socio ya eligió su PIN? (solo personal del gimnasio) */
+export async function socioTienePin(id: string): Promise<boolean> {
+  const sb = await db()
+  const { data } = await sb.rpc("socio_tiene_pin", { p_socio: id })
+  return data === true
+}
+
 // ---------- Usuarios ----------
 export const getUsuarios = cache(async (): Promise<Usuario[]> => {
   const sb = await db()

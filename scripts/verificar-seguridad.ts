@@ -155,6 +155,50 @@ async function main() {
   const conViejo = (await anon.rpc("qr_gimnasio", { p_token: tokenQR })).data ?? []
   chequeo("el dueño genera un QR nuevo y el viejo deja de funcionar", !nuevoQR.error && conViejo.length === 0, nuevoQR.error?.message)
 
+  console.log("\nPIN del socio (perfil desde el QR)")
+  const tokenNuevo = nuevoQR.data as string
+  const vinc2 = (await anon.rpc("qr_vincular", { p_token: tokenNuevo, p_dni: "40112908" })).data as { dispositivo: string }
+  const arg = { p_token: tokenNuevo, p_dispositivo: vinc2.dispositivo }
+  type Resp = Record<string, unknown> & { ok?: boolean; error?: string }
+  const llamar = async (fn: string, extra: Record<string, unknown> = {}) => (await anon.rpc(fn as never, { ...arg, ...extra } as never)).data as unknown as Resp
+  chequeo("al principio no tiene PIN", (await llamar("qr_perfil_estado")).tiene_pin === false)
+  chequeo("sin PIN elegido no se puede entrar al perfil", (await llamar("qr_perfil", { p_pin: "1234" })).error === "SIN_PIN")
+  chequeo("rechaza un PIN que no son 4 números", (await llamar("qr_pin_crear", { p_pin: "12a4" })).error === "PIN_INVALIDO")
+  const crea = await llamar("qr_pin_crear", { p_pin: "4821" })
+  chequeo("el socio elige su PIN y ve su perfil", crea.ok === true && typeof crea.nombre === "string")
+  const perfilJson = JSON.stringify(crea)
+  chequeo("el perfil no trae montos ni precios", !/monto|precio/i.test(perfilJson))
+  const datosJuan = (await admin.from("socios").select("dni, telefono, email").eq("id", juan.id).single()).data!
+  chequeo(
+    "DNI, teléfono y email salen enmascarados",
+    typeof crea.dni === "string" && !crea.dni.includes(datosJuan.dni) && String(crea.dni).endsWith(datosJuan.dni.slice(-3)) &&
+      (!crea.telefono || String(crea.telefono).includes("•")) && (!crea.email || String(crea.email).includes("•")),
+  )
+  chequeo("no se puede pisar un PIN ya elegido", (await llamar("qr_pin_crear", { p_pin: "9999" })).error === "YA_TIENE_PIN")
+  const hash = (await admin.from("socio_pins").select("pin_hash").eq("socio_id", juan.id).single()).data!.pin_hash
+  chequeo("el PIN se guarda cifrado", hash !== "4821" && hash.startsWith("$2"))
+  const pinsAnon = await anon.from("socio_pins").select("pin_hash")
+  chequeo("nadie puede leer la tabla de PIN", (pinsAnon.data ?? []).length === 0)
+  chequeo("con el PIN correcto entra al perfil", (await llamar("qr_perfil", { p_pin: "4821" })).ok === true)
+  const mal1 = await llamar("qr_perfil", { p_pin: "0000" })
+  chequeo("un PIN incorrecto avisa cuántos intentos quedan", mal1.error === "PIN_INCORRECTO" && mal1.restantes === 4)
+  for (let i = 0; i < 3; i++) await llamar("qr_perfil", { p_pin: "0000" })
+  const quinto = await llamar("qr_perfil", { p_pin: "0000" })
+  chequeo("al quinto intento fallido se bloquea", quinto.error === "BLOQUEADO")
+  chequeo("bloqueado no entra ni con el PIN correcto", (await llamar("qr_perfil", { p_pin: "4821" })).error === "BLOQUEADO")
+  if (gymOtro) {
+    const cruce = (await anon.rpc("qr_perfil" as never, { p_token: gymOtro.qr_token, p_dispositivo: vinc2.dispositivo, p_pin: "4821" } as never)).data as unknown as Resp
+    chequeo("un celular de otro gimnasio no abre el perfil", cruce?.error === "DISPOSITIVO_DESCONOCIDO")
+  }
+  chequeo("sin sesión no se puede restablecer un PIN", !!(await anon.rpc("socio_restablecer_pin", { p_socio: juan.id })).error)
+  chequeo("el dueño de otro gimnasio no puede restablecerlo", !!(await otro.rpc("socio_restablecer_pin", { p_socio: juan.id })).error)
+  chequeo("recepción ve si el socio tiene PIN", (await sofia.rpc("socio_tiene_pin", { p_socio: juan.id })).data === true)
+  const reinicio = await sofia.rpc("socio_restablecer_pin", { p_socio: juan.id })
+  chequeo("recepción restablece el PIN", !reinicio.error, reinicio.error?.message)
+  chequeo("al restablecer, el celular del socio queda desvinculado", (await llamar("qr_perfil_estado")).error === "DISPOSITIVO_DESCONOCIDO")
+  const quedan = await admin.from("socio_pins").select("socio_id").eq("socio_id", juan.id)
+  chequeo("el PIN viejo se borró", (quedan.data ?? []).length === 0)
+
   console.log("\nAnular cobros y ventas")
   const planMensual = (await admin.from("planes").select("id, precio").eq("gym_id", gymDemo.id).eq("tipo", "mensual").eq("activo", true).limit(1).single()).data!
   const sociosTodos = (await admin.from("socios").select("id").eq("gym_id", gymDemo.id).eq("activo", true).not("vencimiento", "is", null).limit(1).single()).data!

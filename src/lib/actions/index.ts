@@ -340,6 +340,20 @@ export async function quitarLogo(): Promise<ResultadoAccion> {
   return { ok: true }
 }
 
+/** Dueño y recepción: borra el PIN del perfil del socio (y cierra su sesión en los celulares). */
+export async function restablecerPin(socioId: string): Promise<ResultadoAccion> {
+  try {
+    await getSesion()
+    const sb = await supabaseServer()
+    const { error } = await sb.rpc("socio_restablecer_pin", { p_socio: socioId })
+    if (error) return { ok: false, error: traducir(error) }
+  } catch (e) {
+    return { ok: false, error: traducir(e as Error) }
+  }
+  refrescar()
+  return { ok: true }
+}
+
 export async function guardarReglas(datos: unknown): Promise<ResultadoAccion> {
   const r = reglasSchema.safeParse(datos)
   if (!r.success) return invalido(r)!

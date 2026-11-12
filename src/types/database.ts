@@ -367,6 +367,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"socio_pins": {
+                  Row: {
+                    "bloqueado_hasta": string | null,"bloqueos": number,"gym_id": string,"intentos": number,"pin_hash": string,"socio_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "bloqueado_hasta"?: string | null,"bloqueos"?: number,"gym_id": string,"intentos"?: number,"pin_hash": string,"socio_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "bloqueado_hasta"?: string | null,"bloqueos"?: number,"gym_id"?: string,"intentos"?: number,"pin_hash"?: string,"socio_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "socio_pins_gym_id_fkey"
+      columns: ["gym_id"]
+isOneToOne: false
+      referencedRelation: "gyms"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "socio_pins_socio_id_fkey"
+      columns: ["socio_id"]
+isOneToOne: true
+      referencedRelation: "socios"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"socios": {
                   Row: {
                     "activo": boolean,"apellido": string,"clases_restantes": number | null,"created_at": string,"dni": string,"email": string,"fecha_alta": string,"gym_id": string,"id": string,"nombre": string,"observaciones": string,"plan_id": string | null,"telefono": string,"ultima_asistencia": string | null,"vencimiento": string | null
@@ -402,8 +428,16 @@ isOneToOne: false
             "_caja_abierta":
 { Args: { "p_usuario": string }; Returns: string
                            },
+"_qr_perfil":
+{ Args: { "p_socio": string }; Returns: Json
+                           },
 "_qr_registrar":
 { Args: { "p_dispositivo": string,"p_gym": Omit<Database["public"]['Tables']["gyms"]['Row'], Database["public"]['Tables']["gyms"]['ComputedFields']>,"p_socio": string }; Returns: Json
+                           },
+"_qr_socio":
+{ Args: { "p_dispositivo": string,"p_token": string }; Returns: {
+              "error": string,"gym_id": string,"socio_id": string
+            }[]
                            },
 "_yo":
 { Args: Record<PropertyKey, never>; Returns: {
@@ -481,6 +515,15 @@ isOneToOne: false
 "qr_ingresar":
 { Args: { "p_dispositivo": string,"p_token": string }; Returns: Json
                            },
+"qr_perfil":
+{ Args: { "p_dispositivo": string,"p_pin": string,"p_token": string }; Returns: Json
+                           },
+"qr_perfil_estado":
+{ Args: { "p_dispositivo": string,"p_token": string }; Returns: Json
+                           },
+"qr_pin_crear":
+{ Args: { "p_dispositivo": string,"p_pin": string,"p_token": string }; Returns: Json
+                           },
 "qr_regenerar":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -500,6 +543,12 @@ isOneToOne: false
 { Args: { "p_desde": string,"p_hasta"?: string }; Returns: {
               "categoria": string,"medio": string,"tipo": string,"total": number
             }[]
+                           },
+"socio_restablecer_pin":
+{ Args: { "p_socio": string }; Returns: undefined
+                           },
+"socio_tiene_pin":
+{ Args: { "p_socio": string }; Returns: boolean
                            },
 "vender":
 { Args: { "p_items": Json,"p_medio": string }; Returns: string

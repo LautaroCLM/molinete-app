@@ -1,15 +1,33 @@
 "use client"
 
 import { useEffect, useState, useTransition } from "react"
-import { Check, Clock, Info } from "lucide-react"
+import { Check, Clock, Info, UserRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Disco, ESTILO_ESTADO } from "@/components/shared/estado-badge"
 import { LogoMarca } from "@/components/layout/logo"
-import { desvincularDispositivo, ingresarConDispositivo, ingresarConDni, type ResultadoQR } from "@/lib/actions/qr"
+import { PerfilVista, PinPantalla } from "./perfil-socio"
+import {
+  abrirPerfil,
+  crearPin,
+  desvincularDispositivo,
+  estadoPerfil,
+  ingresarConDispositivo,
+  ingresarConDni,
+  type PerfilSocio,
+  type ResultadoPerfil,
+  type ResultadoQR,
+} from "@/lib/actions/qr"
 import { cn } from "@/lib/utils"
 
-type Vista = { tipo: "cargando" } | { tipo: "dni"; error?: string } | { tipo: "listo"; r: Extract<ResultadoQR, { ok: true }> } | { tipo: "error"; mensaje: string }
+type Listo = Extract<ResultadoQR, { ok: true }>
+type Vista =
+  | { tipo: "cargando" }
+  | { tipo: "dni"; error?: string }
+  | { tipo: "listo"; r: Listo }
+  | { tipo: "pin"; r: Listo; modo: "crear" | "entrar"; error?: string; bloqueado: boolean }
+  | { tipo: "perfil"; r: Listo; perfil: PerfilSocio }
+  | { tipo: "error"; mensaje: string }
 
 const clave = (gymId: string) => `molinete:ingreso:${gymId}`
 
@@ -61,6 +79,36 @@ export function IngresoQR({ token, gymId, gymNombre }: { token: string; gymId: s
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, gymId])
+
+  /** Si el celular ya no está vinculado (p. ej. el gimnasio restableció el PIN), vuelve a pedir el DNI. */
+  function sesionPerdida() {
+    guardar(gymId, null)
+    setVista({ tipo: "dni" })
+  }
+
+  function verPerfil(r: Listo) {
+    start(async () => {
+      const e = await estadoPerfil(token, r.dispositivo)
+      if (!e.ok) return e.codigo === "DISPOSITIVO_DESCONOCIDO" ? sesionPerdida() : setVista({ tipo: "error", mensaje: e.mensaje })
+      setVista({ tipo: "pin", r, modo: e.tienePin ? "entrar" : "crear", bloqueado: !!e.bloqueadoHasta, error: e.bloqueadoHasta ? "Tu perfil está bloqueado por varios intentos. Probá más tarde o pedí en recepción que restablezcan tu PIN." : undefined })
+    })
+  }
+
+  function enviarPin(actual: Extract<Vista, { tipo: "pin" }>, pin: string) {
+    start(async () => {
+      const f = actual.modo === "crear" ? crearPin : abrirPerfil
+      const res: ResultadoPerfil = await f(token, actual.r.dispositivo, pin)
+      if (res.ok) return setVista({ tipo: "perfil", r: actual.r, perfil: res.perfil })
+      if (res.codigo === "DISPOSITIVO_DESCONOCIDO") return sesionPerdida()
+      setVista({
+        tipo: "pin",
+        r: actual.r,
+        modo: res.codigo === "YA_TIENE_PIN" ? "entrar" : res.codigo === "SIN_PIN" ? "crear" : actual.modo,
+        error: res.mensaje,
+        bloqueado: res.codigo === "BLOQUEADO",
+      })
+    })
+  }
 
   function noSoyYo() {
     const disp = leer(gymId)
@@ -122,7 +170,21 @@ export function IngresoQR({ token, gymId, gymNombre }: { token: string; gymId: s
           </form>
         )}
 
-        {vista.tipo === "listo" && <Resultado r={vista.r} noSoyYo={noSoyYo} />}
+        {vista.tipo === "listo" && <Resultado r={vista.r} noSoyYo={noSoyYo} verPerfil={() => verPerfil(vista.r)} pendiente={pendiente} />}
+
+        {vista.tipo === "pin" && (
+          <PinPantalla
+            key={`${vista.modo}`}
+            modo={vista.modo}
+            error={vista.error}
+            bloqueado={vista.bloqueado}
+            pendiente={pendiente}
+            onEnviar={(pin) => enviarPin(vista, pin)}
+            onVolver={() => setVista({ tipo: "listo", r: vista.r })}
+          />
+        )}
+
+        {vista.tipo === "perfil" && <PerfilVista perfil={vista.perfil} onVolver={() => setVista({ tipo: "listo", r: vista.r })} />}
 
         {vista.tipo === "error" && (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
@@ -135,7 +197,7 @@ export function IngresoQR({ token, gymId, gymNombre }: { token: string; gymId: s
   )
 }
 
-function Resultado({ r, noSoyYo }: { r: Extract<ResultadoQR, { ok: true }>; noSoyYo: () => void }) {
+function Resultado({ r, noSoyYo, verPerfil, pendiente }: { r: Extract<ResultadoQR, { ok: true }>; noSoyYo: () => void; verPerfil: () => void; pendiente: boolean }) {
   const e = ESTILO_ESTADO[r.estado]
   return (
     <div className="flex flex-1 flex-col">
@@ -158,7 +220,11 @@ function Resultado({ r, noSoyYo }: { r: Extract<ResultadoQR, { ok: true }>; noSo
         <p className="mt-4 rounded-xl border-2 border-dashed px-4 py-3.5 text-center text-lg font-semibold">{r.recordatorio}</p>
       )}
 
-      <p className="mt-6 text-center text-muted-foreground">¡Buen entrenamiento!</p>
+      <Button size="lg" className="mt-6 h-14 text-lg" onClick={verPerfil} disabled={pendiente}>
+        <UserRound className="size-5" /> {pendiente ? "Abriendo…" : "Ver mi perfil"}
+      </Button>
+
+      <p className="mt-5 text-center text-muted-foreground">¡Buen entrenamiento!</p>
 
       <button onClick={noSoyYo} className="mt-auto pt-10 text-center text-sm text-muted-foreground underline underline-offset-4">
         No soy {r.nombre}
