@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { NAV } from "./nav"
+import { GymAvatar } from "@/components/layout/gym-avatar"
 import { Logo } from "./logo"
 import { usePanel } from "./panel-context"
 import { ROLES } from "@/lib/labels"
@@ -57,11 +58,14 @@ export function Sidebar() {
 export function SidebarUsuario() {
   const { usuario, gym } = usePanel()
   return (
-    <div className="rounded-lg border border-sidebar-border px-3 py-2.5 text-xs">
-      <p className="truncate font-semibold text-white">{gym.nombre}</p>
-      <p className="truncate text-sidebar-foreground/80">
-        {usuario.nombre} {usuario.apellido} · {ROLES[usuario.rol].label}
-      </p>
+    <div className="flex items-center gap-2.5 rounded-lg border border-sidebar-border px-2.5 py-2.5 text-xs">
+      <GymAvatar nombre={gym.nombre} logoUrl={gym.logoUrl} className="size-10" />
+      <div className="min-w-0">
+        <p className="truncate font-semibold text-white">{gym.nombre}</p>
+        <p className="truncate text-sidebar-foreground/80">
+          {usuario.nombre} {usuario.apellido} · {ROLES[usuario.rol].label}
+        </p>
+      </div>
     </div>
   )
 }

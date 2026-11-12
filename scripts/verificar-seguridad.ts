@@ -155,6 +155,21 @@ async function main() {
   const conViejo = (await anon.rpc("qr_gimnasio", { p_token: tokenQR })).data ?? []
   chequeo("el dueño genera un QR nuevo y el viejo deja de funcionar", !nuevoQR.error && conViejo.length === 0, nuevoQR.error?.message)
 
+  console.log("\nLogo del gimnasio (Storage)")
+  const png = new Blob([Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10])], { type: "image/png" })
+  const ruta = `${gymDemo.id}/logo.webp`
+  const sube = await dueno.storage.from("logos").upload(ruta, png, { upsert: true, contentType: "image/png" })
+  chequeo("el dueño sube el logo de su gimnasio", !sube.error, sube.error?.message)
+  const subeRecep = await sofia.storage.from("logos").upload(ruta, png, { upsert: true, contentType: "image/png" })
+  chequeo("recepción no puede cambiar el logo", !!subeRecep.error)
+  const subeOtro = await otro.storage.from("logos").upload(ruta, png, { upsert: true, contentType: "image/png" })
+  chequeo("el dueño de otro gimnasio no puede tocar este logo", !!subeOtro.error)
+  const subeAnon = await createClient<Database>(URL, PUBLICA, { auth: { persistSession: false } }).storage.from("logos").upload(ruta, png, { upsert: true, contentType: "image/png" })
+  chequeo("sin sesión no se puede subir", !!subeAnon.error)
+  const texto = await dueno.storage.from("logos").upload(`${gymDemo.id}/otro.txt`, new Blob(["hola"], { type: "text/plain" }), { contentType: "text/plain" })
+  chequeo("rechaza archivos que no son imagen", !!texto.error)
+  await admin.storage.from("logos").remove([ruta])
+
   // Limpieza del gimnasio de prueba
   if (nuevo.data) await admin.from("gyms").delete().eq("id", nuevo.data)
   const u = (await otro.auth.getUser()).data.user

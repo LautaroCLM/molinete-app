@@ -1,5 +1,6 @@
 "use client"
 
+import { GymAvatar } from "@/components/layout/gym-avatar"
 import { useState } from "react"
 import { useTheme } from "next-themes"
 import { Menu, Search, Moon, Sun, Monitor, LogOut, UserRound, DoorOpen, ShoppingBag, Banknote } from "lucide-react"
@@ -45,9 +46,12 @@ export function Header() {
           <Menu />
         </Button>
 
-        <div className="hidden min-w-0 flex-col leading-tight md:flex">
-          <span className="truncate text-[0.95rem] font-semibold">{gym.nombre}</span>
-          <span className="truncate text-xs text-muted-foreground">{gym.direccion}</span>
+        <div className="hidden min-w-0 items-center gap-2.5 md:flex">
+          <GymAvatar nombre={gym.nombre} logoUrl={gym.logoUrl} className="size-7 rounded-md text-[0.65rem]" />
+          <div className="flex min-w-0 flex-col leading-tight">
+            <span className="truncate text-[0.95rem] font-semibold">{gym.nombre}</span>
+            <span className="truncate text-xs text-muted-foreground">{gym.direccion}</span>
+          </div>
         </div>
 
         <button

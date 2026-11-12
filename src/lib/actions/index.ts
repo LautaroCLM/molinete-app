@@ -300,6 +300,45 @@ export async function guardarGimnasio(datos: unknown): Promise<ResultadoAccion> 
   return { ok: true }
 }
 
+const LOGO_TIPOS = ["image/png", "image/jpeg", "image/webp"]
+const LOGO_MAX = 1024 * 1024
+
+/** Sube (o reemplaza) el logo del gimnasio. Solo el dueño; las políticas de Storage lo vuelven a exigir. */
+export async function subirLogo(formData: FormData): Promise<ResultadoAccion> {
+  const archivo = formData.get("logo")
+  if (!(archivo instanceof File) || archivo.size === 0) return { ok: false, error: "Elegí una imagen." }
+  if (!LOGO_TIPOS.includes(archivo.type)) return { ok: false, error: "La imagen tiene que ser PNG, JPG o WebP." }
+  if (archivo.size > LOGO_MAX) return { ok: false, error: "La imagen pesa más de 1 MB." }
+  try {
+    const { gym } = await exigir("configuracion.ver")
+    const sb = await supabaseServer()
+    const ruta = `${gym.id}/logo.webp`
+    const { error } = await sb.storage.from("logos").upload(ruta, archivo, { upsert: true, contentType: archivo.type, cacheControl: "31536000" })
+    if (error) return { ok: false, error: traducir(error) }
+    const { data } = sb.storage.from("logos").getPublicUrl(ruta)
+    const { error: e2 } = await sb.from("gyms").update({ logo_url: `${data.publicUrl}?v=${Date.now()}` }).eq("id", gym.id)
+    if (e2) return { ok: false, error: traducir(e2) }
+  } catch (e) {
+    return { ok: false, error: traducir(e as Error) }
+  }
+  refrescar()
+  return { ok: true }
+}
+
+export async function quitarLogo(): Promise<ResultadoAccion> {
+  try {
+    const { gym } = await exigir("configuracion.ver")
+    const sb = await supabaseServer()
+    await sb.storage.from("logos").remove([`${gym.id}/logo.webp`])
+    const { error } = await sb.from("gyms").update({ logo_url: null }).eq("id", gym.id)
+    if (error) return { ok: false, error: traducir(error) }
+  } catch (e) {
+    return { ok: false, error: traducir(e as Error) }
+  }
+  refrescar()
+  return { ok: true }
+}
+
 export async function guardarReglas(datos: unknown): Promise<ResultadoAccion> {
   const r = reglasSchema.safeParse(datos)
   if (!r.success) return invalido(r)!
