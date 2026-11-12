@@ -16,6 +16,14 @@ npm run seed
 npm run dev
 ```
 
+**Para mostrar la demo (rápido):** `npm run dev` compila cada pantalla al abrirla y se siente lento (de 1 a 7 segundos por módulo). Para presentar usá el modo producción, que es el mismo que usa Vercel: primero detené `npm run dev`, después
+
+```bash
+npm run demo
+```
+
+(compila una vez, tarda ~1 minuto, y queda en http://localhost:3000 con cambios de módulo de ~0,1 a 0,5 s). Si cambiás código, volvé a correr `npm run demo`.
+
 - `npm run db:start` levanta Supabase en tu PC. Usa los puertos **554xx** para no chocar con otros proyectos de Supabase.
 - `npm run seed` carga el gimnasio de demostración "Fuerza Sur".
 - Después abrí <http://localhost:3000>.
