@@ -1,0 +1,15 @@
+# Lo que NO se sube a Vercel al publicar con la CLI.
+# (Con este archivo la CLI no usa .gitignore, así que public/desktop/ —instaladores— sí se sube.)
+.env*
+!.env.example
+.next
+node_modules
+.claude
+.git
+supabase/.temp
+supabase/.branches
+img
+desktop/node_modules
+desktop/src-tauri/target
+desktop/src-tauri/gen
+*.tsbuildinfo

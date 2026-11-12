@@ -129,3 +129,28 @@ src/
 - **Subir el logo del gimnasio** (requiere Storage).
 - **Dominio propio:** hoy es `molinete-pi.vercel.app`. Al cambiarlo hay que actualizar `site_url` en `config.toml` y volver a aplicarlo.
 - **El freno de intentos del QR es por gimnasio**, no por IP. Alguien podría trabar por 10 minutos la primera vinculación de otros socios (los ya vinculados no se ven afectados).
+
+
+## App de escritorio (Windows)
+
+Carpeta `desktop/` (Tauri v2): una ventana de Windows que carga la web publicada (https://molinete-pi.vercel.app). No cambia la web.
+
+- **Cambios en la web:** llegan solos a todas las apps instaladas. Si la pantalla está abierta, aparece "Hay una nueva actualización" con el botón **Actualizar**.
+- **Cambios en la ventana** (poco frecuentes): se publica un instalador nuevo. Al abrir, la app lo detecta y ofrece **Instalar ahora**.
+- **Sin conexión:** muestra una pantalla de "Reintentar".
+- **Descargas** (Excel) van a la carpeta Descargas y se muestran en el Explorador. Los enlaces externos se abren en el navegador.
+- Requiere Rust (toolchain MSVC), Visual Studio Build Tools y Node.
+
+Publicar una versión del instalador (solo cuando cambia `desktop/`):
+
+```powershell
+# 1) subir "version" en desktop\src-tauri\tauri.conf.json y desktop\src-tauri\Cargo.toml
+# 2) compilar y preparar los archivos
+.\scripts\publicar-escritorio.ps1 -Notas "Qué cambió"
+# 3) publicar la web para que las apps instaladas lo reciban
+vercel deploy --prod
+```
+
+El instalador para clientes nuevos queda en `public\desktop\Molinete-Setup.exe` (y en https://molinete-pi.vercel.app/desktop/Molinete-Setup.exe). Windows muestra "Windows protegió tu PC" porque no está firmado con certificado: **Más información > Ejecutar de todas formas**.
+
+La clave que firma las actualizaciones está en `%USERPROFILE%\.molinete\updater.key`. **Guardá una copia fuera de la PC**: si se pierde, las apps ya instaladas no podrán actualizarse y habría que reinstalarlas. No se sube al repositorio.

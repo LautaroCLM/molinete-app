@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 
 /** Rutas que no requieren sesión. */
-const PUBLICAS = ["/login", "/recuperar", "/auth", "/q"]
+const PUBLICAS = ["/login", "/recuperar", "/auth", "/q", "/desktop"]
 
 /**
  * Refresca la sesión de Supabase en cada request y manda al login a quien no la tenga.

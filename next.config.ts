@@ -1,6 +1,8 @@
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
+  // Identifica cada publicación: el aviso "hay una nueva actualización" compara este valor.
+  env: { NEXT_PUBLIC_BUILD_ID: process.env.NODE_ENV === "production" ? (process.env.VERCEL_DEPLOYMENT_ID ?? process.env.VERCEL_GIT_COMMIT_SHA ?? String(Date.now())) : "dev" },
   // Todo el panel depende del usuario y del gimnasio (datos dinámicos por sesión),
   // por eso no usamos Cache Components ni prefetch parcial.
   devIndicators: false,

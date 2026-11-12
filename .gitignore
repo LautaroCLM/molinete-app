@@ -49,3 +49,10 @@ supabase/.branches
 
 .vercel
 .env*
+
+# App de escritorio (Tauri)
+desktop/node_modules/
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
+# Instaladores generados (se publican con scripts/publicar-escritorio.ps1)
+public/desktop/

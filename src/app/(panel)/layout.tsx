@@ -1,3 +1,4 @@
+import { AvisoActualizacion } from "@/components/layout/aviso-actualizacion"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import { PanelProvider } from "@/components/layout/panel-context"
@@ -33,6 +34,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
             <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
           </div>
         </div>
+        <AvisoActualizacion />
         <LlegadaDialog />
         <CobroDialog />
         <VentaDialog />

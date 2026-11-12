@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Molinete</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; min-height: 100vh; display: grid; place-items: center;
+        background: #0b100e radial-gradient(60rem 28rem at 85% -8%, rgba(59, 232, 164, 0.09), transparent 70%);
+        color: #e6ebe8; font-family: "Segoe UI", system-ui, sans-serif; text-align: center;
+      }
+      main { padding: 24px; max-width: 26rem; }
+      img { width: 88px; height: 88px; }
+      h1 { margin: 16px 0 4px; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
+      p { margin: 0; color: #8d9a94; line-height: 1.5; }
+      .spinner {
+        width: 22px; height: 22px; margin: 22px auto 0; border-radius: 50%;
+        border: 3px solid #24302a; border-top-color: #2fd68f; animation: giro 0.8s linear infinite;
+      }
+      button {
+        margin-top: 20px; padding: 10px 20px; border: 0; border-radius: 10px; cursor: pointer;
+        font: inherit; font-weight: 600; color: #03150c;
+        background-image: linear-gradient(135deg, #3be8a4, #11a66b);
+      }
+      button:active { transform: scale(0.97); }
+      [hidden] { display: none !important; }
+      @keyframes giro { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="logo.png" alt="" />
+      <h1>Molinete</h1>
+      <div id="cargando">
+        <div class="spinner" role="status" aria-label="Cargando"></div>
+      </div>
+      <div id="sin-conexion" hidden>
+        <p>No pudimos conectarnos. Revisá la conexión a internet.</p>
+        <button id="reintentar" type="button">Reintentar</button>
+      </div>
+    </main>
+    <script>
+      // Mantener igual que HOST_APP en src-tauri/src/lib.rs
+      var APP = "https://molinete-pi.vercel.app";
+      var cargando = document.getElementById("cargando");
+      var sinConexion = document.getElementById("sin-conexion");
+      var timer = null;
+
+      function intentar() {
+        clearTimeout(timer);
+        sinConexion.hidden = true;
+        cargando.hidden = false;
+        var corte = new AbortController();
+        var limite = setTimeout(function () { corte.abort(); }, 8000);
+        fetch(APP + "/login", { mode: "no-cors", cache: "no-store", signal: corte.signal })
+          .then(function () { clearTimeout(limite); window.location.replace(APP); })
+          .catch(function () {
+            clearTimeout(limite);
+            cargando.hidden = true;
+            sinConexion.hidden = false;
+            timer = setTimeout(intentar, 6000);
+          });
+      }
+
+      document.getElementById("reintentar").addEventListener("click", intentar);
+      intentar();
+    </script>
+  </body>
+</html>
