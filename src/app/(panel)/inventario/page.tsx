@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 
 export const metadata = { title: "Inventario" }
 
-const TIPO_LABEL = { entrada: "Entrada", venta: "Venta", ajuste: "Ajuste" } as const
+const TIPO_LABEL = { entrada: "Entrada", venta: "Venta", ajuste: "Ajuste", anulacion: "Anulación" } as const
 
 export default async function InventarioPage({ searchParams }: { searchParams: Promise<{ vista?: string; filtro?: string }> }) {
   const sp = await searchParams
@@ -77,6 +77,7 @@ async function Movimientos() {
                     m.tipo === "entrada" && "bg-ok-soft text-ok",
                     m.tipo === "venta" && "bg-muted text-muted-foreground",
                     m.tipo === "ajuste" && "bg-warn-soft text-warn",
+                    m.tipo === "anulacion" && "bg-bad-soft text-bad",
                   )}
                 >
                   {TIPO_LABEL[m.tipo]}

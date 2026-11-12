@@ -161,14 +161,14 @@ isOneToOne: false
                   ]
                 },"movimientos_stock": {
                   Row: {
-                    "cantidad": number,"fecha": string,"gym_id": string,"id": string,"nota": string,"producto_id": string,"tipo": string,"usuario_id": string
+                    "cantidad": number,"fecha": string,"gym_id": string,"id": string,"movimiento_id": string | null,"nota": string,"producto_id": string,"tipo": string,"usuario_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "cantidad": number,"fecha"?: string,"gym_id": string,"id"?: string,"nota"?: string,"producto_id": string,"tipo": string,"usuario_id": string
+                    "cantidad": number,"fecha"?: string,"gym_id": string,"id"?: string,"movimiento_id"?: string | null,"nota"?: string,"producto_id": string,"tipo": string,"usuario_id": string
                   }
                   Update: {
-                    "cantidad"?: number,"fecha"?: string,"gym_id"?: string,"id"?: string,"nota"?: string,"producto_id"?: string,"tipo"?: string,"usuario_id"?: string
+                    "cantidad"?: number,"fecha"?: string,"gym_id"?: string,"id"?: string,"movimiento_id"?: string | null,"nota"?: string,"producto_id"?: string,"tipo"?: string,"usuario_id"?: string
                   }
                   Relationships: [
                     {
@@ -176,6 +176,12 @@ isOneToOne: false
       columns: ["gym_id"]
 isOneToOne: false
       referencedRelation: "gyms"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "movimientos_stock_movimiento_id_fkey"
+      columns: ["movimiento_id"]
+isOneToOne: false
+      referencedRelation: "movimientos"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "movimientos_stock_producto_id_fkey"
@@ -193,14 +199,14 @@ isOneToOne: false
                   ]
                 },"pagos": {
                   Row: {
-                    "fecha": string,"gym_id": string,"id": string,"medio": string,"monto": number,"movimiento_id": string,"plan_id": string,"socio_id": string,"usuario_id": string,"vencimiento_hasta": string | null
+                    "activo_anterior": boolean | null,"clases_anterior": number | null,"fecha": string,"gym_id": string,"id": string,"medio": string,"monto": number,"movimiento_id": string,"plan_anterior": string | null,"plan_id": string,"snapshot": boolean,"socio_id": string,"usuario_id": string,"vencimiento_anterior": string | null,"vencimiento_hasta": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "fecha"?: string,"gym_id": string,"id"?: string,"medio": string,"monto": number,"movimiento_id": string,"plan_id": string,"socio_id": string,"usuario_id": string,"vencimiento_hasta"?: string | null
+                    "activo_anterior"?: boolean | null,"clases_anterior"?: number | null,"fecha"?: string,"gym_id": string,"id"?: string,"medio": string,"monto": number,"movimiento_id": string,"plan_anterior"?: string | null,"plan_id": string,"snapshot"?: boolean,"socio_id": string,"usuario_id": string,"vencimiento_anterior"?: string | null,"vencimiento_hasta"?: string | null
                   }
                   Update: {
-                    "fecha"?: string,"gym_id"?: string,"id"?: string,"medio"?: string,"monto"?: number,"movimiento_id"?: string,"plan_id"?: string,"socio_id"?: string,"usuario_id"?: string,"vencimiento_hasta"?: string | null
+                    "activo_anterior"?: boolean | null,"clases_anterior"?: number | null,"fecha"?: string,"gym_id"?: string,"id"?: string,"medio"?: string,"monto"?: number,"movimiento_id"?: string,"plan_anterior"?: string | null,"plan_id"?: string,"snapshot"?: boolean,"socio_id"?: string,"usuario_id"?: string,"vencimiento_anterior"?: string | null,"vencimiento_hasta"?: string | null
                   }
                   Relationships: [
                     {
@@ -214,6 +220,12 @@ isOneToOne: false
       columns: ["movimiento_id"]
 isOneToOne: false
       referencedRelation: "movimientos"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pagos_plan_anterior_fkey"
+      columns: ["plan_anterior"]
+isOneToOne: false
+      referencedRelation: "planes"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "pagos_plan_id_fkey"

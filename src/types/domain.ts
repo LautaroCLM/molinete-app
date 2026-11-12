@@ -159,7 +159,7 @@ export interface MovimientoStock {
   id: ID
   gym_id: ID
   productoId: ID
-  tipo: "entrada" | "venta" | "ajuste"
+  tipo: "entrada" | "venta" | "ajuste" | "anulacion"
   /** Positivo suma stock, negativo resta. */
   cantidad: number
   fecha: string

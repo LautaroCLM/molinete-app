@@ -174,6 +174,9 @@ function AnularDialog({ movimiento, cerrar }: { movimiento: MovimientoDetalle | 
           <DialogTitle>Anular movimiento</DialogTitle>
           <DialogDescription>
             El movimiento no se borra: queda tachado, con tu nombre y el motivo, y deja de sumar en la caja.
+            {movimiento && (movimiento.categoria === "cuota" || movimiento.categoria === "clase") &&
+              " Además, el socio vuelve a su vencimiento y plan anteriores."}
+            {movimiento?.categoria === "venta_producto" && " Además, el stock de los productos vendidos se repone."}
           </DialogDescription>
         </DialogHeader>
         {movimiento && (

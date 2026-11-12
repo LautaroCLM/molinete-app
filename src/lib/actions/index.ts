@@ -42,6 +42,7 @@ const ERRORES: Record<string, string> = {
   PLAN_INEXISTENTE: "El plan no existe o está desactivado.",
   PRODUCTO_INEXISTENTE: "El producto no existe o está desactivado.",
   YA_ANULADO: "Ese movimiento ya estaba anulado.",
+  ANULAR_ANTES_EL_ULTIMO_COBRO: "Ese socio tiene un cobro posterior. Anulá primero el último cobro y después este.",
   YA_TIENE_GIMNASIO: "Tu usuario ya pertenece a un gimnasio.",
   CUOTA_SOLO_POR_COBRO: "El vencimiento cambia solo al cobrar. Pedile al dueño si hay que corregirlo.",
   STOCK_SOLO_POR_MOVIMIENTO: "El stock se modifica con un movimiento de stock.",

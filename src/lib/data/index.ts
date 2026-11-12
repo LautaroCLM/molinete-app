@@ -163,7 +163,7 @@ export async function getSocio(id: string) {
   const socio = (await getSociosBase()).find((s) => s.id === id)
   if (!socio) return null
   const [pagosR, asistR, usuarios, planes] = await Promise.all([
-    sb.from("pagos").select("*").eq("socio_id", id).order("fecha", { ascending: false }).limit(100),
+    sb.from("pagos").select("*, movimiento:movimientos(anulado_at)").eq("socio_id", id).order("fecha", { ascending: false }).limit(100),
     sb.from("asistencias").select("*").eq("socio_id", id).order("fecha", { ascending: false }).limit(400),
     getUsuarios(),
     getPlanes(),
@@ -174,6 +174,7 @@ export async function getSocio(id: string) {
     medio: p.medio as MedioPago,
     fecha: p.fecha,
     vencimientoHasta: p.vencimiento_hasta,
+    anulado: !!p.movimiento?.anulado_at,
     plan: planes.find((x) => x.id === p.plan_id),
     usuario: usuarios.find((u) => u.id === p.usuario_id),
   }))

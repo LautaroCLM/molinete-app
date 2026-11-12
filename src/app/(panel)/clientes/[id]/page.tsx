@@ -131,9 +131,12 @@ export default async function SocioPage({
                   </TableHeader>
                   <TableBody>
                     {pagos.slice(0, 30).map((p) => (
-                      <TableRow key={p.id}>
+                      <TableRow key={p.id} className={p.anulado ? "text-muted-foreground line-through" : undefined}>
                         <TableCell className="pl-4 tabular-nums">{fechaHora(p.fecha)}</TableCell>
-                        <TableCell>{p.plan?.nombre}</TableCell>
+                        <TableCell>
+                          {p.plan?.nombre}
+                          {p.anulado && <span className="ml-2 rounded-full bg-bad-soft px-2 py-0.5 text-xs font-semibold text-bad inline-block no-underline">Anulado</span>}
+                        </TableCell>
                         <TableCell className="hidden text-muted-foreground sm:table-cell">{MEDIOS_PAGO[p.medio]}</TableCell>
                         <TableCell className="hidden text-muted-foreground md:table-cell">
                           {p.vencimientoHasta ? fecha(p.vencimientoHasta) : "—"}

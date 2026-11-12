@@ -155,6 +155,39 @@ async function main() {
   const conViejo = (await anon.rpc("qr_gimnasio", { p_token: tokenQR })).data ?? []
   chequeo("el dueño genera un QR nuevo y el viejo deja de funcionar", !nuevoQR.error && conViejo.length === 0, nuevoQR.error?.message)
 
+  console.log("\nAnular cobros y ventas")
+  const planMensual = (await admin.from("planes").select("id, precio").eq("gym_id", gymDemo.id).eq("tipo", "mensual").eq("activo", true).limit(1).single()).data!
+  const sociosTodos = (await admin.from("socios").select("id").eq("gym_id", gymDemo.id).eq("activo", true).not("vencimiento", "is", null).limit(1).single()).data!
+  const foto = async () => (await admin.from("socios").select("plan_id, vencimiento, clases_restantes, activo").eq("id", sociosTodos.id).single()).data!
+  const socioAntes = await foto()
+  const c1 = await sofia.rpc("cobrar", { p_socio: sociosTodos.id, p_plan: planMensual.id, p_monto: planMensual.precio, p_medio: "efectivo" })
+  const c2 = await sofia.rpc("cobrar", { p_socio: sociosTodos.id, p_plan: planMensual.id, p_monto: planMensual.precio, p_medio: "efectivo" })
+  chequeo("recepción puede cobrar dos veces (prueba)", !c1.error && !c2.error, c1.error?.message ?? c2.error?.message)
+  const movDe = async (pagoId: string) => (await admin.from("pagos").select("movimiento_id").eq("id", pagoId).single()).data!.movimiento_id
+  const pago1 = (c1.data as { pago_id: string }).pago_id
+  const pago2 = (c2.data as { pago_id: string }).pago_id
+  const mov1 = await movDe(pago1)
+  const mov2 = await movDe(pago2)
+  const orden = await dueno.rpc("anular_movimiento", { p_movimiento: mov1, p_motivo: "prueba" })
+  chequeo("no deja anular un cobro si hay uno posterior", !!orden.error && orden.error.message.includes("ANULAR_ANTES_EL_ULTIMO_COBRO"), orden.error?.message)
+  const a2 = await dueno.rpc("anular_movimiento", { p_movimiento: mov2, p_motivo: "prueba" })
+  const a1 = await dueno.rpc("anular_movimiento", { p_movimiento: mov1, p_motivo: "prueba" })
+  chequeo("anulando en orden se aceptan los dos", !a2.error && !a1.error, a2.error?.message ?? a1.error?.message)
+  const socioDespues = await foto()
+  chequeo("el socio vuelve a su plan, vencimiento y estado anteriores", JSON.stringify(socioDespues) === JSON.stringify(socioAntes), JSON.stringify({ socioAntes, socioDespues }))
+  const anuladoDosVeces = await dueno.rpc("anular_movimiento", { p_movimiento: mov1, p_motivo: "otra vez" })
+  chequeo("no se puede anular dos veces", !!anuladoDosVeces.error && anuladoDosVeces.error.message.includes("YA_ANULADO"))
+
+  const prodV = (await admin.from("productos").select("id, stock, precio").eq("gym_id", gymDemo.id).eq("activo", true).gte("stock", 5).limit(1).single()).data!
+  const venta = await sofia.rpc("vender", { p_items: [{ productoId: prodV.id, cantidad: 3 }], p_medio: "efectivo" })
+  const stockVenta = (await admin.from("productos").select("stock").eq("id", prodV.id).single()).data!.stock
+  chequeo("la venta descuenta el stock", !venta.error && stockVenta === prodV.stock - 3, venta.error?.message)
+  const anuV = await dueno.rpc("anular_movimiento", { p_movimiento: venta.data as string, p_motivo: "prueba" })
+  const stockFin = (await admin.from("productos").select("stock").eq("id", prodV.id).single()).data!.stock
+  chequeo("anular la venta devuelve el stock", !anuV.error && stockFin === prodV.stock, anuV.error?.message)
+  const lineaAnul = await admin.from("movimientos_stock").select("cantidad").eq("movimiento_id", venta.data as string).eq("tipo", "anulacion")
+  chequeo("queda un movimiento de stock de anulación", (lineaAnul.data ?? []).length === 1 && lineaAnul.data![0].cantidad === 3)
+
   console.log("\nLogo del gimnasio (Storage)")
   const png = new Blob([Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10])], { type: "image/png" })
   const ruta = `${gymDemo.id}/logo.webp`
