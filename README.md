@@ -189,3 +189,8 @@ Desde su perfil (con PIN), en "Tu rutina" el socio toca **Empezar entrenamiento*
 - Base: `entrenamientos` y `entrenamiento_series` (sin políticas: solo se usan por funciones con celular vinculado + PIN, con el mismo freno de intentos del perfil).
 - Guardar es idempotente (`cliente_id`): reintentar no duplica.
 - Pantalla: `src/app/q/[token]/entrenamiento.tsx`; utilidades en `src/lib/entrenamiento.ts`.
+
+### Progreso de entrenamientos
+
+- **Socio** (perfil con PIN): chip de **racha** (semanas seguidas, lunes a domingo, con al menos una asistencia) y **"Ver mi progreso"**: gráfico por ejercicio de fuerza estimada (1RM) o peso máximo, con el avance en kg. Gráfico SVG propio (sin librerías) en `src/app/q/[token]/grafico-progreso.tsx`.
+- **Personal** (ficha del socio, dueño y recepción): panel **Entrenamientos** con sesiones y volumen de 30 días, récords, evolución por ejercicio (Recharts) y últimos entrenamientos. Solo lectura: las tablas de entrenamientos no se pueden escribir directo.

@@ -2,12 +2,13 @@
 
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
-import { ArrowLeft, Delete, Dumbbell, IdCard, Mail, Phone, Play, ShieldCheck, Trophy } from "lucide-react"
+import { ArrowLeft, ChartLine, Delete, Dumbbell, Flame, IdCard, Mail, Phone, Play, ShieldCheck, Trophy } from "lucide-react"
 import { Disco, ESTILO_ESTADO } from "@/components/shared/estado-badge"
 import { SocioAvatar } from "@/components/shared/socio-avatar"
 import { CalendarioAsistencias } from "@/features/socios/calendario-asistencias"
 import { fecha, num } from "@/lib/format"
-import type { PerfilSocio, RutinaPerfil } from "@/lib/actions/qr"
+import type { PerfilSocio, ProgresoEjercicio, ResultadoProgreso, RutinaPerfil } from "@/lib/actions/qr"
+import { GraficoProgreso } from "./grafico-progreso"
 import { cn } from "@/lib/utils"
 
 /** Pantalla del PIN: elegirlo (primera vez, dos veces) o ingresarlo. */
@@ -147,6 +148,7 @@ export function PerfilVista({
   etiquetaVolver = "Volver",
   onNoSoyYo,
   onEmpezar,
+  onProgreso,
   pendiente = false,
 }: {
   perfil: PerfilSocio
@@ -154,6 +156,7 @@ export function PerfilVista({
   etiquetaVolver?: string
   onNoSoyYo?: () => void
   onEmpezar?: (rutina: RutinaPerfil, diaIdx: number) => void
+  onProgreso?: () => Promise<ResultadoProgreso>
   pendiente?: boolean
 }) {
   const e = ESTILO_ESTADO[perfil.estado]
@@ -180,6 +183,11 @@ export function PerfilVista({
             {perfil.plan ?? "Sin plan"}
             {perfil.fechaAlta && ` · socio desde el ${fecha(perfil.fechaAlta)}`}
           </p>
+          {perfil.rachaSemanas > 0 && (
+            <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-warn-soft px-2.5 py-1 text-xs font-bold text-warn">
+              <Flame className="size-3.5" /> {perfil.rachaSemanas} {perfil.rachaSemanas === 1 ? "semana seguida" : "semanas seguidas"}
+            </p>
+          )}
         </div>
       </div>
 
@@ -224,6 +232,7 @@ export function PerfilVista({
               </li>
             ))}
           </ul>
+          {onProgreso && <SeccionProgreso onProgreso={onProgreso} />}
         </section>
       )}
 
@@ -370,5 +379,62 @@ function SeccionRutinas({ rutinas, onEmpezar, pendiente }: { rutinas: RutinaPerf
         <p className="mt-3 text-sm text-muted-foreground">Esta rutina todavía no tiene días cargados.</p>
       )}
     </section>
+  )
+}
+
+/** Botón "Ver mi progreso": carga la evolución por ejercicio y la muestra con un gráfico. */
+function SeccionProgreso({ onProgreso }: { onProgreso: () => Promise<ResultadoProgreso> }) {
+  const [estado, setEstado] = useState<{ tipo: "cerrado" } | { tipo: "cargando" } | { tipo: "listo"; ejercicios: ProgresoEjercicio[] } | { tipo: "error"; mensaje: string }>({ tipo: "cerrado" })
+  const [elegido, setElegido] = useState(0)
+
+  if (estado.tipo === "cerrado" || estado.tipo === "cargando" || estado.tipo === "error") {
+    return (
+      <div className="mt-3">
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={estado.tipo === "cargando"}
+          onClick={async () => {
+            setEstado({ tipo: "cargando" })
+            const r = await onProgreso()
+            setEstado(r.ok ? { tipo: "listo", ejercicios: r.ejercicios } : { tipo: "error", mensaje: r.mensaje })
+          }}
+        >
+          <ChartLine className="size-4" /> {estado.tipo === "cargando" ? "Cargando…" : "Ver mi progreso"}
+        </Button>
+        {estado.tipo === "error" && (
+          <p role="alert" className="mt-2 text-sm font-medium text-bad">
+            {estado.mensaje}
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  const ej = estado.ejercicios[elegido] ?? estado.ejercicios[0]
+  return (
+    <div className="mt-4 border-t pt-4">
+      <h3 className="font-semibold">Tu progreso</h3>
+      {estado.ejercicios.length === 0 || !ej ? (
+        <p className="mt-1 text-sm text-muted-foreground">Todavía no hay datos para mostrar.</p>
+      ) : (
+        <>
+          <div className="mt-2 flex flex-wrap gap-2" role="tablist" aria-label="Ejercicios">
+            {estado.ejercicios.slice(0, 12).map((e, i) => (
+              <button
+                key={e.nombre}
+                role="tab"
+                aria-selected={i === elegido}
+                onClick={() => setElegido(i)}
+                className={cn("rounded-full border px-3 py-1.5 text-sm font-medium transition-colors", i === elegido ? "border-primary bg-primary/15 text-foreground" : "text-muted-foreground hover:text-foreground")}
+              >
+                {e.nombre}
+              </button>
+            ))}
+          </div>
+          <GraficoProgreso key={ej.nombre} nombre={ej.nombre} puntos={ej.puntos} />
+        </>
+      )}
+    </div>
   )
 }

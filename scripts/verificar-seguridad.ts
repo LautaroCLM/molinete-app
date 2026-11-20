@@ -293,9 +293,56 @@ async function main() {
     const cruce5 = (await anon.rpc("qr_entrenamiento_guardar" as never, { p_token: gymOtro.qr_token, p_dispositivo: vinc5.dispositivo, p_pin: "4821", p_datos: sesion(uuid(9), [[60, 8]], [[80, 5]]) } as never)).data as unknown as R5
     chequeo("un celular de otro gimnasio no puede guardar", cruce5?.error === "DISPOSITIVO_DESCONOCIDO")
   }
-  chequeo("nadie lee los entrenamientos directo en la tabla", ((await anon.from("entrenamiento_series").select("id")).data ?? []).length === 0 && ((await sofia.from("entrenamientos").select("id")).data ?? []).length === 0)
+  chequeo("sin sesión no se leen los entrenamientos", ((await anon.from("entrenamiento_series").select("id")).data ?? []).length === 0 && ((await anon.from("entrenamientos").select("id")).data ?? []).length === 0)
   for (let i = 0; i < 5; i++) await llamar5("qr_entrenamiento_guardar", { p_pin: "9999", p_datos: sesion(uuid(20 + i), [[60, 8]], [[80, 5]]) })
   chequeo("guardar con PIN incorrecto repetido bloquea (mismo freno que el perfil)", (await llamar5("qr_entrenamiento_guardar", { p_pin: "4821", p_datos: sesion(uuid(30), [[60, 8]], [[80, 5]]) })).error === "BLOQUEADO")
+
+  await admin.from("entrenamientos").delete().eq("socio_id", juan.id)
+  await admin.from("socio_pins").delete().eq("socio_id", juan.id)
+  await admin.from("socio_dispositivos").delete().eq("socio_id", juan.id)
+
+  console.log("\nProgreso de entrenamientos")
+  const vinc6 = (await anon.rpc("qr_vincular", { p_token: tokenNuevo, p_dni: "40112908" })).data as { dispositivo: string }
+  const base6 = { p_token: tokenNuevo, p_dispositivo: vinc6.dispositivo }
+  type R6 = Record<string, unknown> & { ok?: boolean; error?: string; racha_semanas?: number; ejercicios?: { nombre: string; puntos: { fecha: string; peso: number; e1rm: number }[] }[] }
+  const llamar6 = async (fn: string, extra: Record<string, unknown> = {}) => (await anon.rpc(fn as never, { ...base6, ...extra } as never)).data as unknown as R6
+  await llamar6("qr_pin_crear", { p_pin: "4821" })
+  const ses6 = (cliente: string, peso: number) => ({
+    cliente_id: cliente, rutina_nombre: "Rutina de prueba", dia_nombre: "Día A",
+    ejercicios: [{ nombre: "Press de banca", series: [{ peso, reps: 8 }] }, { nombre: "Remo", series: [{ peso: 40, reps: 10 }] }],
+  })
+  const id6 = (n: number) => `00000000-0000-4000-8000-0000000001${String(n).padStart(2, "0")}`
+  for (const [n, peso] of [[1, 60], [2, 62.5], [3, 50]] as [number, number][]) await llamar6("qr_entrenamiento_guardar", { p_pin: "4821", p_datos: ses6(id6(n), peso) })
+
+  chequeo("el progreso exige el PIN", (await llamar6("qr_progreso", { p_pin: "0000" })).error === "PIN_INCORRECTO")
+  const prog = await llamar6("qr_progreso", { p_pin: "4821" })
+  const press = prog.ejercicios?.find((e) => e.nombre === "Press de banca")
+  chequeo("el progreso trae un punto por sesión, en orden", prog.ok === true && press?.puntos.length === 3, JSON.stringify(press?.puntos.map((q) => q.e1rm)))
+  chequeo("cada punto trae el mejor peso y el 1RM estimado", !!press && Math.abs(press.puntos[1].e1rm - 79.17) < 0.01 && press.puntos[1].peso === 62.5)
+  chequeo("incluye todos los ejercicios entrenados", (prog.ejercicios ?? []).length === 2)
+  const otroDisp = (await anon.rpc("qr_progreso" as never, { p_token: gymOtro?.qr_token ?? "x", p_dispositivo: vinc6.dispositivo, p_pin: "4821" } as never)).data as unknown as R6
+  chequeo("un celular de otro gimnasio no ve el progreso", !!gymOtro && otroDisp?.error === "DISPOSITIVO_DESCONOCIDO")
+
+  // Racha semanal: se contrasta con un cálculo independiente en JS
+  const aDiaAR = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(new Date(iso))
+  const lunesDe = (dia: string) => { const d = new Date(dia + "T00:00:00Z"); const dow = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - dow); return d.getTime() }
+  const semanasConAsistencia = new Set(((await admin.from("asistencias").select("fecha").eq("socio_id", juan.id)).data ?? []).map((a) => lunesDe(aDiaAR(a.fecha))))
+  let semana = lunesDe(aDiaAR(new Date().toISOString()))
+  if (!semanasConAsistencia.has(semana)) semana -= 7 * 86400e3
+  let esperada = 0
+  while (semanasConAsistencia.has(semana)) { esperada++; semana -= 7 * 86400e3 }
+  const perfil8 = await llamar6("qr_perfil", { p_pin: "4821" })
+  chequeo("la racha semanal del perfil coincide con el cálculo independiente", perfil8.racha_semanas === esperada, `esperada ${esperada}, recibida ${perfil8.racha_semanas}`)
+
+  // El personal lee los entrenamientos de su gimnasio (ficha del socio), pero no los escribe
+  chequeo("recepción lee los entrenamientos de su gimnasio", ((await sofia.from("entrenamientos").select("id").eq("socio_id", juan.id)).data ?? []).length === 3)
+  chequeo("el dueño lee las series de sus socios", ((await dueno.from("entrenamiento_series").select("id").eq("socio_id", juan.id)).data ?? []).length === 6)
+  chequeo("el dueño de otro gimnasio no ve nada", ((await otro.from("entrenamientos").select("id")).data ?? []).length === 0 && ((await otro.from("entrenamiento_series").select("id")).data ?? []).length === 0)
+  chequeo("el personal no puede crear entrenamientos a mano", !!(await sofia.from("entrenamientos").insert({ gym_id: gymDemo.id, socio_id: juan.id, cliente_id: id6(99) })).error)
+  const mod = await sofia.from("entrenamiento_series").update({ peso: 999 }).eq("socio_id", juan.id).select()
+  chequeo("ni modificar las series", !!mod.error || (mod.data ?? []).length === 0)
+  const bor = await dueno.from("entrenamientos").delete().eq("socio_id", juan.id).select()
+  chequeo("ni borrarlas", !!bor.error || (bor.data ?? []).length === 0)
 
   await admin.from("entrenamientos").delete().eq("socio_id", juan.id)
   await admin.from("socio_pins").delete().eq("socio_id", juan.id)

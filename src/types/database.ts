@@ -719,6 +719,9 @@ isOneToOne: false
 "qr_pin_crear":
 { Args: { "p_dispositivo": string,"p_pin": string,"p_token": string }; Returns: Json
                            },
+"qr_progreso":
+{ Args: { "p_dispositivo": string,"p_pin": string,"p_token": string }; Returns: Json
+                           },
 "qr_regenerar":
 { Args: Record<PropertyKey, never>; Returns: string
                            },

@@ -165,6 +165,8 @@ export interface PerfilSocio {
   entrenamientos: EntrenamientoResumen[]
   /** Cuántos entrenamientos registró en los últimos 30 días. */
   entrenamientos30: number
+  /** Semanas seguidas (lunes a domingo) con al menos una asistencia. */
+  rachaSemanas: number
   /** Últimos pagos, sin montos. */
   pagos: { fecha: string; plan: string | null; hasta: string | null }[]
   dni: string | null
@@ -190,6 +192,7 @@ interface CrudoPerfil extends Crudo {
   rutinas?: RutinaPerfil[]
   entrenamientos?: EntrenamientoResumen[]
   entrenamientos_30?: number
+  racha_semanas?: number
   dni?: string | null
   telefono?: string | null
   email?: string | null
@@ -235,6 +238,7 @@ function aPerfil(r: CrudoPerfil | null): ResultadoPerfil {
       rutinas: r.rutinas ?? [],
       entrenamientos: r.entrenamientos ?? [],
       entrenamientos30: r.entrenamientos_30 ?? 0,
+      rachaSemanas: r.racha_semanas ?? 0,
       dni: r.dni ?? null,
       telefono: r.telefono ?? null,
       email: r.email ?? null,
@@ -343,4 +347,21 @@ export async function guardarEntrenamiento(token: string, dispositivo: string, p
   const r = data as unknown as (CrudoPerfil & { series?: number; volumen?: number; records?: string[] }) | null
   if (error || !r || !r.ok) return falloEntreno(error ? null : r)
   return { ok: true, series: r.series ?? 0, volumen: Number(r.volumen ?? 0), records: r.records ?? [] }
+}
+
+// ---------- Progreso por ejercicio ----------
+export interface ProgresoEjercicio {
+  nombre: string
+  puntos: { fecha: string; peso: number | null; e1rm: number | null }[]
+}
+export type ResultadoProgreso = { ok: true; ejercicios: ProgresoEjercicio[] } | { ok: false; codigo: string; mensaje: string }
+
+/** Evolución de cada ejercicio entrenado: por sesión, mejor peso y 1RM estimado. */
+export async function cargarProgreso(token: string, dispositivo: string, pin: string): Promise<ResultadoProgreso> {
+  if (!esDispositivo(dispositivo) || !/^\d{4}$/.test(pin)) return { ok: false, codigo: "DISPOSITIVO_DESCONOCIDO", mensaje: MENSAJES.DISPOSITIVO_DESCONOCIDO }
+  const sb = await supabaseServer()
+  const { data, error } = await sb.rpc("qr_progreso", { p_token: token, p_dispositivo: dispositivo, p_pin: pin })
+  const r = data as unknown as (CrudoPerfil & { ejercicios?: ProgresoEjercicio[] }) | null
+  if (error || !r || !r.ok) return falloEntreno(error ? null : r)
+  return { ok: true, ejercicios: r.ejercicios ?? [] }
 }

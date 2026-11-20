@@ -18,6 +18,7 @@ import {
   ingresarConDispositivo,
   ingresarConDni,
   cargarHistorial,
+  cargarProgreso,
   guardarEntrenamiento,
   type Historial,
   type PerfilSocio,
@@ -263,6 +264,7 @@ export function IngresoQR({ token, gymId, gymNombre, modoApp }: { token: string;
             }
             onNoSoyYo={modoApp ? noSoyYo : undefined}
             onEmpezar={(rutina, diaIdx) => empezarEntrenamiento(vista, rutina, diaIdx)}
+            onProgreso={() => cargarProgreso(token, vista.dispositivo, vista.pin)}
             pendiente={pendiente}
           />
         )}

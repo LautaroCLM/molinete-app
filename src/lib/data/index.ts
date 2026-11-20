@@ -279,6 +279,68 @@ export async function getRutinasDeSocio(socioId: string): Promise<{ id: string; 
     .map((f) => ({ id: f.rutina!.id, nombre: f.rutina!.nombre, asignadaEn: f.asignada_en, activo: f.rutina!.activo }))
 }
 
+// ---------- Entrenamientos del socio (lectura para el personal) ----------
+export interface DatosEntrenamientos {
+  resumen: { sesiones30: number; volumen30: number; records: number; total: number }
+  sesiones: { id: string; fecha: string; rutina: string; dia: string; series: number; volumen: number; records: number }[]
+  /** Evolución por ejercicio (el más entrenado primero): por sesión, mejor peso y 1RM estimado. */
+  progreso: { nombre: string; puntos: { fecha: string; peso: number | null; e1rm: number | null }[] }[]
+}
+
+export async function getEntrenamientosSocio(socioId: string): Promise<DatosEntrenamientos> {
+  const sb = await db()
+  const [sesiones, series] = await Promise.all([
+    todas((d, h) =>
+      sb.from("entrenamientos").select("id, finalizado_en, rutina_nombre, dia_nombre").eq("socio_id", socioId).order("finalizado_en", { ascending: false }).order("id").range(d, h),
+    ),
+    todas((d, h) =>
+      sb.from("entrenamiento_series").select("id, entrenamiento_id, ejercicio, peso, repeticiones, e1rm, es_record").eq("socio_id", socioId).order("id").range(d, h),
+    ),
+  ])
+  const fechaDe = new Map(sesiones.map((s) => [s.id, s.finalizado_en]))
+  const porSesion = new Map<string, { series: number; volumen: number; records: number }>()
+  const ejercicios = new Map<string, { nombre: string; sesiones: Map<string, { fecha: string; peso: number | null; e1rm: number | null }> }>()
+  for (const f of series) {
+    const a = porSesion.get(f.entrenamiento_id) ?? { series: 0, volumen: 0, records: 0 }
+    a.series += 1
+    a.volumen += Number(f.peso ?? 0) * Number(f.repeticiones ?? 0)
+    if (f.es_record) a.records += 1
+    porSesion.set(f.entrenamiento_id, a)
+
+    const fecha = fechaDe.get(f.entrenamiento_id)
+    if (!fecha) continue
+    const clave = f.ejercicio.trim().toLowerCase()
+    const ej = ejercicios.get(clave) ?? { nombre: f.ejercicio, sesiones: new Map() }
+    const p = ej.sesiones.get(f.entrenamiento_id) ?? { fecha, peso: null, e1rm: null }
+    if (f.peso !== null && (p.peso === null || Number(f.peso) > p.peso)) p.peso = Number(f.peso)
+    if (f.e1rm !== null && (p.e1rm === null || Number(f.e1rm) > p.e1rm)) p.e1rm = Number(f.e1rm)
+    ej.sesiones.set(f.entrenamiento_id, p)
+    ejercicios.set(clave, ej)
+  }
+  const hace30 = Date.now() - 30 * 86400e3
+  const lista = sesiones.map((s) => ({
+    id: s.id,
+    fecha: s.finalizado_en,
+    rutina: s.rutina_nombre,
+    dia: s.dia_nombre,
+    ...(porSesion.get(s.id) ?? { series: 0, volumen: 0, records: 0 }),
+  }))
+  const recientes = lista.filter((s) => new Date(s.fecha).getTime() >= hace30)
+  return {
+    resumen: {
+      sesiones30: recientes.length,
+      volumen30: recientes.reduce((t, s) => t + s.volumen, 0),
+      records: lista.reduce((t, s) => t + s.records, 0),
+      total: lista.length,
+    },
+    sesiones: lista.map((s) => ({ ...s, volumen: Math.round(s.volumen) })),
+    progreso: [...ejercicios.values()]
+      .sort((a, b) => b.sesiones.size - a.sesiones.size || a.nombre.localeCompare(b.nombre))
+      .slice(0, 30)
+      .map((e) => ({ nombre: e.nombre, puntos: [...e.sesiones.values()].sort((a, b) => a.fecha.localeCompare(b.fecha)).slice(-40) })),
+  }
+}
+
 // ---------- Usuarios ----------
 export const getUsuarios = cache(async (): Promise<Usuario[]> => {
   const sb = await db()

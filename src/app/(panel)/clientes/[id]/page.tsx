@@ -1,3 +1,4 @@
+import { EntrenamientosSocio } from "@/features/socios/entrenamientos-socio"
 import { RutinasSocio } from "@/features/socios/rutinas-socio"
 import { PinSocio } from "@/features/socios/pin-socio"
 import { SocioAvatar } from "@/components/shared/socio-avatar"
@@ -13,7 +14,7 @@ import { BotonAccion } from "@/components/shared/boton-accion"
 import { CalendarioAsistencias } from "@/features/socios/calendario-asistencias"
 import { BajaSocioBoton } from "@/features/socios/baja-socio"
 import { AbrirCobro } from "@/features/cobros/abrir-cobro"
-import { getRutinas, getRutinasDeSocio, getSocio, socioTienePin } from "@/lib/data"
+import { getEntrenamientosSocio, getRutinas, getRutinasDeSocio, getSocio, socioTienePin } from "@/lib/data"
 import { dni, fecha, fechaHora, hace, pesos } from "@/lib/format"
 import { ESTADOS_CUOTA, MEDIOS_PAGO } from "@/lib/labels"
 import { cn } from "@/lib/utils"
@@ -35,7 +36,7 @@ export default async function SocioPage({
   const data = await getSocio(id)
   if (!data) notFound()
   const { socio, pagos, asistencias, ultimos30 } = data
-  const [tienePin, rutinasAsignadas, rutinasTodas] = await Promise.all([socioTienePin(id), getRutinasDeSocio(id), getRutinas()])
+  const [tienePin, rutinasAsignadas, rutinasTodas, entrenamientos] = await Promise.all([socioTienePin(id), getRutinasDeSocio(id), getRutinas(), getEntrenamientosSocio(id)])
   const e = ESTILO_ESTADO[socio.estado.estado]
   const debe = socio.estado.estado === "vencido" || socio.estado.estado === "en_gracia"
 
@@ -120,6 +121,8 @@ export default async function SocioPage({
           >
             <CalendarioAsistencias fechas={asistencias.map((a) => a.fecha)} />
           </Panel>
+
+          {entrenamientos.sesiones.length > 0 && <EntrenamientosSocio datos={entrenamientos} />}
 
           <Tabs defaultValue="pagos" className="rounded-xl border bg-card">
             <div className="flex items-center justify-between border-b px-4 pt-3 pb-3">
