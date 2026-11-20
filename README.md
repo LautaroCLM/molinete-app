@@ -171,3 +171,13 @@ La web es una PWA instalable: no hay APK ni tienda. En Chrome para Android, entr
 - `public/sw.js`: service worker. Las páginas siempre salen de la red; sin conexión muestra `public/offline.html`. Solo guarda archivos estáticos con hash.
 - `src/app/manifest.ts`: nombre, colores e íconos (incluye `public/icon-maskable-512.png`).
 - En iPhone se agrega desde Safari: Compartir > Agregar a pantalla de inicio.
+
+
+### App del socio (instalable desde el QR)
+
+El socio puede instalar su propio acceso: en la pantalla de bienvenida del QR aparece **"Instalar la app en este celular"**. El ícono instalado abre directo su perfil (PIN y rutina) con el nombre del gimnasio.
+
+- La app abre con `?app=1`: **no registra asistencia**. La asistencia solo se registra al escanear el QR del gimnasio.
+- Manifest propio por QR: `src/app/q/[token]/manifest.webmanifest/route.ts`.
+- Si el gimnasio regenera el QR (Configuración), las apps ya instaladas muestran "Este QR ya no funciona": el socio tiene que escanear el QR nuevo e instalar de nuevo.
+- Con la app en segundo plano más de 5 minutos, el perfil vuelve a pedir el PIN.

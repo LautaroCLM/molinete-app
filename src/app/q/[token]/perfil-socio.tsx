@@ -23,7 +23,7 @@ export function PinPantalla({
   bloqueado: boolean
   pendiente: boolean
   onEnviar: (pin: string) => void
-  onVolver: () => void
+  onVolver?: () => void
 }) {
   const [pin, setPin] = useState("")
   const [primero, setPrimero] = useState<string | null>(null)
@@ -79,9 +79,11 @@ export function PinPantalla({
 
   return (
     <div className="flex flex-1 flex-col">
-      <button onClick={onVolver} className="inline-flex items-center gap-1.5 self-start text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="size-4" /> Volver
-      </button>
+      {onVolver && (
+        <button onClick={onVolver} className="inline-flex items-center gap-1.5 self-start text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="size-4" /> Volver
+        </button>
+      )}
 
       <div className="mt-6 text-center">
         <span className="mx-auto grid size-12 place-items-center rounded-full bg-ok-soft text-ok">
@@ -138,7 +140,7 @@ function Tecla({ children, onClick, disabled, etiqueta }: { children: React.Reac
 }
 
 /** Perfil del socio: su estado, constancia, pagos (sin montos) y sus datos enmascarados. */
-export function PerfilVista({ perfil, onVolver }: { perfil: PerfilSocio; onVolver: () => void }) {
+export function PerfilVista({ perfil, onVolver, etiquetaVolver = "Volver", onNoSoyYo }: { perfil: PerfilSocio; onVolver: () => void; etiquetaVolver?: string; onNoSoyYo?: () => void }) {
   const e = ESTILO_ESTADO[perfil.estado]
   const ultimos30 = perfil.ultimos30
   const datos = [
@@ -150,7 +152,7 @@ export function PerfilVista({ perfil, onVolver }: { perfil: PerfilSocio; onVolve
   return (
     <div className="flex flex-1 flex-col gap-6">
       <button onClick={onVolver} className="inline-flex items-center gap-1.5 self-start text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="size-4" /> Volver
+        <ArrowLeft className="size-4" /> {etiquetaVolver}
       </button>
 
       <div className="flex items-center gap-4">
@@ -226,6 +228,12 @@ export function PerfilVista({ perfil, onVolver }: { perfil: PerfilSocio; onVolve
           </dl>
           <p className="mt-3 text-xs text-muted-foreground">Por tu seguridad se muestran ocultos en parte. Para cambiarlos, pedilo en recepción.</p>
         </section>
+      )}
+
+      {onNoSoyYo && (
+        <button onClick={onNoSoyYo} className="pb-2 text-center text-sm text-muted-foreground underline underline-offset-4">
+          No soy {perfil.nombre}
+        </button>
       )}
     </div>
   )

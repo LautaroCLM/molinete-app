@@ -3,11 +3,26 @@ import { supabaseServer } from "@/lib/supabase/server"
 import { LogoMarca } from "@/components/layout/logo"
 import { IngresoQR } from "./ingreso-qr"
 
-export const metadata: Metadata = { title: "Ingreso", robots: { index: false, follow: false } }
-export const viewport: Viewport = { themeColor: "#161a22" }
-
-export default async function IngresoQRPage({ params }: { params: Promise<{ token: string }> }) {
+export async function generateMetadata({ params }: { params: Promise<{ token: string }> }): Promise<Metadata> {
   const { token } = await params
+  return {
+    title: "Ingreso",
+    robots: { index: false, follow: false },
+    // La app que el socio instala desde su QR abre directo su perfil.
+    manifest: `/q/${encodeURIComponent(token)}/manifest.webmanifest`,
+  }
+}
+export const viewport: Viewport = { themeColor: "#0b100e" }
+
+export default async function IngresoQRPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>
+  searchParams: Promise<{ app?: string }>
+}) {
+  const { token } = await params
+  const { app } = await searchParams
   const sb = await supabaseServer()
   const { data } = await sb.rpc("qr_gimnasio", { p_token: token })
   const gym = data?.[0]
@@ -19,7 +34,7 @@ export default async function IngresoQRPage({ params }: { params: Promise<{ toke
   if (!gym.activo)
     return <Aviso titulo={gym.nombre} texto="El ingreso con QR está pausado. Avisá en recepción que llegaste." />
 
-  return <IngresoQR token={token} gymId={gym.id} gymNombre={gym.nombre} />
+  return <IngresoQR token={token} gymId={gym.id} gymNombre={gym.nombre} modoApp={app === "1"} />
 }
 
 function Aviso({ titulo, texto }: { titulo: string; texto: string }) {
