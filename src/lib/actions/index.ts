@@ -21,6 +21,7 @@ import {
   contrasenaSchema,
   gimnasioSchema,
   loginSchema,
+  mensajesWhatsAppSchema,
   movimientoSchema,
   planSchema,
   productoSchema,
@@ -403,6 +404,37 @@ async function llamarRutina(fn: "archivar_rutina" | "asignar_rutina" | "quitar_r
     await getSesion()
     const sb = await supabaseServer()
     const { error } = await sb.rpc(fn as never, args as never)
+    if (error) return { ok: false, error: traducir(error) }
+  } catch (e) {
+    return { ok: false, error: traducir(e as Error) }
+  }
+  refrescar()
+  return { ok: true }
+}
+
+// ---------- Avisos de cuota por WhatsApp ----------
+/** Deja registrado que se avisó a un socio (el mensaje se abre en WhatsApp desde el navegador). */
+export async function registrarAviso(socioId: string, tipo: "por_vencer" | "vencida"): Promise<ResultadoAccion> {
+  try {
+    await getSesion()
+    const sb = await supabaseServer()
+    const { error } = await sb.rpc("registrar_aviso", { p_socio: socioId, p_tipo: tipo })
+    if (error) return { ok: false, error: traducir(error) }
+  } catch (e) {
+    return { ok: false, error: traducir(e as Error) }
+  }
+  refrescar()
+  return { ok: true }
+}
+
+/** Dueño: mensajes de WhatsApp del gimnasio. Vacío = texto por defecto. */
+export async function guardarMensajesWhatsApp(datos: unknown): Promise<ResultadoAccion> {
+  const r = mensajesWhatsAppSchema.safeParse(datos)
+  if (!r.success) return invalido(r)!
+  try {
+    const { gym } = await exigir("configuracion.ver")
+    const sb = await supabaseServer()
+    const { error } = await sb.from("gyms").update({ msg_por_vencer: r.data.msgPorVencer || null, msg_vencida: r.data.msgVencida || null }).eq("id", gym.id)
     if (error) return { ok: false, error: traducir(error) }
   } catch (e) {
     return { ok: false, error: traducir(e as Error) }

@@ -173,14 +173,14 @@ isOneToOne: false
                   ]
                 },"gyms": {
                   Row: {
-                    "created_at": string,"dias_gracia": number,"dias_inactividad": number,"direccion": string,"email": string,"id": string,"localidad": string,"logo_url": string | null,"nombre": string,"qr_activo": boolean,"qr_token": string,"telefono": string,"venc_dia": number,"venc_dias": number,"venc_tipo": string,"zona_horaria": string
+                    "created_at": string,"dias_gracia": number,"dias_inactividad": number,"direccion": string,"email": string,"id": string,"localidad": string,"logo_url": string | null,"msg_por_vencer": string | null,"msg_vencida": string | null,"nombre": string,"qr_activo": boolean,"qr_token": string,"telefono": string,"venc_dia": number,"venc_dias": number,"venc_tipo": string,"zona_horaria": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"dias_gracia"?: number,"dias_inactividad"?: number,"direccion"?: string,"email"?: string,"id"?: string,"localidad"?: string,"logo_url"?: string | null,"nombre": string,"qr_activo"?: boolean,"qr_token"?: string,"telefono"?: string,"venc_dia"?: number,"venc_dias"?: number,"venc_tipo"?: string,"zona_horaria"?: string
+                    "created_at"?: string,"dias_gracia"?: number,"dias_inactividad"?: number,"direccion"?: string,"email"?: string,"id"?: string,"localidad"?: string,"logo_url"?: string | null,"msg_por_vencer"?: string | null,"msg_vencida"?: string | null,"nombre": string,"qr_activo"?: boolean,"qr_token"?: string,"telefono"?: string,"venc_dia"?: number,"venc_dias"?: number,"venc_tipo"?: string,"zona_horaria"?: string
                   }
                   Update: {
-                    "created_at"?: string,"dias_gracia"?: number,"dias_inactividad"?: number,"direccion"?: string,"email"?: string,"id"?: string,"localidad"?: string,"logo_url"?: string | null,"nombre"?: string,"qr_activo"?: boolean,"qr_token"?: string,"telefono"?: string,"venc_dia"?: number,"venc_dias"?: number,"venc_tipo"?: string,"zona_horaria"?: string
+                    "created_at"?: string,"dias_gracia"?: number,"dias_inactividad"?: number,"direccion"?: string,"email"?: string,"id"?: string,"localidad"?: string,"logo_url"?: string | null,"msg_por_vencer"?: string | null,"msg_vencida"?: string | null,"nombre"?: string,"qr_activo"?: boolean,"qr_token"?: string,"telefono"?: string,"venc_dia"?: number,"venc_dias"?: number,"venc_tipo"?: string,"zona_horaria"?: string
                   }
                   Relationships: [
                     
@@ -402,6 +402,38 @@ isOneToOne: false
       columns: ["gym_id"]
 isOneToOne: false
       referencedRelation: "gyms"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"recordatorios": {
+                  Row: {
+                    "fecha": string,"gym_id": string,"id": string,"socio_id": string,"tipo": string,"usuario_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "fecha"?: string,"gym_id": string,"id"?: string,"socio_id": string,"tipo": string,"usuario_id"?: string | null
+                  }
+                  Update: {
+                    "fecha"?: string,"gym_id"?: string,"id"?: string,"socio_id"?: string,"tipo"?: string,"usuario_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "recordatorios_gym_id_fkey"
+      columns: ["gym_id"]
+isOneToOne: false
+      referencedRelation: "gyms"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "recordatorios_socio_id_fkey"
+      columns: ["socio_id"]
+isOneToOne: false
+      referencedRelation: "socios"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "recordatorios_usuario_id_fkey"
+      columns: ["usuario_id"]
+isOneToOne: false
+      referencedRelation: "perfiles"
       referencedColumns: ["id"]
     }
                   ]
@@ -736,6 +768,9 @@ isOneToOne: false
                            },
 "registrar_asistencia":
 { Args: { "p_socio": string }; Returns: string
+                           },
+"registrar_aviso":
+{ Args: { "p_socio": string,"p_tipo": string }; Returns: undefined
                            },
 "registrar_movimiento":
 { Args: { "p_categoria": string,"p_descripcion": string,"p_medio": string,"p_monto": number,"p_sin_caja"?: boolean,"p_tipo": string }; Returns: string

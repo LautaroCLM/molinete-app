@@ -1,5 +1,7 @@
 "use client"
 
+import { aAviso } from "@/features/avisos/a-aviso"
+import { useAvisar } from "@/features/avisos/use-avisar"
 import { SocioAvatar } from "@/components/shared/socio-avatar"
 import { useMemo, useState } from "react"
 import Link from "next/link"
@@ -53,6 +55,7 @@ export function SociosTabla({ socios, filtroInicial }: { socios: SocioConEstado[
   const [sorting, setSorting] = useState<SortingState>([])
   const { abrir } = usePanel()
   const router = useRouter()
+  const { aplica, avisar } = useAvisar()
 
   const conteos = useMemo(
     () => Object.fromEntries(FILTROS.map((f) => [f.id, socios.filter((s) => pasaFiltro(s, f.id)).length])) as Record<FiltroSocios, number>,
@@ -147,6 +150,7 @@ export function SociosTabla({ socios, filtroInicial }: { socios: SocioConEstado[
                 <DropdownMenuItem onSelect={() => router.push(`/clientes/${s.id}`)}>Ver ficha</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => router.push(`/clientes/${s.id}/editar`)}>Editar datos</DropdownMenuItem>
                 <DropdownMenuSeparator />
+                {aplica(aAviso(s))?.telefonoOk && <DropdownMenuItem onSelect={() => avisar(aAviso(s))}>Avisar la cuota por WhatsApp</DropdownMenuItem>}
                 <DropdownMenuItem asChild>
                   <a href={`https://wa.me/549${s.telefono.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
                     Escribir por WhatsApp
@@ -158,7 +162,7 @@ export function SociosTabla({ socios, filtroInicial }: { socios: SocioConEstado[
         ),
       },
     ],
-    [abrir, router],
+    [abrir, router, aplica, avisar],
   )
 
   // eslint-disable-next-line react-hooks/incompatible-library

@@ -7,7 +7,7 @@
 //! - Sin acceso nativo para la web remota: todo lo nativo (descargas, enlaces externos, actualizador)
 //!   lo maneja este código.
 
-use tauri::webview::DownloadEvent;
+use tauri::webview::{DownloadEvent, NewWindowResponse};
 use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
 use tauri_plugin_opener::OpenerExt;
@@ -80,6 +80,7 @@ pub fn run() {
         .setup(|app| {
             let para_navegar = app.handle().clone();
             let para_descargas = app.handle().clone();
+            let para_nuevas = app.handle().clone();
 
             WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
                 .title("Molinete")
@@ -94,6 +95,15 @@ pub fn run() {
                     } else {
                         let _ = para_navegar.opener().open_url(url.as_str(), None::<&str>);
                         false
+                    }
+                })
+                // Enlaces que piden ventana nueva (por ejemplo WhatsApp con el aviso armado): al navegador del sistema.
+                .on_new_window(move |url, _features| {
+                    if es_interna(&url) {
+                        NewWindowResponse::Allow
+                    } else {
+                        let _ = para_nuevas.opener().open_url(url.as_str(), None::<&str>);
+                        NewWindowResponse::Deny
                     }
                 })
                 // Descargas (Excel): se guardan en Descargas y se muestra el archivo en el Explorador.

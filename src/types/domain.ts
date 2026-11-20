@@ -27,6 +27,10 @@ export interface Gym {
   telefono: string
   email: string
   logoUrl: string | null
+  /** Mensaje de WhatsApp para cuotas por vencer; null = texto por defecto. */
+  msgPorVencer: string | null
+  /** Mensaje de WhatsApp para cuotas vencidas; null = texto por defecto. */
+  msgVencida: string | null
   config: GymConfig
 }
 

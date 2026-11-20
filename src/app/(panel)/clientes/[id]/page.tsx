@@ -1,3 +1,5 @@
+import { BotonAvisar } from "@/features/avisos/boton-avisar"
+import { aAviso } from "@/features/avisos/a-aviso"
 import { EntrenamientosSocio } from "@/features/socios/entrenamientos-socio"
 import { RutinasSocio } from "@/features/socios/rutinas-socio"
 import { PinSocio } from "@/features/socios/pin-socio"
@@ -14,7 +16,7 @@ import { BotonAccion } from "@/components/shared/boton-accion"
 import { CalendarioAsistencias } from "@/features/socios/calendario-asistencias"
 import { BajaSocioBoton } from "@/features/socios/baja-socio"
 import { AbrirCobro } from "@/features/cobros/abrir-cobro"
-import { getEntrenamientosSocio, getRutinas, getRutinasDeSocio, getSocio, socioTienePin } from "@/lib/data"
+import { getEntrenamientosSocio, getRutinas, getRutinasDeSocio, getSocio, getUltimosAvisos, socioTienePin } from "@/lib/data"
 import { dni, fecha, fechaHora, hace, pesos } from "@/lib/format"
 import { ESTADOS_CUOTA, MEDIOS_PAGO } from "@/lib/labels"
 import { cn } from "@/lib/utils"
@@ -36,7 +38,7 @@ export default async function SocioPage({
   const data = await getSocio(id)
   if (!data) notFound()
   const { socio, pagos, asistencias, ultimos30 } = data
-  const [tienePin, rutinasAsignadas, rutinasTodas, entrenamientos] = await Promise.all([socioTienePin(id), getRutinasDeSocio(id), getRutinas(), getEntrenamientosSocio(id)])
+  const [tienePin, rutinasAsignadas, rutinasTodas, entrenamientos, ultimosAvisos] = await Promise.all([socioTienePin(id), getRutinasDeSocio(id), getRutinas(), getEntrenamientosSocio(id), getUltimosAvisos()])
   const e = ESTILO_ESTADO[socio.estado.estado]
   const debe = socio.estado.estado === "vencido" || socio.estado.estado === "en_gracia"
 
@@ -60,6 +62,7 @@ export default async function SocioPage({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          <BotonAvisar socio={aAviso(socio)} ultimoAviso={ultimosAvisos[socio.id]} size="lg" />
           <BotonAccion accion={{ tipo: "llegada", socioId: socio.id }} variant={debe ? "outline" : "default"} size="lg">
             <DoorOpen /> Registrar llegada
           </BotonAccion>

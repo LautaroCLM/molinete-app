@@ -194,3 +194,12 @@ Desde su perfil (con PIN), en "Tu rutina" el socio toca **Empezar entrenamiento*
 
 - **Socio** (perfil con PIN): chip de **racha** (semanas seguidas, lunes a domingo, con al menos una asistencia) y **"Ver mi progreso"**: gráfico por ejercicio de fuerza estimada (1RM) o peso máximo, con el avance en kg. Gráfico SVG propio (sin librerías) en `src/app/q/[token]/grafico-progreso.tsx`.
 - **Personal** (ficha del socio, dueño y recepción): panel **Entrenamientos** con sesiones y volumen de 30 días, récords, evolución por ejercicio (Recharts) y últimos entrenamientos. Solo lectura: las tablas de entrenamientos no se pueden escribir directo.
+
+### Avisos de cuota por WhatsApp
+
+Con un clic: abre WhatsApp (wa.me) con el mensaje escrito y registra quién avisó y cuándo (tabla `recordatorios`); el personal solo aprieta enviar. No usa la API de WhatsApp: no tiene costo ni necesita aprobación de Meta.
+
+- **Dónde:** botón **Avisar cuotas** en Socios (lista de por vencer y vencidas, una por una), ícono en las listas del Inicio, botón en la ficha y opción en el menú de cada socio. Solo aparece si la cuota está por vencer o vencida y el teléfono sirve (`src/lib/whatsapp.ts` lo normaliza a 549 + área + número, sin 0 ni 15).
+- **Mensajes:** el dueño los edita en Configuración → "Mensajes de WhatsApp" (variables `{nombre}`, `{gimnasio}`, `{plan}`, `{cuando}`, `{vence}`); vacío = texto original.
+- "Avisado hace…" evita avisar dos veces al mismo socio (45 días de memoria).
+- La app de escritorio (0.1.1) abre estos enlaces en el navegador del sistema.

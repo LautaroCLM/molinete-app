@@ -341,6 +341,17 @@ export async function getEntrenamientosSocio(socioId: string): Promise<DatosEntr
   }
 }
 
+// ---------- Avisos de cuota por WhatsApp ----------
+/** Último aviso enviado a cada socio (últimos 45 días): { socioId: fecha ISO }. */
+export async function getUltimosAvisos(): Promise<Record<string, string>> {
+  const sb = await db()
+  const desde = new Date(Date.now() - 45 * 86400e3).toISOString()
+  const filas = await todas((d, h) => sb.from("recordatorios").select("id, socio_id, fecha").gte("fecha", desde).order("fecha", { ascending: false }).order("id").range(d, h))
+  const mapa: Record<string, string> = {}
+  for (const f of filas) if (!mapa[f.socio_id]) mapa[f.socio_id] = f.fecha
+  return mapa
+}
+
 // ---------- Usuarios ----------
 export const getUsuarios = cache(async (): Promise<Usuario[]> => {
   const sb = await db()

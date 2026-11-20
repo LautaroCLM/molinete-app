@@ -64,6 +64,8 @@ export const gym: Gym = {
   telefono: "11 4222-8190",
   email: "hola@fuerzasur.com.ar",
   logoUrl: null,
+  msgPorVencer: null,
+  msgVencida: null,
   config: {
     vencimiento: { tipo: "dias_desde_pago", dias: 30 },
     diasGracia: 5,

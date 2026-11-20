@@ -26,6 +26,8 @@ export const mapGym = (g: Fila<"gyms">): Gym => ({
   telefono: g.telefono,
   email: g.email,
   logoUrl: g.logo_url,
+  msgPorVencer: g.msg_por_vencer,
+  msgVencida: g.msg_vencida,
   config: {
     vencimiento:
       g.venc_tipo === "dia_fijo" ? { tipo: "dia_fijo", dia: g.venc_dia } : { tipo: "dias_desde_pago", dias: g.venc_dias },

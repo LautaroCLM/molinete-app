@@ -1,3 +1,5 @@
+import { BotonAvisar } from "@/features/avisos/boton-avisar"
+import { aAviso } from "@/features/avisos/a-aviso"
 import { SocioAvatar } from "@/components/shared/socio-avatar"
 import Link from "next/link"
 import { PackageOpen, Wallet, DoorOpen, ChevronRight } from "lucide-react"
@@ -7,7 +9,7 @@ import { EstadoBadge } from "@/components/shared/estado-badge"
 import { BotonAccion } from "@/components/shared/boton-accion"
 import { Button } from "@/components/ui/button"
 import { GraficoAsistenciasHora, GraficoIngresosMes } from "@/features/dashboard/graficos"
-import { getAsistencias, getCajaAbierta, getDashboard, getSesion } from "@/lib/data"
+import { getAsistencias, getCajaAbierta, getDashboard, getSesion, getUltimosAvisos } from "@/lib/data"
 import { puede } from "@/lib/permissions"
 import { fechaLarga, hora, num, pesos, fechaHora } from "@/lib/format"
 import { MEDIOS_PAGO } from "@/lib/labels"
@@ -22,10 +24,11 @@ function saludo() {
 
 export default async function DashboardPage() {
   const { usuario } = await getSesion()
-  const [d, llegadas, miCaja] = await Promise.all([
+  const [d, llegadas, miCaja, ultimos] = await Promise.all([
     getDashboard(),
     getAsistencias({ limite: 8 }),
     getCajaAbierta(usuario.id),
+    getUltimosAvisos(),
   ])
   const verTotales = puede(usuario.rol, "dashboard.totales")
   const dif = d.asistenciasHoy - d.asistenciasAyer
@@ -139,7 +142,7 @@ export default async function DashboardPage() {
           }
           contenidoClassName="px-2 pb-2"
         >
-          <ListaSocios socios={d.porVencer.slice(0, 7)} accion="Cobrar" />
+          <ListaSocios socios={d.porVencer.slice(0, 7)} accion="Cobrar" ultimos={ultimos} />
         </Panel>
         <Panel
           titulo="Cuotas vencidas"
@@ -154,6 +157,7 @@ export default async function DashboardPage() {
           <ListaSocios
             socios={d.vencidos.sort((a, b) => (b.estado.dias ?? -999) - (a.estado.dias ?? -999)).slice(0, 7)}
             accion="Cobrar"
+            ultimos={ultimos}
           />
         </Panel>
         {verTotales ? <UltimasLlegadas llegadas={llegadas} /> : null}
@@ -173,7 +177,7 @@ function resumenMedios(porMedio: Record<MedioPago, number>) {
 
 type SocioLista = Awaited<ReturnType<typeof getDashboard>>["porVencer"][number]
 
-function ListaSocios({ socios, accion }: { socios: SocioLista[]; accion: string }) {
+function ListaSocios({ socios, accion, ultimos }: { socios: SocioLista[]; accion: string; ultimos: Record<string, string> }) {
   if (socios.length === 0) return <p className="px-3 py-6 text-center text-sm text-muted-foreground">Nadie por acá. Todo en orden.</p>
   return (
     <ul className="divide-y">
@@ -189,6 +193,7 @@ function ListaSocios({ socios, accion }: { socios: SocioLista[]; accion: string 
           <EstadoBadge estado={s.estado.estado} className="hidden sm:inline-flex">
             {s.estado.resumen.replace(", está en días de gracia", "")}
           </EstadoBadge>
+          <BotonAvisar socio={aAviso(s)} ultimoAviso={ultimos[s.id]} compacto />
           <BotonAccion accion={{ tipo: "cobro", socioId: s.id }} variant="outline" size="sm">
             {accion}
           </BotonAccion>

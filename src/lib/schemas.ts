@@ -81,6 +81,11 @@ export const ajusteStockSchema = z.object({
   nota: z.string().trim().min(3, "Contá el motivo."),
 })
 
+export const mensajesWhatsAppSchema = z.object({
+  msgPorVencer: z.string().trim().max(500, "El mensaje es muy largo (hasta 500 letras).").default(""),
+  msgVencida: z.string().trim().max(500, "El mensaje es muy largo (hasta 500 letras).").default(""),
+})
+
 export const planSchema = z.object({
   nombre: z.string().trim().min(2, "Ingresá el nombre del plan."),
   tipo: z.enum(["mensual", "por_clase", "semanal", "paquete", "pase_diario"]),

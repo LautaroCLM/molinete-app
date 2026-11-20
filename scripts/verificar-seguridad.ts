@@ -348,6 +348,23 @@ async function main() {
   await admin.from("socio_pins").delete().eq("socio_id", juan.id)
   await admin.from("socio_dispositivos").delete().eq("socio_id", juan.id)
 
+  console.log("\nAvisos de cuota por WhatsApp")
+  const aviso = await sofia.rpc("registrar_aviso", { p_socio: juan.id, p_tipo: "vencida" })
+  chequeo("recepción registra un aviso", !aviso.error, aviso.error?.message)
+  chequeo("el aviso queda en la auditoría", ((await admin.from("auditoria").select("id").eq("gym_id", gymDemo.id).eq("accion", "Avisó por WhatsApp")).data ?? []).length >= 1)
+  chequeo("un tipo de aviso inválido se rechaza", !!(await sofia.rpc("registrar_aviso", { p_socio: juan.id, p_tipo: "otro" })).error)
+  chequeo("el dueño de otro gimnasio no puede avisar a socios ajenos", !!(await otro.rpc("registrar_aviso", { p_socio: juan.id, p_tipo: "vencida" })).error)
+  chequeo("sin sesión no se registran avisos", !!(await anon.rpc("registrar_aviso", { p_socio: juan.id, p_tipo: "vencida" })).error)
+  chequeo("el personal lee los avisos de su gimnasio", ((await sofia.from("recordatorios").select("id").eq("socio_id", juan.id)).data ?? []).length === 1)
+  chequeo("otro gimnasio y sin sesión no los ven", ((await otro.from("recordatorios").select("id")).data ?? []).length === 0 && ((await anon.from("recordatorios").select("id")).data ?? []).length === 0)
+  chequeo("no se pueden escribir avisos a mano", !!(await sofia.from("recordatorios").insert({ gym_id: gymDemo.id, socio_id: juan.id, tipo: "vencida" })).error)
+  const mensajeRecep = await sofia.from("gyms").update({ msg_vencida: "Hackeado" }).eq("id", gymDemo.id).select()
+  chequeo("recepción no puede cambiar los mensajes del gimnasio", !!mensajeRecep.error || (mensajeRecep.data ?? []).length === 0)
+  const mensajeDueno = await dueno.from("gyms").update({ msg_por_vencer: "Hola {nombre}, tu cuota {cuando}." }).eq("id", gymDemo.id).select("msg_por_vencer")
+  chequeo("el dueño guarda sus mensajes", !mensajeDueno.error && mensajeDueno.data?.[0]?.msg_por_vencer === "Hola {nombre}, tu cuota {cuando}.")
+  await admin.from("gyms").update({ msg_por_vencer: null, msg_vencida: null }).eq("id", gymDemo.id)
+  await admin.from("recordatorios").delete().eq("gym_id", gymDemo.id)
+
   console.log("\nAnular cobros y ventas")
   const planMensual = (await admin.from("planes").select("id, precio").eq("gym_id", gymDemo.id).eq("tipo", "mensual").eq("activo", true).limit(1).single()).data!
   const sociosTodos = (await admin.from("socios").select("id").eq("gym_id", gymDemo.id).eq("activo", true).not("vencimiento", "is", null).limit(1).single()).data!
