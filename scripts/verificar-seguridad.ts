@@ -248,6 +248,59 @@ async function main() {
   await admin.from("socio_pins").delete().eq("socio_id", juan.id)
   await admin.from("socio_dispositivos").delete().eq("socio_id", juan.id)
 
+  console.log("\nEntrenamientos del socio")
+  const vinc5 = (await anon.rpc("qr_vincular", { p_token: tokenNuevo, p_dni: "40112908" })).data as { dispositivo: string }
+  const base5 = { p_token: tokenNuevo, p_dispositivo: vinc5.dispositivo }
+  type R5 = Record<string, unknown> & { ok?: boolean; error?: string; records?: string[]; id?: string; repetido?: boolean; restantes?: number; series?: number }
+  const llamar5 = async (fn: string, extra: Record<string, unknown> = {}) => (await anon.rpc(fn as never, { ...base5, ...extra } as never)).data as unknown as R5
+  await llamar5("qr_pin_crear", { p_pin: "4821" })
+  const sesion = (cliente: string, press: [number, number][], sentadilla: [number, number][]) => ({
+    cliente_id: cliente, rutina_nombre: "Rutina de prueba", dia_nombre: "Día A",
+    ejercicios: [
+      { nombre: "Press de banca", series: press.map(([peso, reps]) => ({ peso, reps })) },
+      { nombre: "Sentadilla", series: sentadilla.map(([peso, reps]) => ({ peso, reps })) },
+    ],
+  })
+  const uuid = (n: number) => `00000000-0000-4000-8000-0000000000${String(n).padStart(2, "0")}`
+
+  chequeo("sin entrenamientos el historial viene vacío", Object.keys(((await llamar5("qr_entrenamiento_datos", { p_pin: "4821" })).ejercicios as object) ?? {}).length === 0)
+  chequeo("con un PIN incorrecto no se puede guardar", (await llamar5("qr_entrenamiento_guardar", { p_pin: "0000", p_datos: sesion(uuid(1), [[60, 8]], [[80, 5]]) })).error === "PIN_INCORRECTO")
+  chequeo("rechaza una sesión sin ejercicios", (await llamar5("qr_entrenamiento_guardar", { p_pin: "4821", p_datos: { cliente_id: uuid(1), ejercicios: [] } })).error === "DATOS_INVALIDOS")
+  chequeo("rechaza pesos o repeticiones imposibles", (await llamar5("qr_entrenamiento_guardar", { p_pin: "4821", p_datos: sesion(uuid(1), [[-5, 8]], [[80, 5]]) })).error === "DATOS_INVALIDOS")
+  chequeo("rechaza una serie vacía", (await llamar5("qr_entrenamiento_guardar", { p_pin: "4821", p_datos: { cliente_id: uuid(1), ejercicios: [{ nombre: "X", series: [{}] }] } })).error === "DATOS_INVALIDOS")
+
+  const s1 = await llamar5("qr_entrenamiento_guardar", { p_pin: "4821", p_datos: sesion(uuid(1), [[60, 8], [60, 8], [55, 10]], [[80, 5]]) })
+  chequeo("guarda el primer entrenamiento", s1.ok === true && s1.series === 4, JSON.stringify(s1))
+  chequeo("la primera vez no cuenta como récord", (s1.records ?? []).length === 0)
+  const s1b = await llamar5("qr_entrenamiento_guardar", { p_pin: "4821", p_datos: sesion(uuid(1), [[60, 8], [60, 8], [55, 10]], [[80, 5]]) })
+  const cuenta = Number(((await admin.from("entrenamientos").select("id", { count: "exact", head: true }).eq("socio_id", juan.id)).count) ?? 0)
+  chequeo("reenviar el mismo entrenamiento no lo duplica", s1b.repetido === true && s1b.id === s1.id && cuenta === 1, `${cuenta} sesiones`)
+
+  const hist = (await llamar5("qr_entrenamiento_datos", { p_pin: "4821" })).ejercicios as Record<string, { series: { peso: number; reps: number }[]; mejor_e1rm: number }>
+  chequeo("el historial devuelve la última vez y la mejor marca", hist["press de banca"]?.series.length === 3 && Math.abs(hist["press de banca"].mejor_e1rm - 76) < 0.01, JSON.stringify(hist["press de banca"]))
+
+  const s2 = await llamar5("qr_entrenamiento_guardar", { p_pin: "4821", p_datos: sesion(uuid(2), [[62.5, 8]], [[80, 4]]) })
+  chequeo("superar la marca anterior da récord (solo en ese ejercicio)", JSON.stringify(s2.records) === JSON.stringify(["Press de banca"]), JSON.stringify(s2.records))
+  const s3 = await llamar5("qr_entrenamiento_guardar", { p_pin: "4821", p_datos: sesion(uuid(3), [[50, 8]], [[70, 5]]) })
+  chequeo("una sesión más liviana no marca récord", s3.ok === true && (s3.records ?? []).length === 0)
+  const marcados = Number(((await admin.from("entrenamiento_series").select("id", { count: "exact", head: true }).eq("socio_id", juan.id).eq("es_record", true)).count) ?? 0)
+  chequeo("solo la mejor serie del ejercicio queda marcada", marcados === 1, `${marcados} marcadas`)
+
+  const perfil7 = ((await llamar5("qr_perfil", { p_pin: "4821" })) as unknown) as { entrenamientos?: unknown[]; entrenamientos_30?: number }
+  chequeo("el perfil muestra los últimos entrenamientos", (perfil7.entrenamientos ?? []).length === 3 && perfil7.entrenamientos_30 === 3)
+
+  if (gymOtro) {
+    const cruce5 = (await anon.rpc("qr_entrenamiento_guardar" as never, { p_token: gymOtro.qr_token, p_dispositivo: vinc5.dispositivo, p_pin: "4821", p_datos: sesion(uuid(9), [[60, 8]], [[80, 5]]) } as never)).data as unknown as R5
+    chequeo("un celular de otro gimnasio no puede guardar", cruce5?.error === "DISPOSITIVO_DESCONOCIDO")
+  }
+  chequeo("nadie lee los entrenamientos directo en la tabla", ((await anon.from("entrenamiento_series").select("id")).data ?? []).length === 0 && ((await sofia.from("entrenamientos").select("id")).data ?? []).length === 0)
+  for (let i = 0; i < 5; i++) await llamar5("qr_entrenamiento_guardar", { p_pin: "9999", p_datos: sesion(uuid(20 + i), [[60, 8]], [[80, 5]]) })
+  chequeo("guardar con PIN incorrecto repetido bloquea (mismo freno que el perfil)", (await llamar5("qr_entrenamiento_guardar", { p_pin: "4821", p_datos: sesion(uuid(30), [[60, 8]], [[80, 5]]) })).error === "BLOQUEADO")
+
+  await admin.from("entrenamientos").delete().eq("socio_id", juan.id)
+  await admin.from("socio_pins").delete().eq("socio_id", juan.id)
+  await admin.from("socio_dispositivos").delete().eq("socio_id", juan.id)
+
   console.log("\nAnular cobros y ventas")
   const planMensual = (await admin.from("planes").select("id, precio").eq("gym_id", gymDemo.id).eq("tipo", "mensual").eq("activo", true).limit(1).single()).data!
   const sociosTodos = (await admin.from("socios").select("id").eq("gym_id", gymDemo.id).eq("activo", true).not("vencimiento", "is", null).limit(1).single()).data!

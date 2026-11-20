@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Disco, ESTILO_ESTADO } from "@/components/shared/estado-badge"
 import { LogoMarca } from "@/components/layout/logo"
 import { BotonInstalarApp } from "@/components/layout/boton-instalar"
+import { toast } from "sonner"
+import { EntrenamientoVista } from "./entrenamiento"
 import { PerfilVista, PinPantalla } from "./perfil-socio"
 import {
   abrirPerfil,
@@ -15,7 +17,11 @@ import {
   estadoPerfil,
   ingresarConDispositivo,
   ingresarConDni,
+  cargarHistorial,
+  guardarEntrenamiento,
+  type Historial,
   type PerfilSocio,
+  type RutinaPerfil,
   type ResultadoPerfil,
   type ResultadoQR,
 } from "@/lib/actions/qr"
@@ -27,7 +33,8 @@ type Vista =
   | { tipo: "dni"; error?: string }
   | { tipo: "listo"; r: Listo }
   | { tipo: "pin"; dispositivo: string; r: Listo | null; modo: "crear" | "entrar"; error?: string; bloqueado: boolean }
-  | { tipo: "perfil"; dispositivo: string; r: Listo | null; perfil: PerfilSocio }
+  | { tipo: "perfil"; dispositivo: string; r: Listo | null; perfil: PerfilSocio; pin: string }
+  | { tipo: "entrenando"; dispositivo: string; r: Listo | null; perfil: PerfilSocio; pin: string; rutina: RutinaPerfil; diaIdx: number; historial: Historial }
   | { tipo: "sin-dispositivo" }
   | { tipo: "error"; mensaje: string }
 
@@ -126,7 +133,7 @@ export function IngresoQR({ token, gymId, gymNombre, modoApp }: { token: string;
     start(async () => {
       const f = actual.modo === "crear" ? crearPin : abrirPerfil
       const res: ResultadoPerfil = await f(token, actual.dispositivo, pin)
-      if (res.ok) return setVista({ tipo: "perfil", dispositivo: actual.dispositivo, r: actual.r, perfil: res.perfil })
+      if (res.ok) return setVista({ tipo: "perfil", dispositivo: actual.dispositivo, r: actual.r, perfil: res.perfil, pin })
       if (res.codigo === "DISPOSITIVO_DESCONOCIDO") return sesionPerdida()
       setVista({
         tipo: "pin",
@@ -136,6 +143,22 @@ export function IngresoQR({ token, gymId, gymNombre, modoApp }: { token: string;
         error: res.mensaje,
         bloqueado: res.codigo === "BLOQUEADO",
       })
+    })
+  }
+
+  function empezarEntrenamiento(v: Extract<Vista, { tipo: "perfil" }>, rutina: RutinaPerfil, diaIdx: number) {
+    start(async () => {
+      const h = await cargarHistorial(token, v.dispositivo, v.pin)
+      if (!h.ok) return h.codigo === "DISPOSITIVO_DESCONOCIDO" ? sesionPerdida() : void toast.error(h.mensaje)
+      setVista({ tipo: "entrenando", dispositivo: v.dispositivo, r: v.r, perfil: v.perfil, pin: v.pin, rutina, diaIdx, historial: h.historial })
+    })
+  }
+
+  /** Vuelve al perfil, trayendo de nuevo los datos para que se vea el entrenamiento recién guardado. */
+  function volverAlPerfil(v: Extract<Vista, { tipo: "entrenando" }>) {
+    start(async () => {
+      const res = await abrirPerfil(token, v.dispositivo, v.pin)
+      setVista({ tipo: "perfil", dispositivo: v.dispositivo, r: v.r, perfil: res.ok ? res.perfil : v.perfil, pin: v.pin })
     })
   }
 
@@ -239,6 +262,22 @@ export function IngresoQR({ token, gymId, gymNombre, modoApp }: { token: string;
                 : setVista({ tipo: "pin", dispositivo: vista.dispositivo, r: null, modo: "entrar", bloqueado: false })
             }
             onNoSoyYo={modoApp ? noSoyYo : undefined}
+            onEmpezar={(rutina, diaIdx) => empezarEntrenamiento(vista, rutina, diaIdx)}
+            pendiente={pendiente}
+          />
+        )}
+
+        {vista.tipo === "entrenando" && (
+          <EntrenamientoVista
+            key={`${vista.rutina.id}:${vista.diaIdx}`}
+            gymId={gymId}
+            socioId={vista.perfil.socioId}
+            rutina={vista.rutina}
+            diaIdx={vista.diaIdx}
+            historial={vista.historial}
+            onGuardar={(datos) => guardarEntrenamiento(token, vista.dispositivo, vista.pin, datos)}
+            onSalir={() => setVista({ tipo: "perfil", dispositivo: vista.dispositivo, r: vista.r, perfil: vista.perfil, pin: vista.pin })}
+            onTerminado={() => volverAlPerfil(vista)}
           />
         )}
 

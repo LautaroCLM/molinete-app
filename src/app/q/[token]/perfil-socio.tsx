@@ -1,11 +1,12 @@
 "use client"
 
+import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
-import { ArrowLeft, Delete, Dumbbell, IdCard, Mail, Phone, ShieldCheck } from "lucide-react"
+import { ArrowLeft, Delete, Dumbbell, IdCard, Mail, Phone, Play, ShieldCheck, Trophy } from "lucide-react"
 import { Disco, ESTILO_ESTADO } from "@/components/shared/estado-badge"
 import { SocioAvatar } from "@/components/shared/socio-avatar"
 import { CalendarioAsistencias } from "@/features/socios/calendario-asistencias"
-import { fecha } from "@/lib/format"
+import { fecha, num } from "@/lib/format"
 import type { PerfilSocio, RutinaPerfil } from "@/lib/actions/qr"
 import { cn } from "@/lib/utils"
 
@@ -140,7 +141,21 @@ function Tecla({ children, onClick, disabled, etiqueta }: { children: React.Reac
 }
 
 /** Perfil del socio: su estado, constancia, pagos (sin montos) y sus datos enmascarados. */
-export function PerfilVista({ perfil, onVolver, etiquetaVolver = "Volver", onNoSoyYo }: { perfil: PerfilSocio; onVolver: () => void; etiquetaVolver?: string; onNoSoyYo?: () => void }) {
+export function PerfilVista({
+  perfil,
+  onVolver,
+  etiquetaVolver = "Volver",
+  onNoSoyYo,
+  onEmpezar,
+  pendiente = false,
+}: {
+  perfil: PerfilSocio
+  onVolver: () => void
+  etiquetaVolver?: string
+  onNoSoyYo?: () => void
+  onEmpezar?: (rutina: RutinaPerfil, diaIdx: number) => void
+  pendiente?: boolean
+}) {
   const e = ESTILO_ESTADO[perfil.estado]
   const ultimos30 = perfil.ultimos30
   const datos = [
@@ -183,7 +198,34 @@ export function PerfilVista({ perfil, onVolver, etiquetaVolver = "Volver", onNoS
       </section>
       {perfil.recordatorio && <p className="rounded-xl border-2 border-dashed px-4 py-3 text-center font-semibold">{perfil.recordatorio}</p>}
 
-      {perfil.rutinas.length > 0 && <SeccionRutinas rutinas={perfil.rutinas} />}
+      {perfil.rutinas.length > 0 && <SeccionRutinas rutinas={perfil.rutinas} onEmpezar={onEmpezar} pendiente={pendiente} />}
+
+      {perfil.entrenamientos.length > 0 && (
+        <section className="rounded-2xl border bg-card p-5">
+          <h2 className="font-semibold">Tus entrenamientos</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {perfil.entrenamientos30 === 0 ? "Ninguno en los últimos 30 días." : `${perfil.entrenamientos30} ${perfil.entrenamientos30 === 1 ? "registrado" : "registrados"} en los últimos 30 días.`}
+          </p>
+          <ul className="mt-2 divide-y">
+            {perfil.entrenamientos.slice(0, 5).map((t, i) => (
+              <li key={i} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                <span className="min-w-0">
+                  <span className="block truncate font-medium">{t.dia || "Entrenamiento"}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {fecha(t.fecha)} · {t.series} {t.series === 1 ? "serie" : "series"}
+                    {t.volumen > 0 && ` · ${num(t.volumen)} kg`}
+                  </span>
+                </span>
+                {t.records > 0 && (
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-warn-soft px-2 py-0.5 text-xs font-bold text-warn">
+                    <Trophy className="size-3" /> {t.records}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="rounded-2xl border bg-card p-5">
         <h2 className="font-semibold">Tus asistencias</h2>
@@ -240,7 +282,7 @@ export function PerfilVista({ perfil, onVolver, etiquetaVolver = "Volver", onNoS
 }
 
 /** Rutinas del socio: arranca en el día que le toca hoy y puede mirar cualquier otro. */
-function SeccionRutinas({ rutinas }: { rutinas: RutinaPerfil[] }) {
+function SeccionRutinas({ rutinas, onEmpezar, pendiente }: { rutinas: RutinaPerfil[]; onEmpezar?: (rutina: RutinaPerfil, diaIdx: number) => void; pendiente: boolean }) {
   const [ri, setRi] = useState(0)
   const rutina = rutinas[ri] ?? rutinas[0]
   // Día elegido por rutina: sin elegir, el que le toca hoy.
@@ -317,6 +359,11 @@ function SeccionRutinas({ rutinas }: { rutinas: RutinaPerfil[] }) {
                 </li>
               ))}
             </ol>
+          )}
+          {onEmpezar && dia.ejercicios.length > 0 && (
+            <Button size="lg" className="mt-4 h-14 w-full text-lg" onClick={() => onEmpezar(rutina, di)} disabled={pendiente}>
+              <Play className="size-5" /> {pendiente ? "Abriendo…" : esHoy ? "Empezar entrenamiento" : "Entrenar este día"}
+            </Button>
           )}
         </>
       ) : (

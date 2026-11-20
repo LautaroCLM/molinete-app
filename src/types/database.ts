@@ -107,6 +107,70 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"entrenamiento_series": {
+                  Row: {
+                    "e1rm": number | null,"ejercicio": string,"entrenamiento_id": string,"es_record": boolean,"gym_id": string,"id": string,"orden": number,"peso": number | null,"repeticiones": number | null,"serie": number,"socio_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "e1rm"?: number | null,"ejercicio": string,"entrenamiento_id": string,"es_record"?: boolean,"gym_id": string,"id"?: string,"orden": number,"peso"?: number | null,"repeticiones"?: number | null,"serie": number,"socio_id": string
+                  }
+                  Update: {
+                    "e1rm"?: number | null,"ejercicio"?: string,"entrenamiento_id"?: string,"es_record"?: boolean,"gym_id"?: string,"id"?: string,"orden"?: number,"peso"?: number | null,"repeticiones"?: number | null,"serie"?: number,"socio_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "entrenamiento_series_entrenamiento_id_fkey"
+      columns: ["entrenamiento_id"]
+isOneToOne: false
+      referencedRelation: "entrenamientos"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "entrenamiento_series_gym_id_fkey"
+      columns: ["gym_id"]
+isOneToOne: false
+      referencedRelation: "gyms"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "entrenamiento_series_socio_id_fkey"
+      columns: ["socio_id"]
+isOneToOne: false
+      referencedRelation: "socios"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"entrenamientos": {
+                  Row: {
+                    "cliente_id": string,"dia_nombre": string,"finalizado_en": string,"gym_id": string,"id": string,"iniciado_en": string,"rutina_id": string | null,"rutina_nombre": string,"socio_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cliente_id": string,"dia_nombre"?: string,"finalizado_en"?: string,"gym_id": string,"id"?: string,"iniciado_en"?: string,"rutina_id"?: string | null,"rutina_nombre"?: string,"socio_id": string
+                  }
+                  Update: {
+                    "cliente_id"?: string,"dia_nombre"?: string,"finalizado_en"?: string,"gym_id"?: string,"id"?: string,"iniciado_en"?: string,"rutina_id"?: string | null,"rutina_nombre"?: string,"socio_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "entrenamientos_gym_id_fkey"
+      columns: ["gym_id"]
+isOneToOne: false
+      referencedRelation: "gyms"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "entrenamientos_rutina_id_fkey"
+      columns: ["rutina_id"]
+isOneToOne: false
+      referencedRelation: "rutinas"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "entrenamientos_socio_id_fkey"
+      columns: ["socio_id"]
+isOneToOne: false
+      referencedRelation: "socios"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"gyms": {
                   Row: {
                     "created_at": string,"dias_gracia": number,"dias_inactividad": number,"direccion": string,"email": string,"id": string,"localidad": string,"logo_url": string | null,"nombre": string,"qr_activo": boolean,"qr_token": string,"telefono": string,"venc_dia": number,"venc_dias": number,"venc_tipo": string,"zona_horaria": string
@@ -538,6 +602,9 @@ isOneToOne: false
             "_caja_abierta":
 { Args: { "p_usuario": string }; Returns: string
                            },
+"_qr_auth_pin":
+{ Args: { "p_dispositivo": string,"p_pin": string,"p_token": string }; Returns: Json
+                           },
 "_qr_perfil":
 { Args: { "p_socio": string }; Returns: Json
                            },
@@ -628,6 +695,12 @@ isOneToOne: false
                            },
 "qr_desvincular":
 { Args: { "p_dispositivo": string }; Returns: undefined
+                           },
+"qr_entrenamiento_datos":
+{ Args: { "p_dispositivo": string,"p_pin": string,"p_token": string }; Returns: Json
+                           },
+"qr_entrenamiento_guardar":
+{ Args: { "p_datos": Json,"p_dispositivo": string,"p_pin": string,"p_token": string }; Returns: Json
                            },
 "qr_gimnasio":
 { Args: { "p_token": string }; Returns: {

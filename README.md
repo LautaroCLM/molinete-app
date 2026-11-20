@@ -181,3 +181,11 @@ El socio puede instalar su propio acceso: en la pantalla de bienvenida del QR ap
 - Manifest propio por QR: `src/app/q/[token]/manifest.webmanifest/route.ts`.
 - Si el gimnasio regenera el QR (Configuración), las apps ya instaladas muestran "Este QR ya no funciona": el socio tiene que escanear el QR nuevo e instalar de nuevo.
 - Con la app en segundo plano más de 5 minutos, el perfil vuelve a pedir el PIN.
+
+### Registro de entrenamientos (socio)
+
+Desde su perfil (con PIN), en "Tu rutina" el socio toca **Empezar entrenamiento**: anota peso y repeticiones por serie (precargados con lo que hizo la última vez), marca cada serie con ✓ y arranca un temporizador de descanso (según el descanso de la rutina; −15 s / +15 s / Saltar). Al terminar se guarda y se anuncian los **récords** (mejor 1RM estimado de Epley por ejercicio; la primera vez no cuenta). Si cierra la app a mitad, retoma donde estaba (borrador local de hasta 8 h). El perfil lista sus últimos entrenamientos.
+
+- Base: `entrenamientos` y `entrenamiento_series` (sin políticas: solo se usan por funciones con celular vinculado + PIN, con el mismo freno de intentos del perfil).
+- Guardar es idempotente (`cliente_id`): reintentar no duplica.
+- Pantalla: `src/app/q/[token]/entrenamiento.tsx`; utilidades en `src/lib/entrenamiento.ts`.

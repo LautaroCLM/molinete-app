@@ -135,6 +135,15 @@ export interface RutinaPerfil {
   dias: { nombre: string; ejercicios: { nombre: string; series: string; repeticiones: string; descanso: string; nota: string }[] }[]
 }
 
+export interface EntrenamientoResumen {
+  fecha: string
+  rutina: string
+  dia: string
+  series: number
+  volumen: number
+  records: number
+}
+
 export interface PerfilSocio {
   socioId: string
   nombre: string
@@ -152,6 +161,10 @@ export interface PerfilSocio {
   ultimos30: number
   /** Rutinas asignadas (las más recientes primero). */
   rutinas: RutinaPerfil[]
+  /** Últimos entrenamientos registrados. */
+  entrenamientos: EntrenamientoResumen[]
+  /** Cuántos entrenamientos registró en los últimos 30 días. */
+  entrenamientos30: number
   /** Últimos pagos, sin montos. */
   pagos: { fecha: string; plan: string | null; hasta: string | null }[]
   dni: string | null
@@ -175,6 +188,8 @@ interface CrudoPerfil extends Crudo {
   asistencias?: string[]
   pagos?: { fecha: string; plan: string | null; hasta: string | null }[]
   rutinas?: RutinaPerfil[]
+  entrenamientos?: EntrenamientoResumen[]
+  entrenamientos_30?: number
   dni?: string | null
   telefono?: string | null
   email?: string | null
@@ -218,6 +233,8 @@ function aPerfil(r: CrudoPerfil | null): ResultadoPerfil {
       ultimos30: (r.asistencias ?? []).filter((a) => new Date(a).getTime() >= Date.now() - 30 * 24 * 3600e3).length,
       pagos: r.pagos ?? [],
       rutinas: r.rutinas ?? [],
+      entrenamientos: r.entrenamientos ?? [],
+      entrenamientos30: r.entrenamientos_30 ?? 0,
       dni: r.dni ?? null,
       telefono: r.telefono ?? null,
       email: r.email ?? null,
@@ -254,4 +271,76 @@ export async function abrirPerfil(token: string, dispositivo: string, pin: strin
   const sb = await supabaseServer()
   const { data, error } = await sb.rpc("qr_perfil", { p_token: token, p_dispositivo: dispositivo, p_pin: pin })
   return aPerfil(error ? null : (data as unknown as CrudoPerfil))
+}
+
+// ---------- Registro de entrenamientos ----------
+export interface HistorialEjercicio {
+  fecha: string
+  series: { peso: number | null; reps: number | null }[]
+  mejorE1rm: number | null
+  mejorPeso: number | null
+}
+/** Historial por ejercicio (clave: nombre en minúsculas): la última vez y las mejores marcas. */
+export type Historial = Record<string, HistorialEjercicio>
+
+export type ResultadoHistorial = { ok: true; historial: Historial } | { ok: false; codigo: string; mensaje: string }
+
+export interface DatosEntrenamiento {
+  clienteId: string
+  rutinaId: string | null
+  rutinaNombre: string
+  diaNombre: string
+  iniciadoEn: string
+  ejercicios: { nombre: string; series: { peso: number | null; reps: number | null }[] }[]
+}
+
+export type ResultadoGuardado =
+  | { ok: true; series: number; volumen: number; records: string[] }
+  | { ok: false; codigo: string; mensaje: string }
+
+const MSG_ENTRENO: Record<string, string> = {
+  DATOS_INVALIDOS: "Revisá los pesos y las repeticiones: hay valores que no se pueden guardar.",
+}
+
+function falloEntreno(r: CrudoPerfil | null): { ok: false; codigo: string; mensaje: string } {
+  const f = aPerfil(r ?? { ok: false, error: "ERROR" })
+  const codigo = r?.error ?? "ERROR"
+  if (!f.ok && MSG_ENTRENO[codigo]) return { ok: false, codigo, mensaje: MSG_ENTRENO[codigo] }
+  return f.ok ? { ok: false, codigo, mensaje: "No pudimos guardar tu entrenamiento." } : { ok: false, codigo: f.codigo, mensaje: f.mensaje }
+}
+
+/** Trae la última vez y las mejores marcas de cada ejercicio (para precargar y detectar récords). */
+export async function cargarHistorial(token: string, dispositivo: string, pin: string): Promise<ResultadoHistorial> {
+  if (!esDispositivo(dispositivo) || !/^\d{4}$/.test(pin)) return { ok: false, codigo: "DISPOSITIVO_DESCONOCIDO", mensaje: MENSAJES.DISPOSITIVO_DESCONOCIDO }
+  const sb = await supabaseServer()
+  const { data, error } = await sb.rpc("qr_entrenamiento_datos", { p_token: token, p_dispositivo: dispositivo, p_pin: pin })
+  const r = data as unknown as (CrudoPerfil & { ejercicios?: Record<string, { fecha: string; series: { peso: number | null; reps: number | null }[]; mejor_e1rm: number | null; mejor_peso: number | null }> }) | null
+  if (error || !r || !r.ok) return falloEntreno(error ? null : r)
+  const historial: Historial = {}
+  for (const [k, v] of Object.entries(r.ejercicios ?? {})) {
+    historial[k] = { fecha: v.fecha, series: v.series ?? [], mejorE1rm: v.mejor_e1rm, mejorPeso: v.mejor_peso }
+  }
+  return { ok: true, historial }
+}
+
+/** Guarda un entrenamiento terminado. Es seguro reintentar: el mismo clienteId no se duplica. */
+export async function guardarEntrenamiento(token: string, dispositivo: string, pin: string, datos: DatosEntrenamiento): Promise<ResultadoGuardado> {
+  if (!esDispositivo(dispositivo) || !/^\d{4}$/.test(pin)) return { ok: false, codigo: "DISPOSITIVO_DESCONOCIDO", mensaje: MENSAJES.DISPOSITIVO_DESCONOCIDO }
+  const sb = await supabaseServer()
+  const { data, error } = await sb.rpc("qr_entrenamiento_guardar", {
+    p_token: token,
+    p_dispositivo: dispositivo,
+    p_pin: pin,
+    p_datos: {
+      cliente_id: datos.clienteId,
+      rutina_id: datos.rutinaId,
+      rutina_nombre: datos.rutinaNombre,
+      dia_nombre: datos.diaNombre,
+      iniciado_en: datos.iniciadoEn,
+      ejercicios: datos.ejercicios,
+    },
+  })
+  const r = data as unknown as (CrudoPerfil & { series?: number; volumen?: number; records?: string[] }) | null
+  if (error || !r || !r.ok) return falloEntreno(error ? null : r)
+  return { ok: true, series: r.series ?? 0, volumen: Number(r.volumen ?? 0), records: r.records ?? [] }
 }
