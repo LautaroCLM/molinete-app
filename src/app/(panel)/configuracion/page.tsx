@@ -1,5 +1,6 @@
 import { MensajesWhatsApp } from "@/features/configuracion/mensajes-whatsapp"
 import { LogoGimnasio } from "@/features/configuracion/logo-gimnasio"
+import { MarcaAppSocio } from "@/features/configuracion/marca-app-socio"
 import { GimnasioForm } from "@/features/configuracion/gimnasio-form"
 import { getSesion } from "@/lib/data"
 
@@ -10,6 +11,7 @@ export default async function ConfigGimnasioPage() {
   return (
     <div className="flex flex-col gap-6">
       <LogoGimnasio gym={gym} />
+      <MarcaAppSocio gym={gym} />
       <GimnasioForm gym={gym} />
       <MensajesWhatsApp gym={gym} />
     </div>

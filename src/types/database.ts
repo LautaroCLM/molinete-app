@@ -193,14 +193,14 @@ isOneToOne: false
                   ]
                 },"gyms": {
                   Row: {
-                    "created_at": string,"dias_gracia": number,"dias_inactividad": number,"direccion": string,"email": string,"id": string,"localidad": string,"logo_url": string | null,"msg_por_vencer": string | null,"msg_vencida": string | null,"nombre": string,"qr_activo": boolean,"qr_token": string,"telefono": string,"venc_dia": number,"venc_dias": number,"venc_tipo": string,"zona_horaria": string
+                    "color_acento": string | null,"created_at": string,"dias_gracia": number,"dias_inactividad": number,"direccion": string,"email": string,"id": string,"localidad": string,"logo_url": string | null,"msg_bienvenida": string | null,"msg_por_vencer": string | null,"msg_vencida": string | null,"nombre": string,"qr_activo": boolean,"qr_token": string,"telefono": string,"venc_dia": number,"venc_dias": number,"venc_tipo": string,"zona_horaria": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"dias_gracia"?: number,"dias_inactividad"?: number,"direccion"?: string,"email"?: string,"id"?: string,"localidad"?: string,"logo_url"?: string | null,"msg_por_vencer"?: string | null,"msg_vencida"?: string | null,"nombre": string,"qr_activo"?: boolean,"qr_token"?: string,"telefono"?: string,"venc_dia"?: number,"venc_dias"?: number,"venc_tipo"?: string,"zona_horaria"?: string
+                    "color_acento"?: string | null,"created_at"?: string,"dias_gracia"?: number,"dias_inactividad"?: number,"direccion"?: string,"email"?: string,"id"?: string,"localidad"?: string,"logo_url"?: string | null,"msg_bienvenida"?: string | null,"msg_por_vencer"?: string | null,"msg_vencida"?: string | null,"nombre": string,"qr_activo"?: boolean,"qr_token"?: string,"telefono"?: string,"venc_dia"?: number,"venc_dias"?: number,"venc_tipo"?: string,"zona_horaria"?: string
                   }
                   Update: {
-                    "created_at"?: string,"dias_gracia"?: number,"dias_inactividad"?: number,"direccion"?: string,"email"?: string,"id"?: string,"localidad"?: string,"logo_url"?: string | null,"msg_por_vencer"?: string | null,"msg_vencida"?: string | null,"nombre"?: string,"qr_activo"?: boolean,"qr_token"?: string,"telefono"?: string,"venc_dia"?: number,"venc_dias"?: number,"venc_tipo"?: string,"zona_horaria"?: string
+                    "color_acento"?: string | null,"created_at"?: string,"dias_gracia"?: number,"dias_inactividad"?: number,"direccion"?: string,"email"?: string,"id"?: string,"localidad"?: string,"logo_url"?: string | null,"msg_bienvenida"?: string | null,"msg_por_vencer"?: string | null,"msg_vencida"?: string | null,"nombre"?: string,"qr_activo"?: boolean,"qr_token"?: string,"telefono"?: string,"venc_dia"?: number,"venc_dias"?: number,"venc_tipo"?: string,"zona_horaria"?: string
                   }
                   Relationships: [
                     
@@ -774,7 +774,7 @@ isOneToOne: false
                            },
 "qr_gimnasio":
 { Args: { "p_token": string }; Returns: {
-              "activo": boolean,"id": string,"nombre": string
+              "activo": boolean,"color_acento": string,"id": string,"logo_url": string,"msg_bienvenida": string,"nombre": string
             }[]
                            },
 "qr_ingresar":

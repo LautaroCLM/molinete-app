@@ -27,6 +27,10 @@ export interface Gym {
   telefono: string
   email: string
   logoUrl: string | null
+  /** Color principal (#rrggbb) de la app del socio; null = el de Molinete. */
+  colorAcento: string | null
+  /** Frase de bienvenida de la app del socio; null = sin frase. */
+  msgBienvenida: string | null
   /** Mensaje de WhatsApp para cuotas por vencer; null = texto por defecto. */
   msgPorVencer: string | null
   /** Mensaje de WhatsApp para cuotas vencidas; null = texto por defecto. */

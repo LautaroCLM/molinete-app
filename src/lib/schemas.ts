@@ -86,6 +86,11 @@ export const mensajesWhatsAppSchema = z.object({
   msgVencida: z.string().trim().max(500, "El mensaje es muy largo (hasta 500 letras).").default(""),
 })
 
+export const marcaSchema = z.object({
+  colorAcento: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Elegí un color válido.").or(z.literal("")).default(""),
+  msgBienvenida: z.string().trim().max(140, "La frase es muy larga (hasta 140 letras).").default(""),
+})
+
 export const planSchema = z.object({
   nombre: z.string().trim().min(2, "Ingresá el nombre del plan."),
   tipo: z.enum(["mensual", "por_clase", "semanal", "paquete", "pase_diario"]),

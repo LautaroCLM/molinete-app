@@ -145,6 +145,7 @@ function Tecla({ children, onClick, disabled, etiqueta }: { children: React.Reac
 /** Perfil del socio: su estado, constancia, pagos (sin montos) y sus datos enmascarados. */
 export function PerfilVista({
   perfil,
+  bienvenida,
   onVolver,
   etiquetaVolver = "Volver",
   onNoSoyYo,
@@ -157,6 +158,7 @@ export function PerfilVista({
   pendiente = false,
 }: {
   perfil: PerfilSocio
+  bienvenida?: string | null
   onVolver: () => void
   etiquetaVolver?: string
   onNoSoyYo?: () => void
@@ -181,6 +183,8 @@ export function PerfilVista({
       <button onClick={onVolver} className="inline-flex items-center gap-1.5 self-start text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" /> {etiquetaVolver}
       </button>
+
+      {bienvenida && <p className="rounded-xl border-l-4 border-primary bg-muted/50 px-4 py-3 text-sm font-medium">{bienvenida}</p>}
 
       <div className="flex items-center gap-4">
         <SocioAvatar id={perfil.socioId} className="size-20" />

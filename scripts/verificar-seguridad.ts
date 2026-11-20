@@ -546,6 +546,19 @@ async function main() {
   chequeo("rechaza archivos que no son imagen", !!texto.error)
   await admin.storage.from("logos").remove([ruta])
 
+  // --- Marca del gimnasio en la app del socio ---
+  const marcaOk = await dueno.from("gyms").update({ color_acento: "#7c3aed", msg_bienvenida: "¡Dale que hoy se entrena!" }).eq("id", gymDemo.id)
+  chequeo("el dueño personaliza color y bienvenida", !marcaOk.error, marcaOk.error?.message)
+  const marcaPublica = ((await anon.rpc("qr_gimnasio", { p_token: tokenNuevo })).data ?? [])[0]
+  chequeo("el QR público trae color, bienvenida y logo del gimnasio", marcaPublica?.color_acento === "#7c3aed" && marcaPublica?.msg_bienvenida === "¡Dale que hoy se entrena!" && "logo_url" in (marcaPublica ?? {}))
+  chequeo("rechaza un color que no es #rrggbb", !!(await dueno.from("gyms").update({ color_acento: "rojo" }).eq("id", gymDemo.id)).error)
+  chequeo("rechaza una bienvenida de más de 140 letras", !!(await dueno.from("gyms").update({ msg_bienvenida: "x".repeat(141) }).eq("id", gymDemo.id)).error)
+  const marcaRecep = await sofia.from("gyms").update({ color_acento: "#000000" }).eq("id", gymDemo.id).select("id")
+  chequeo("recepción no puede cambiar la marca", (marcaRecep.data ?? []).length === 0)
+  const marcaOtro = await otro.from("gyms").update({ color_acento: "#000000" }).eq("id", gymDemo.id).select("id")
+  chequeo("el dueño de otro gimnasio no puede cambiarla", (marcaOtro.data ?? []).length === 0)
+  await admin.from("gyms").update({ color_acento: null, msg_bienvenida: null }).eq("id", gymDemo.id)
+
   // Limpieza del gimnasio de prueba
   if (nuevo.data) await admin.from("gyms").delete().eq("id", nuevo.data)
   const u = (await otro.auth.getUser()).data.user

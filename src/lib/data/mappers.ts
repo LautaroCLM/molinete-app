@@ -26,6 +26,8 @@ export const mapGym = (g: Fila<"gyms">): Gym => ({
   telefono: g.telefono,
   email: g.email,
   logoUrl: g.logo_url,
+  colorAcento: g.color_acento,
+  msgBienvenida: g.msg_bienvenida,
   msgPorVencer: g.msg_por_vencer,
   msgVencida: g.msg_vencida,
   config: {

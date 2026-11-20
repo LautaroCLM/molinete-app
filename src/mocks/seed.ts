@@ -64,6 +64,8 @@ export const gym: Gym = {
   telefono: "11 4222-8190",
   email: "hola@fuerzasur.com.ar",
   logoUrl: null,
+  colorAcento: null,
+  msgBienvenida: null,
   msgPorVencer: null,
   msgVencida: null,
   config: {

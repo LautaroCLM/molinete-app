@@ -217,3 +217,7 @@ Desde su perfil (con PIN), el socio puede **armar sus propias rutinas** ("Crear 
 - **Privadas:** el personal no las ve ni por la pantalla ni por la base (`rutinas.socio_id`, políticas RLS), y no puede asignarlas, editarlas ni archivarlas. El historial de entrenamientos que ve el personal las anota solo como "Rutina propia". Entre socios tampoco se ven.
 - **Mis récords:** botón "Ver mis récords" (mejor marca, fuerza estimada y récords batidos por ejercicio).
 - Código: `src/app/q/[token]/rutina-propia-editor.tsx`; funciones `qr_rutina_guardar`, `qr_rutina_eliminar`, `qr_biblioteca` y `qr_records`.
+
+### Marca del gimnasio en la app del socio
+
+En Configuración → Gimnasio, el dueño elige el **color principal** y una **frase de bienvenida**; el logo es el que ya sube ahí. La app del socio (`/q/<token>`) muestra el logo en el encabezado, repinta botones y acentos con el color, usa la frase en vez de "¡Buen entrenamiento!" y la repite en el perfil. La app instalada toma el logo como ícono (`/q/<token>/icono/<tamaño>`, PNG generado sobre el color) y el color como barra del sistema. Sin personalizar, queda la marca de Molinete. Datos: `gyms.color_acento`, `gyms.msg_bienvenida`; `qr_gimnasio` los devuelve.

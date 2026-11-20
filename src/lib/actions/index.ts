@@ -22,6 +22,7 @@ import {
   ejercicioBibliotecaSchema,
   gimnasioSchema,
   loginSchema,
+  marcaSchema,
   mensajesWhatsAppSchema,
   movimientoSchema,
   planSchema,
@@ -465,6 +466,22 @@ export async function guardarMensajesWhatsApp(datos: unknown): Promise<Resultado
     const { gym } = await exigir("configuracion.ver")
     const sb = await supabaseServer()
     const { error } = await sb.from("gyms").update({ msg_por_vencer: r.data.msgPorVencer || null, msg_vencida: r.data.msgVencida || null }).eq("id", gym.id)
+    if (error) return { ok: false, error: traducir(error) }
+  } catch (e) {
+    return { ok: false, error: traducir(e as Error) }
+  }
+  refrescar()
+  return { ok: true }
+}
+
+/** Dueño: color y frase de bienvenida de la app del socio. Vacío = sin personalizar. */
+export async function guardarMarca(datos: unknown): Promise<ResultadoAccion> {
+  const r = marcaSchema.safeParse(datos)
+  if (!r.success) return invalido(r)!
+  try {
+    const { gym } = await exigir("configuracion.ver")
+    const sb = await supabaseServer()
+    const { error } = await sb.from("gyms").update({ color_acento: r.data.colorAcento || null, msg_bienvenida: r.data.msgBienvenida || null }).eq("id", gym.id)
     if (error) return { ok: false, error: traducir(error) }
   } catch (e) {
     return { ok: false, error: traducir(e as Error) }

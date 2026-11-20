@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
+import { useEffect, useState, useTransition, type CSSProperties } from "react"
+import { estiloAcento } from "@/lib/color"
 import { Check, Clock, Info, UserRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -68,7 +69,13 @@ function guardar(gymId: string, valor: string | null) {
   }
 }
 
-export function IngresoQR({ token, gymId, gymNombre, modoApp }: { token: string; gymId: string; gymNombre: string; modoApp: boolean }) {
+export interface MarcaGym {
+  logoUrl: string | null
+  color: string | null
+  bienvenida: string | null
+}
+
+export function IngresoQR({ token, gymId, gymNombre, modoApp, marca }: { token: string; gymId: string; gymNombre: string; modoApp: boolean; marca: MarcaGym }) {
   const [vista, setVista] = useState<Vista>({ tipo: "cargando" })
   const [pendiente, start] = useTransition()
 
@@ -209,9 +216,14 @@ export function IngresoQR({ token, gymId, gymNombre, modoApp }: { token: string;
   }, [enPerfil])
 
   return (
-    <main className="flex min-h-svh flex-col bg-background">
-      <header className="flex items-center gap-2.5 bg-sidebar px-5 py-4 text-white [--logo-hole:var(--sidebar)]">
-        <LogoMarca className="size-6" />
+    <main className="flex min-h-svh flex-col bg-background" style={estiloAcento(marca.color) as CSSProperties}>
+      <header className={cn("flex items-center gap-2.5 bg-sidebar px-5 py-4 text-white [--logo-hole:var(--sidebar)]", marca.color && "border-b-4 border-primary")}>
+        {marca.logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={marca.logoUrl} alt="" className="size-9 rounded-lg bg-white object-cover" />
+        ) : (
+          <LogoMarca className="size-6" />
+        )}
         <span className="truncate font-semibold">{gymNombre}</span>
       </header>
 
@@ -261,7 +273,7 @@ export function IngresoQR({ token, gymId, gymNombre, modoApp }: { token: string;
           </form>
         )}
 
-        {vista.tipo === "listo" && <Resultado r={vista.r} noSoyYo={noSoyYo} verPerfil={() => verPerfil(vista.r)} pendiente={pendiente} />}
+        {vista.tipo === "listo" && <Resultado bienvenida={marca.bienvenida} r={vista.r} noSoyYo={noSoyYo} verPerfil={() => verPerfil(vista.r)} pendiente={pendiente} />}
 
         {vista.tipo === "pin" && (
           <PinPantalla
@@ -278,6 +290,7 @@ export function IngresoQR({ token, gymId, gymNombre, modoApp }: { token: string;
         {vista.tipo === "perfil" && (
           <PerfilVista
             perfil={vista.perfil}
+            bienvenida={marca.bienvenida}
             etiquetaVolver={vista.r ? "Volver" : "Cerrar perfil"}
             onVolver={() =>
               vista.r
@@ -352,7 +365,7 @@ export function IngresoQR({ token, gymId, gymNombre, modoApp }: { token: string;
   )
 }
 
-function Resultado({ r, noSoyYo, verPerfil, pendiente }: { r: Extract<ResultadoQR, { ok: true }>; noSoyYo: () => void; verPerfil: () => void; pendiente: boolean }) {
+function Resultado({ bienvenida, r, noSoyYo, verPerfil, pendiente }: { bienvenida: string | null; r: Extract<ResultadoQR, { ok: true }>; noSoyYo: () => void; verPerfil: () => void; pendiente: boolean }) {
   const e = ESTILO_ESTADO[r.estado]
   return (
     <div className="flex flex-1 flex-col">
@@ -380,7 +393,7 @@ function Resultado({ r, noSoyYo, verPerfil, pendiente }: { r: Extract<ResultadoQ
       </Button>
       <BotonInstalarApp className="mt-3 h-12" />
 
-      <p className="mt-5 text-center text-muted-foreground">¡Buen entrenamiento!</p>
+      <p className="mt-5 text-center text-muted-foreground">{bienvenida ?? "¡Buen entrenamiento!"}</p>
 
       <button onClick={noSoyYo} className="mt-auto pt-10 text-center text-sm text-muted-foreground underline underline-offset-4">
         No soy {r.nombre}

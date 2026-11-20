@@ -1,4 +1,5 @@
 import { supabaseServer } from "@/lib/supabase/server"
+import { COLOR_RE } from "@/lib/color"
 
 export const dynamic = "force-dynamic"
 
@@ -14,6 +15,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   if (!gym) return new Response("No encontrado", { status: 404 })
 
   const nombre = gym.nombre as string
+  const color = gym.color_acento && COLOR_RE.test(gym.color_acento) ? gym.color_acento : "#0b100e"
   const manifiesto = {
     id: `/q/${token}`,
     name: `${nombre} · Mi perfil`,
@@ -24,14 +26,20 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
     scope: `/q/${token}`,
     display: "standalone",
     orientation: "portrait",
-    background_color: "#0b100e",
-    theme_color: "#0b100e",
+    background_color: color,
+    theme_color: color,
     categories: ["health", "fitness"],
-    icons: [
-      { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
-    ],
+    icons: gym.logo_url
+      ? [
+          { src: `/q/${token}/icono/192`, sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: `/q/${token}/icono/512`, sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: `/q/${token}/icono/512?maskable=1`, sizes: "512x512", type: "image/png", purpose: "maskable" },
+        ]
+      : [
+          { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+        ],
   }
   return new Response(JSON.stringify(manifiesto), {
     headers: { "Content-Type": "application/manifest+json", "Cache-Control": "no-store" },
