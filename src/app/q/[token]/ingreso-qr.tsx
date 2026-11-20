@@ -9,6 +9,7 @@ import { LogoMarca } from "@/components/layout/logo"
 import { BotonInstalarApp } from "@/components/layout/boton-instalar"
 import { toast } from "sonner"
 import { EntrenamientoVista } from "./entrenamiento"
+import { RutinaPropiaEditor } from "./rutina-propia-editor"
 import { PerfilVista, PinPantalla } from "./perfil-socio"
 import {
   abrirPerfil,
@@ -19,6 +20,11 @@ import {
   ingresarConDni,
   cargarHistorial,
   cargarProgreso,
+  cargarRecords,
+  cargarBiblioteca,
+  guardarRutinaPropia,
+  eliminarRutinaPropia,
+  type EjercicioBibliotecaSocio,
   guardarEntrenamiento,
   type Historial,
   type PerfilSocio,
@@ -36,6 +42,7 @@ type Vista =
   | { tipo: "pin"; dispositivo: string; r: Listo | null; modo: "crear" | "entrar"; error?: string; bloqueado: boolean }
   | { tipo: "perfil"; dispositivo: string; r: Listo | null; perfil: PerfilSocio; pin: string }
   | { tipo: "entrenando"; dispositivo: string; r: Listo | null; perfil: PerfilSocio; pin: string; rutina: RutinaPerfil; diaIdx: number; historial: Historial }
+  | { tipo: "editando"; dispositivo: string; r: Listo | null; perfil: PerfilSocio; pin: string; rutina: RutinaPerfil | null; biblioteca: EjercicioBibliotecaSocio[] }
   | { tipo: "sin-dispositivo" }
   | { tipo: "error"; mensaje: string }
 
@@ -155,6 +162,21 @@ export function IngresoQR({ token, gymId, gymNombre, modoApp }: { token: string;
     })
   }
 
+  /** Abre el armado de una rutina propia (nueva o la que ya tiene), trayendo la biblioteca del gimnasio para sugerir ejercicios. */
+  function abrirEditor(v: Extract<Vista, { tipo: "perfil" }>, rutina: RutinaPerfil | null) {
+    start(async () => {
+      const b = await cargarBiblioteca(token, v.dispositivo, v.pin)
+      if (!b.ok && b.codigo === "DISPOSITIVO_DESCONOCIDO") return sesionPerdida()
+      setVista({ tipo: "editando", dispositivo: v.dispositivo, r: v.r, perfil: v.perfil, pin: v.pin, rutina, biblioteca: b.ok ? b.ejercicios : [] })
+    })
+  }
+
+  /** Vuelve al perfil trayendo los datos de nuevo (para que se vea lo que cambió). */
+  async function recargarPerfil(v: { dispositivo: string; r: Listo | null; perfil: PerfilSocio; pin: string }) {
+    const res = await abrirPerfil(token, v.dispositivo, v.pin)
+    setVista({ tipo: "perfil", dispositivo: v.dispositivo, r: v.r, perfil: res.ok ? res.perfil : v.perfil, pin: v.pin })
+  }
+
   /** Vuelve al perfil, trayendo de nuevo los datos para que se vea el entrenamiento recién guardado. */
   function volverAlPerfil(v: Extract<Vista, { tipo: "entrenando" }>) {
     start(async () => {
@@ -265,7 +287,33 @@ export function IngresoQR({ token, gymId, gymNombre, modoApp }: { token: string;
             onNoSoyYo={modoApp ? noSoyYo : undefined}
             onEmpezar={(rutina, diaIdx) => empezarEntrenamiento(vista, rutina, diaIdx)}
             onProgreso={() => cargarProgreso(token, vista.dispositivo, vista.pin)}
+            onRecords={() => cargarRecords(token, vista.dispositivo, vista.pin)}
+            onCrearRutina={() => abrirEditor(vista, null)}
+            onEditarRutina={(rutina) => abrirEditor(vista, rutina)}
+            onEliminarRutina={async (rutina) => {
+              const r = await eliminarRutinaPropia(token, vista.dispositivo, vista.pin, rutina.id)
+              if (!r.ok) return void toast.error(r.mensaje)
+              toast.success("Rutina eliminada.")
+              await recargarPerfil(vista)
+            }}
             pendiente={pendiente}
+          />
+        )}
+
+        {vista.tipo === "editando" && (
+          <RutinaPropiaEditor
+            key={vista.rutina?.id ?? "nueva"}
+            rutina={vista.rutina}
+            biblioteca={vista.biblioteca}
+            onCancelar={() => setVista({ tipo: "perfil", dispositivo: vista.dispositivo, r: vista.r, perfil: vista.perfil, pin: vista.pin })}
+            onGuardar={async (datos) => {
+              const r = await guardarRutinaPropia(token, vista.dispositivo, vista.pin, datos, vista.rutina?.id)
+              if (r.ok) {
+                toast.success(vista.rutina ? "Rutina actualizada." : "¡Listo! Tu rutina quedó guardada.")
+                await recargarPerfil(vista)
+              }
+              return r
+            }}
           />
         )}
 

@@ -15,6 +15,7 @@ Actualizar solo ante cambios significativos (no registrar comandos). Última act
 - **Diseño**: negro con verde, degradados, animaciones sutiles (respetan "reducir movimiento"), modo oscuro por defecto.
 - **Aviso de nueva versión**: si se publica la web con la pantalla abierta, aparece "Hay una nueva actualización" → Actualizar (`/api/version`).
 - **App para Android** (PWA instalable): service worker, pantalla sin conexión, íconos y botón "Instalar la app". Ver README.
+- **Rutinas propias del socio** (privadas, hasta 10) y **Mis récords**. Ver README.
 - **Videos de técnica, biblioteca de ejercicios e impresión de rutinas**. Ver README.
 - **Avisos de cuota por WhatsApp**: botón Avisar con mensaje editable y registro de avisos. Ver README.
 - **Progreso**: racha semanal y gráfico por ejercicio para el socio; panel de entrenamientos en la ficha para el personal. Ver README.

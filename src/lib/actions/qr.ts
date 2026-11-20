@@ -7,6 +7,7 @@
 import { format, parseISO } from "date-fns"
 import { supabaseServer } from "@/lib/supabase/server"
 import { calcularEstado } from "@/lib/domain/cuota"
+import { rutinaSchema } from "@/lib/schemas"
 import { revalidatePath } from "next/cache"
 import type { EstadoCuota, TipoPlan } from "@/types/domain"
 
@@ -130,6 +131,8 @@ export interface RutinaPerfil {
   id: string
   nombre: string
   descripcion: string
+  /** true si la armó el propio socio (privada); false si se la asignó el gimnasio. */
+  propia: boolean
   /** Índice (desde 0) del día que le toca hoy, por rotación. */
   hoy: number
   dias: { nombre: string; ejercicios: { nombre: string; series: string; repeticiones: string; descanso: string; nota: string; video: string }[] }[]
@@ -364,4 +367,97 @@ export async function cargarProgreso(token: string, dispositivo: string, pin: st
   const r = data as unknown as (CrudoPerfil & { ejercicios?: ProgresoEjercicio[] }) | null
   if (error || !r || !r.ok) return falloEntreno(error ? null : r)
   return { ok: true, ejercicios: r.ejercicios ?? [] }
+}
+
+// ---------- Rutinas propias del socio ----------
+export type ResultadoRutinaPropia = { ok: true; id?: string } | { ok: false; codigo: string; mensaje: string }
+
+export interface EjercicioBibliotecaSocio {
+  nombre: string
+  grupo: string
+  video: string
+}
+export type ResultadoBiblioteca = { ok: true; ejercicios: EjercicioBibliotecaSocio[] } | { ok: false; codigo: string; mensaje: string }
+
+export interface RecordEjercicio {
+  nombre: string
+  e1rm: number | null
+  pesoE1rm: number | null
+  repsE1rm: number | null
+  fechaE1rm: string
+  mejorPeso: number | null
+  repsMejorPeso: number | null
+  fechaMejorPeso: string
+  records: number
+  sesiones: number
+}
+export type ResultadoRecords = { ok: true; ejercicios: RecordEjercicio[] } | { ok: false; codigo: string; mensaje: string }
+
+const MSG_RUTINA: Record<string, string> = {
+  LIMITE_RUTINAS: "Ya tenés 10 rutinas propias. Borrá alguna para crear otra.",
+  RUTINA_INEXISTENTE: "No encontramos esa rutina. Puede que ya la hayas borrado.",
+}
+
+function falloGeneral(r: (CrudoPerfil & { detalle?: string }) | null): { ok: false; codigo: string; mensaje: string } {
+  const codigo = r?.error ?? "ERROR"
+  if (codigo === "RUTINA_INVALIDA" && r?.detalle) return { ok: false, codigo, mensaje: r.detalle }
+  if (MSG_RUTINA[codigo]) return { ok: false, codigo, mensaje: MSG_RUTINA[codigo] }
+  const f = aPerfil(r ?? { ok: false, error: "ERROR" })
+  return f.ok ? { ok: false, codigo, mensaje: "No pudimos completar la acción. Probá de nuevo." } : { ok: false, codigo: f.codigo, mensaje: f.mensaje }
+}
+
+/** Crea (o edita, con id) una rutina propia del socio. Es privada: el gimnasio no la ve. */
+export async function guardarRutinaPropia(token: string, dispositivo: string, pin: string, datos: unknown, id?: string): Promise<ResultadoRutinaPropia> {
+  if (!esDispositivo(dispositivo) || !/^\d{4}$/.test(pin)) return { ok: false, codigo: "DISPOSITIVO_DESCONOCIDO", mensaje: MENSAJES.DISPOSITIVO_DESCONOCIDO }
+  const r = rutinaSchema.safeParse(datos)
+  if (!r.success) return { ok: false, codigo: "RUTINA_INVALIDA", mensaje: r.error.issues[0]?.message ?? "Revisá los datos de la rutina." }
+  const sb = await supabaseServer()
+  const { data, error } = await sb.rpc("qr_rutina_guardar", { p_token: token, p_dispositivo: dispositivo, p_pin: pin, p_rutina: { ...r.data, id: id ?? null } })
+  const res = data as unknown as (CrudoPerfil & { id?: string; detalle?: string }) | null
+  if (error || !res || !res.ok) return falloGeneral(error ? null : res)
+  return { ok: true, id: res.id }
+}
+
+export async function eliminarRutinaPropia(token: string, dispositivo: string, pin: string, id: string): Promise<ResultadoRutinaPropia> {
+  if (!esDispositivo(dispositivo) || !/^\d{4}$/.test(pin)) return { ok: false, codigo: "DISPOSITIVO_DESCONOCIDO", mensaje: MENSAJES.DISPOSITIVO_DESCONOCIDO }
+  const sb = await supabaseServer()
+  const { data, error } = await sb.rpc("qr_rutina_eliminar", { p_token: token, p_dispositivo: dispositivo, p_pin: pin, p_id: id })
+  const res = data as unknown as CrudoPerfil | null
+  if (error || !res || !res.ok) return falloGeneral(error ? null : res)
+  return { ok: true }
+}
+
+/** Biblioteca del gimnasio: sugiere ejercicios y trae sus videos al armar una rutina propia. */
+export async function cargarBiblioteca(token: string, dispositivo: string, pin: string): Promise<ResultadoBiblioteca> {
+  if (!esDispositivo(dispositivo) || !/^\d{4}$/.test(pin)) return { ok: false, codigo: "DISPOSITIVO_DESCONOCIDO", mensaje: MENSAJES.DISPOSITIVO_DESCONOCIDO }
+  const sb = await supabaseServer()
+  const { data, error } = await sb.rpc("qr_biblioteca", { p_token: token, p_dispositivo: dispositivo, p_pin: pin })
+  const r = data as unknown as (CrudoPerfil & { ejercicios?: EjercicioBibliotecaSocio[] }) | null
+  if (error || !r || !r.ok) return falloGeneral(error ? null : r)
+  return { ok: true, ejercicios: r.ejercicios ?? [] }
+}
+
+/** Mejor marca de cada ejercicio: fuerza estimada y mayor peso, con su fecha. */
+export async function cargarRecords(token: string, dispositivo: string, pin: string): Promise<ResultadoRecords> {
+  if (!esDispositivo(dispositivo) || !/^\d{4}$/.test(pin)) return { ok: false, codigo: "DISPOSITIVO_DESCONOCIDO", mensaje: MENSAJES.DISPOSITIVO_DESCONOCIDO }
+  const sb = await supabaseServer()
+  const { data, error } = await sb.rpc("qr_records", { p_token: token, p_dispositivo: dispositivo, p_pin: pin })
+  const r = data as unknown as (CrudoPerfil & { ejercicios?: Record<string, unknown>[] }) | null
+  if (error || !r || !r.ok) return falloGeneral(error ? null : r)
+  const num = (v: unknown) => (v === null || v === undefined ? null : Number(v))
+  return {
+    ok: true,
+    ejercicios: (r.ejercicios ?? []).map((e) => ({
+      nombre: String(e.nombre),
+      e1rm: num(e.e1rm),
+      pesoE1rm: num(e.peso_e1rm),
+      repsE1rm: num(e.reps_e1rm),
+      fechaE1rm: String(e.fecha_e1rm),
+      mejorPeso: num(e.mejor_peso),
+      repsMejorPeso: num(e.reps_mejor_peso),
+      fechaMejorPeso: String(e.fecha_mejor_peso),
+      records: Number(e.records ?? 0),
+      sesiones: Number(e.sesiones ?? 0),
+    })),
+  }
 }

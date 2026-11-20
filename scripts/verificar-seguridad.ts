@@ -413,6 +413,91 @@ async function main() {
   await admin.from("socio_pins").delete().eq("socio_id", juan.id)
   await admin.from("socio_dispositivos").delete().eq("socio_id", juan.id)
 
+  console.log("\nRutinas propias del socio y récords")
+  const ana = (await admin.from("socios").select("id, dni").eq("gym_id", gymDemo.id).eq("activo", true).neq("dni", "40112908").limit(1).single()).data!
+  const vJ = (await anon.rpc("qr_vincular", { p_token: tokenNuevo, p_dni: "40112908" })).data as { dispositivo: string }
+  const vA = (await anon.rpc("qr_vincular", { p_token: tokenNuevo, p_dni: ana.dni })).data as { dispositivo: string }
+  const bJ = { p_token: tokenNuevo, p_dispositivo: vJ.dispositivo }
+  const bA = { p_token: tokenNuevo, p_dispositivo: vA.dispositivo }
+  type R7 = Record<string, unknown> & { ok?: boolean; error?: string; detalle?: string; id?: string; rutinas?: { id: string; nombre: string; propia: boolean; hoy: number; dias: unknown[] }[]; ejercicios?: Record<string, unknown>[] }
+  const rpc7 = async (base: object, fn: string, extra: Record<string, unknown> = {}) => (await anon.rpc(fn as never, { ...base, ...extra } as never)).data as unknown as R7
+  await rpc7(bJ, "qr_pin_crear", { p_pin: "4821" })
+  await rpc7(bA, "qr_pin_crear", { p_pin: "1357" })
+  const mia = (nombre: string) => ({ nombre, descripcion: "", dias: [{ nombre: "Día 1", ejercicios: [{ nombre: "Sentadilla", series: "4", repeticiones: "8", descanso: "90 s", nota: "", video: "" }] }] })
+
+  chequeo("el socio crea su propia rutina", (await rpc7(bJ, "qr_rutina_guardar", { p_pin: "4821", p_rutina: mia("Mi rutina de piernas") })).ok === true)
+  const propia = (await admin.from("rutinas").select("id").eq("socio_id", juan.id)).data!
+  chequeo("queda guardada como suya, no del gimnasio", propia.length === 1)
+  const idProp = propia[0].id as string
+  chequeo("con un PIN incorrecto no se guarda", (await rpc7(bJ, "qr_rutina_guardar", { p_pin: "0000", p_rutina: mia("X") })).error === "PIN_INCORRECTO")
+  const sinDiasProp = await rpc7(bJ, "qr_rutina_guardar", { p_pin: "4821", p_rutina: { nombre: "Vacía", dias: [] } })
+  chequeo("rechaza una rutina sin días, con el motivo", sinDiasProp.error === "RUTINA_INVALIDA" && /días/.test(sinDiasProp.detalle ?? ""))
+  const malVideo = mia("Con video malo"); malVideo.dias[0].ejercicios[0].video = "https://evil.com/x"
+  chequeo("rechaza un video que no es de YouTube o Vimeo", (await rpc7(bJ, "qr_rutina_guardar", { p_pin: "4821", p_rutina: malVideo })).error === "RUTINA_INVALIDA")
+
+  const perfilJ = (await rpc7(bJ, "qr_perfil", { p_pin: "4821" }))
+  chequeo("su perfil la muestra marcada como propia, con «hoy» y días", perfilJ.rutinas?.[0]?.propia === true && perfilJ.rutinas[0].dias.length === 1 && typeof perfilJ.rutinas[0].hoy === "number")
+  chequeo("otro socio no la ve en su perfil", ((await rpc7(bA, "qr_perfil", { p_pin: "1357" })).rutinas ?? []).every((r) => r.id !== idProp))
+
+  // Privacidad frente al personal
+  chequeo("recepción no ve las rutinas propias de los socios", ((await sofia.from("rutinas").select("id").eq("id", idProp)).data ?? []).length === 0)
+  chequeo("el dueño tampoco, ni sus días ni ejercicios", ((await dueno.from("rutinas").select("id").eq("id", idProp)).data ?? []).length === 0
+    && ((await dueno.from("rutina_dias").select("id").eq("rutina_id", idProp)).data ?? []).length === 0
+    && ((await dueno.from("rutina_ejercicios").select("id").eq("gym_id", gymDemo.id).eq("nombre", "Sentadilla")).data ?? []).length === 0)
+  chequeo("el personal no puede editarla", !!(await sofia.rpc("guardar_rutina", { p_rutina: { id: idProp, nombre: "Pisada", dias: [{ nombre: "X", ejercicios: [] }] } })).error)
+  chequeo("ni asignarla, archivarla o duplicarla",
+    !!(await sofia.rpc("asignar_rutina", { p_socio: ana.id, p_rutina: idProp })).error &&
+    !!(await sofia.rpc("archivar_rutina", { p_rutina: idProp, p_activo: false })).error &&
+    !!(await sofia.rpc("duplicar_rutina", { p_rutina: idProp })).error)
+  chequeo("la rutina sigue intacta después de esos intentos", ((await admin.from("rutinas").select("nombre, activo").eq("id", idProp).single()).data)?.nombre === "Mi rutina de piernas")
+
+  // Entre socios
+  chequeo("otro socio no puede editar la rutina de Juan", (await rpc7(bA, "qr_rutina_guardar", { p_pin: "1357", p_rutina: { id: idProp, ...mia("Robada") } })).error === "RUTINA_INEXISTENTE")
+  chequeo("ni borrarla", (await rpc7(bA, "qr_rutina_eliminar", { p_pin: "1357", p_id: idProp })).error === "RUTINA_INEXISTENTE")
+  const edit = await rpc7(bJ, "qr_rutina_guardar", { p_pin: "4821", p_rutina: { id: idProp, ...mia("Mi rutina de piernas v2") } })
+  chequeo("el dueño de la rutina la edita", edit.ok === true && ((await admin.from("rutinas").select("nombre").eq("id", idProp).single()).data)?.nombre === "Mi rutina de piernas v2")
+
+  // Límite de 10
+  let creadas = 1
+  for (let i = 0; i < 12; i++) { const r = await rpc7(bJ, "qr_rutina_guardar", { p_pin: "4821", p_rutina: mia(`Extra ${i}`) }); if (r.ok) creadas++ }
+  chequeo("el límite es de 10 rutinas propias", creadas === 10 && (await rpc7(bJ, "qr_rutina_guardar", { p_pin: "4821", p_rutina: mia("Una más") })).error === "LIMITE_RUTINAS", `${creadas} creadas`)
+  chequeo("la lista del gimnasio no se ensucia con las propias", ((await dueno.from("rutinas").select("id").eq("gym_id", gymDemo.id)).data ?? []).every((r) => r.id !== idProp))
+  chequeo("el socio borra una rutina propia", (await rpc7(bJ, "qr_rutina_eliminar", { p_pin: "4821", p_id: idProp })).ok === true && ((await admin.from("rutinas").select("id").eq("id", idProp)).data ?? []).length === 0)
+
+  // Biblioteca vista por el socio
+  const bib = await sofia.rpc("guardar_ejercicio_biblioteca", { p_nombre: "Hip thrust", p_grupo: "Glúteos", p_video: "https://youtu.be/abc" })
+  const bibJ = await rpc7(bJ, "qr_biblioteca", { p_pin: "4821" })
+  chequeo("el socio ve la biblioteca de su gimnasio para armar su rutina", bibJ.ok === true && (bibJ.ejercicios ?? []).some((e) => e.nombre === "Hip thrust" && e.video === "https://youtu.be/abc"))
+  chequeo("con PIN incorrecto no la ve", (await rpc7(bJ, "qr_biblioteca", { p_pin: "0000" })).error === "PIN_INCORRECTO")
+  await admin.from("biblioteca_ejercicios").delete().eq("id", bib.data as string)
+
+  // Récords
+  const id7 = (n: number) => `00000000-0000-4000-8000-0000000003${String(n).padStart(2, "0")}`
+  const ses7 = (cliente: string, peso: number, reps: number, rutina?: string) => ({ cliente_id: cliente, rutina_id: rutina, rutina_nombre: "X", dia_nombre: "D", ejercicios: [{ nombre: "Press de banca", series: [{ peso, reps }] }] })
+  for (const [n, peso, reps] of [[1, 60, 8], [2, 70, 5], [3, 62.5, 8]] as [number, number, number][]) await rpc7(bJ, "qr_entrenamiento_guardar", { p_pin: "4821", p_datos: ses7(id7(n), peso, reps) })
+  const rec = await rpc7(bJ, "qr_records", { p_pin: "4821" })
+  const pressRec = (rec.ejercicios ?? []).find((e) => e.nombre === "Press de banca") as Record<string, number> | undefined
+  chequeo("«Mis récords» trae la mejor fuerza estimada con su peso y repeticiones", !!pressRec && Math.abs(Number(pressRec.e1rm) - 81.67) < 0.01 && Number(pressRec.peso_e1rm) === 70 && Number(pressRec.reps_e1rm) === 5, JSON.stringify(pressRec))
+  chequeo("y el mayor peso, las sesiones y cuántos récords batió", !!pressRec && Number(pressRec.mejor_peso) === 70 && Number(pressRec.sesiones) === 3 && Number(pressRec.records) === 1)
+  chequeo("los récords exigen el PIN", (await rpc7(bJ, "qr_records", { p_pin: "0000" })).error === "PIN_INCORRECTO")
+  chequeo("otro socio no ve los récords de Juan", ((await rpc7(bA, "qr_records", { p_pin: "1357" })).ejercicios ?? []).length === 0)
+
+  // Un entrenamiento no puede colgarse de la rutina propia de otro socio
+  const rAna = (await rpc7(bA, "qr_rutina_guardar", { p_pin: "1357", p_rutina: mia("De Ana") })).id as string
+  await rpc7(bJ, "qr_entrenamiento_guardar", { p_pin: "4821", p_datos: ses7(id7(9), 50, 8, rAna) })
+  chequeo("un entrenamiento no se asocia a la rutina propia de otro socio", ((await admin.from("entrenamientos").select("rutina_id").eq("cliente_id", id7(9)).single()).data)?.rutina_id === null)
+
+  // El historial (que lee el personal) no revela el nombre de una rutina propia
+  const rSecreta = (await rpc7(bJ, "qr_rutina_guardar", { p_pin: "4821", p_rutina: mia("Mi rutina secreta") })).id as string
+  await rpc7(bJ, "qr_entrenamiento_guardar", { p_pin: "4821", p_datos: { cliente_id: id7(20), rutina_id: rSecreta, rutina_nombre: "Mi rutina secreta", dia_nombre: "Día secreto", ejercicios: [{ nombre: "Press de banca", series: [{ peso: 40, reps: 8 }] }] } })
+  const visto = (await sofia.from("entrenamientos").select("rutina_nombre, dia_nombre, rutina_id").eq("cliente_id", id7(20)).single()).data
+  chequeo("el historial de una rutina propia queda anónimo para el personal", visto?.rutina_nombre === "Rutina propia" && visto?.dia_nombre === "" && visto?.rutina_id === rSecreta, JSON.stringify(visto))
+
+  await admin.from("rutinas").delete().in("socio_id", [juan.id, ana.id])
+  await admin.from("entrenamientos").delete().in("socio_id", [juan.id, ana.id])
+  await admin.from("socio_pins").delete().in("socio_id", [juan.id, ana.id])
+  await admin.from("socio_dispositivos").delete().in("socio_id", [juan.id, ana.id])
+
   console.log("\nAnular cobros y ventas")
   const planMensual = (await admin.from("planes").select("id, precio").eq("gym_id", gymDemo.id).eq("tipo", "mensual").eq("activo", true).limit(1).single()).data!
   const sociosTodos = (await admin.from("socios").select("id").eq("gym_id", gymDemo.id).eq("activo", true).not("vencimiento", "is", null).limit(1).single()).data!

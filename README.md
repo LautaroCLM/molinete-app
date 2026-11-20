@@ -209,3 +209,11 @@ Con un clic: abre WhatsApp (wa.me) con el mensaje escrito y registra quién avis
 - **Videos:** cada ejercicio de una rutina puede llevar un enlace de **YouTube o Vimeo** (https; se valida en el formulario y en la base). El socio lo ve con **Ver técnica** en su perfil y durante el entrenamiento (YouTube se incrusta sin cookies; Vimeo con su reproductor).
 - **Biblioteca** (`/rutinas/biblioteca`, dueño y recepción): ejercicios propios del gimnasio con grupo y video. Al armar una rutina, el nombre sugiere la biblioteca y unos 70 ejercicios comunes (`src/lib/ejercicios-base.ts`); al elegir uno de la biblioteca se trae su video, y un ejercicio nuevo con video se puede guardar con un botón.
 - **Imprimir** (`/imprimir-rutina/<id>`, con `?socio=<id>` para ponerle el nombre): hoja A4 con cada día, ejercicios, series, repeticiones, descanso y casilleros para anotar los kg a mano. Botones en la lista de rutinas y en la ficha del socio.
+
+### Rutinas propias y récords del socio
+
+Desde su perfil (con PIN), el socio puede **armar sus propias rutinas** ("Crear mi rutina"): nombre, días y ejercicios, con las sugerencias de ejercicios comunes y los de la biblioteca de su gimnasio (con sus videos). Hasta 10 por socio, con los mismos límites que las del personal. Las entrena igual que las asignadas (series, descanso, récords).
+
+- **Privadas:** el personal no las ve ni por la pantalla ni por la base (`rutinas.socio_id`, políticas RLS), y no puede asignarlas, editarlas ni archivarlas. El historial de entrenamientos que ve el personal las anota solo como "Rutina propia". Entre socios tampoco se ven.
+- **Mis récords:** botón "Ver mis récords" (mejor marca, fuerza estimada y récords batidos por ejercicio).
+- Código: `src/app/q/[token]/rutina-propia-editor.tsx`; funciones `qr_rutina_guardar`, `qr_rutina_eliminar`, `qr_biblioteca` y `qr_records`.

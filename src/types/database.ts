@@ -511,14 +511,14 @@ isOneToOne: false
                   ]
                 },"rutinas": {
                   Row: {
-                    "activo": boolean,"created_at": string,"descripcion": string,"gym_id": string,"id": string,"nombre": string,"updated_at": string
+                    "activo": boolean,"created_at": string,"descripcion": string,"gym_id": string,"id": string,"nombre": string,"socio_id": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "activo"?: boolean,"created_at"?: string,"descripcion"?: string,"gym_id": string,"id"?: string,"nombre": string,"updated_at"?: string
+                    "activo"?: boolean,"created_at"?: string,"descripcion"?: string,"gym_id": string,"id"?: string,"nombre": string,"socio_id"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "activo"?: boolean,"created_at"?: string,"descripcion"?: string,"gym_id"?: string,"id"?: string,"nombre"?: string,"updated_at"?: string
+                    "activo"?: boolean,"created_at"?: string,"descripcion"?: string,"gym_id"?: string,"id"?: string,"nombre"?: string,"socio_id"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -526,6 +526,12 @@ isOneToOne: false
       columns: ["gym_id"]
 isOneToOne: false
       referencedRelation: "gyms"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "rutinas_socio_id_fkey"
+      columns: ["socio_id"]
+isOneToOne: false
+      referencedRelation: "socios"
       referencedColumns: ["id"]
     }
                   ]
@@ -754,6 +760,9 @@ isOneToOne: false
               "dia": string,"egresos": number,"ingresos": number
             }[]
                            },
+"qr_biblioteca":
+{ Args: { "p_dispositivo": string,"p_pin": string,"p_token": string }; Returns: Json
+                           },
 "qr_desvincular":
 { Args: { "p_dispositivo": string }; Returns: undefined
                            },
@@ -783,8 +792,17 @@ isOneToOne: false
 "qr_progreso":
 { Args: { "p_dispositivo": string,"p_pin": string,"p_token": string }; Returns: Json
                            },
+"qr_records":
+{ Args: { "p_dispositivo": string,"p_pin": string,"p_token": string }; Returns: Json
+                           },
 "qr_regenerar":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"qr_rutina_eliminar":
+{ Args: { "p_dispositivo": string,"p_id": string,"p_pin": string,"p_token": string }; Returns: Json
+                           },
+"qr_rutina_guardar":
+{ Args: { "p_dispositivo": string,"p_pin": string,"p_rutina": Json,"p_token": string }; Returns: Json
                            },
 "qr_vincular":
 { Args: { "p_dni": string,"p_token": string }; Returns: Json

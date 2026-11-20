@@ -3,12 +3,12 @@
 import { BotonVideo } from "@/components/shared/video-tecnica"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
-import { ArrowLeft, ChartLine, Delete, Dumbbell, Flame, IdCard, Mail, Phone, Play, ShieldCheck, Trophy } from "lucide-react"
+import { ArrowLeft, ChartLine, Delete, Dumbbell, Flame, IdCard, Mail, Pencil, Phone, Play, Plus, ShieldCheck, Trash2, Trophy } from "lucide-react"
 import { Disco, ESTILO_ESTADO } from "@/components/shared/estado-badge"
 import { SocioAvatar } from "@/components/shared/socio-avatar"
 import { CalendarioAsistencias } from "@/features/socios/calendario-asistencias"
 import { fecha, num } from "@/lib/format"
-import type { PerfilSocio, ProgresoEjercicio, ResultadoProgreso, RutinaPerfil } from "@/lib/actions/qr"
+import type { PerfilSocio, ProgresoEjercicio, RecordEjercicio, ResultadoProgreso, ResultadoRecords, RutinaPerfil } from "@/lib/actions/qr"
 import { GraficoProgreso } from "./grafico-progreso"
 import { cn } from "@/lib/utils"
 
@@ -150,6 +150,10 @@ export function PerfilVista({
   onNoSoyYo,
   onEmpezar,
   onProgreso,
+  onRecords,
+  onCrearRutina,
+  onEditarRutina,
+  onEliminarRutina,
   pendiente = false,
 }: {
   perfil: PerfilSocio
@@ -158,6 +162,10 @@ export function PerfilVista({
   onNoSoyYo?: () => void
   onEmpezar?: (rutina: RutinaPerfil, diaIdx: number) => void
   onProgreso?: () => Promise<ResultadoProgreso>
+  onRecords?: () => Promise<ResultadoRecords>
+  onCrearRutina?: () => void
+  onEditarRutina?: (rutina: RutinaPerfil) => void
+  onEliminarRutina?: (rutina: RutinaPerfil) => Promise<void>
   pendiente?: boolean
 }) {
   const e = ESTILO_ESTADO[perfil.estado]
@@ -207,7 +215,9 @@ export function PerfilVista({
       </section>
       {perfil.recordatorio && <p className="rounded-xl border-2 border-dashed px-4 py-3 text-center font-semibold">{perfil.recordatorio}</p>}
 
-      {perfil.rutinas.length > 0 && <SeccionRutinas rutinas={perfil.rutinas} onEmpezar={onEmpezar} pendiente={pendiente} />}
+      {(perfil.rutinas.length > 0 || onCrearRutina) && (
+        <SeccionRutinas rutinas={perfil.rutinas} onEmpezar={onEmpezar} onCrear={onCrearRutina} onEditar={onEditarRutina} onEliminar={onEliminarRutina} pendiente={pendiente} />
+      )}
 
       {perfil.entrenamientos.length > 0 && (
         <section className="rounded-2xl border bg-card p-5">
@@ -234,6 +244,7 @@ export function PerfilVista({
             ))}
           </ul>
           {onProgreso && <SeccionProgreso onProgreso={onProgreso} />}
+          {onRecords && <SeccionRecords onRecords={onRecords} />}
         </section>
       )}
 
@@ -292,7 +303,47 @@ export function PerfilVista({
 }
 
 /** Rutinas del socio: arranca en el día que le toca hoy y puede mirar cualquier otro. */
-function SeccionRutinas({ rutinas, onEmpezar, pendiente }: { rutinas: RutinaPerfil[]; onEmpezar?: (rutina: RutinaPerfil, diaIdx: number) => void; pendiente: boolean }) {
+function SeccionRutinas(props: {
+  rutinas: RutinaPerfil[]
+  onEmpezar?: (rutina: RutinaPerfil, diaIdx: number) => void
+  onCrear?: () => void
+  onEditar?: (rutina: RutinaPerfil) => void
+  onEliminar?: (rutina: RutinaPerfil) => Promise<void>
+  pendiente: boolean
+}) {
+  if (props.rutinas.length > 0) return <RutinasConDatos {...props} />
+  return (
+    <section className="rounded-2xl border bg-card p-5">
+      <h2 className="flex items-center gap-2 font-semibold">
+        <Dumbbell className="size-4 text-primary" /> Tu rutina
+      </h2>
+      <p className="mt-2 text-sm text-muted-foreground">Todavía no tenés una rutina. Armá la tuya o pedile una a tu entrenador.</p>
+      {props.onCrear && (
+        <Button type="button" className="mt-4 w-full" size="lg" onClick={props.onCrear} disabled={props.pendiente}>
+          <Plus className="size-5" /> Crear mi rutina
+        </Button>
+      )}
+    </section>
+  )
+}
+
+function RutinasConDatos({
+  rutinas,
+  onEmpezar,
+  onCrear,
+  onEditar,
+  onEliminar,
+  pendiente,
+}: {
+  rutinas: RutinaPerfil[]
+  onEmpezar?: (rutina: RutinaPerfil, diaIdx: number) => void
+  onCrear?: () => void
+  onEditar?: (rutina: RutinaPerfil) => void
+  onEliminar?: (rutina: RutinaPerfil) => Promise<void>
+  pendiente: boolean
+}) {
+  const [confirmando, setConfirmando] = useState(false)
+  const propias = rutinas.filter((r) => r.propia).length
   const [ri, setRi] = useState(0)
   const rutina = rutinas[ri] ?? rutinas[0]
   // Día elegido por rutina: sin elegir, el que le toca hoy.
@@ -307,24 +358,54 @@ function SeccionRutinas({ rutinas, onEmpezar, pendiente }: { rutinas: RutinaPerf
         <Dumbbell className="size-4 text-primary" /> Tu rutina
       </h2>
 
-      {rutinas.length > 1 && (
+      {(rutinas.length > 1 || rutinas.some((r) => r.propia)) && (
         <div className="mt-3 flex flex-wrap gap-2" role="tablist" aria-label="Tus rutinas">
           {rutinas.map((r, i) => (
             <button
               key={r.id}
               role="tab"
               aria-selected={i === ri}
-              onClick={() => setRi(i)}
+              onClick={() => {
+                setRi(i)
+                setConfirmando(false)
+              }}
               className={cn("rounded-full border px-3 py-1.5 text-sm font-medium transition-colors", i === ri ? "border-primary bg-primary/15 text-foreground" : "text-muted-foreground hover:text-foreground")}
             >
               {r.nombre}
+              {r.propia && <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[0.65rem] font-bold text-muted-foreground">MÍA</span>}
             </button>
           ))}
         </div>
       )}
 
-      <p className="mt-3 font-medium">{rutina.nombre}</p>
-      {rutina.descripcion && <p className="text-sm text-muted-foreground">{rutina.descripcion}</p>}
+      <div className="mt-3 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="font-medium">{rutina.nombre}</p>
+          {rutina.descripcion && <p className="text-sm text-muted-foreground">{rutina.descripcion}</p>}
+          {rutina.propia && <p className="mt-0.5 text-xs text-muted-foreground">Armada por vos. Solo la ves vos.</p>}
+        </div>
+        {rutina.propia && onEditar && (
+          <div className="flex shrink-0 items-center gap-1">
+            <Button type="button" variant="ghost" size="icon-sm" aria-label="Editar mi rutina" onClick={() => onEditar(rutina)}>
+              <Pencil />
+            </Button>
+            <Button type="button" variant="ghost" size="icon-sm" aria-label="Eliminar mi rutina" onClick={() => setConfirmando(true)}>
+              <Trash2 />
+            </Button>
+          </div>
+        )}
+      </div>
+      {confirmando && rutina.propia && onEliminar && (
+        <div role="alert" className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-bad/30 bg-bad-soft px-3 py-2.5 text-sm">
+          <span className="flex-1 font-medium text-bad">¿Eliminar “{rutina.nombre}”? No se puede deshacer.</span>
+          <Button type="button" size="sm" variant="destructive" disabled={pendiente} onClick={async () => { await onEliminar(rutina); setConfirmando(false) }}>
+            Eliminar
+          </Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => setConfirmando(false)}>
+            Cancelar
+          </Button>
+        </div>
+      )}
 
       {rutina.dias.length > 0 && dia ? (
         <>
@@ -379,6 +460,11 @@ function SeccionRutinas({ rutinas, onEmpezar, pendiente }: { rutinas: RutinaPerf
         </>
       ) : (
         <p className="mt-3 text-sm text-muted-foreground">Esta rutina todavía no tiene días cargados.</p>
+      )}
+      {onCrear && propias < 10 && (
+        <Button type="button" variant="outline" className="mt-4 w-full" onClick={onCrear} disabled={pendiente}>
+          <Plus className="size-4" /> Crear mi propia rutina
+        </Button>
       )}
     </section>
   )
@@ -436,6 +522,69 @@ function SeccionProgreso({ onProgreso }: { onProgreso: () => Promise<ResultadoPr
           </div>
           <GraficoProgreso key={ej.nombre} nombre={ej.nombre} puntos={ej.puntos} />
         </>
+      )}
+    </div>
+  )
+}
+
+/** "Ver mis récords": la mejor marca de cada ejercicio (fuerza estimada y mayor peso) con su fecha. */
+function SeccionRecords({ onRecords }: { onRecords: () => Promise<ResultadoRecords> }) {
+  const [estado, setEstado] = useState<{ tipo: "cerrado" } | { tipo: "cargando" } | { tipo: "listo"; ejercicios: RecordEjercicio[] } | { tipo: "error"; mensaje: string }>({ tipo: "cerrado" })
+  const kg = (n: number | null) => (n === null ? "—" : `${Math.round(n * 10) / 10}`.replace(".", ","))
+
+  if (estado.tipo !== "listo") {
+    return (
+      <div className="mt-3">
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={estado.tipo === "cargando"}
+          onClick={async () => {
+            setEstado({ tipo: "cargando" })
+            const r = await onRecords()
+            setEstado(r.ok ? { tipo: "listo", ejercicios: r.ejercicios } : { tipo: "error", mensaje: r.mensaje })
+          }}
+        >
+          <Trophy className="size-4" /> {estado.tipo === "cargando" ? "Cargando…" : "Ver mis récords"}
+        </Button>
+        {estado.tipo === "error" && (
+          <p role="alert" className="mt-2 text-sm font-medium text-bad">
+            {estado.mensaje}
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-4 border-t pt-4">
+      <h3 className="flex items-center gap-2 font-semibold">
+        <Trophy className="size-4 text-warn" /> Tus récords
+      </h3>
+      {estado.ejercicios.length === 0 ? (
+        <p className="mt-1 text-sm text-muted-foreground">Cuando registres pesos en tus entrenamientos, tus mejores marcas aparecen acá.</p>
+      ) : (
+        <ul className="mt-2 flex flex-col gap-2">
+          {estado.ejercicios.map((e) => (
+            <li key={e.nombre} className="rounded-xl bg-muted/50 px-3.5 py-3">
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-medium">{e.nombre}</p>
+                {e.records > 0 && (
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-warn-soft px-2 py-0.5 text-xs font-bold text-warn">
+                    <Trophy className="size-3" /> {e.records} {e.records === 1 ? "récord" : "récords"}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-sm tabular-nums">
+                <span className="text-muted-foreground">Mejor marca:</span> <strong>{kg(e.mejorPeso)} kg</strong> × {e.repsMejorPeso ?? "—"} <span className="text-xs text-muted-foreground">({fecha(e.fechaMejorPeso)})</span>
+              </p>
+              <p className="text-sm tabular-nums">
+                <span className="text-muted-foreground">Fuerza estimada:</span> <strong>{kg(e.e1rm)} kg</strong> <span className="text-xs text-muted-foreground">({kg(e.pesoE1rm)} × {e.repsE1rm ?? "—"}, {fecha(e.fechaE1rm)})</span>
+              </p>
+              <p className="text-xs text-muted-foreground">{e.sesiones} {e.sesiones === 1 ? "sesión" : "sesiones"} registradas</p>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   )
