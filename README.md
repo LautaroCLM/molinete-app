@@ -225,3 +225,20 @@ En Configuración → Gimnasio, el dueño elige el **color principal** y una **f
 ### Rutinas del gimnasio para todos los socios
 
 Al armar o editar una rutina, el personal puede activar **"Visible para todos los socios"**: todos los socios del gimnasio la ven en su perfil (etiqueta GIMNASIO) y pueden entrenarla, sin asignarla uno por uno. En Rutinas figura como "Para todos los socios"; si se archiva, deja de verse. Si además está asignada a un socio, le aparece una sola vez. Columna `rutinas.para_todos` (solo rutinas del gimnasio, no las propias de un socio).
+
+### Catálogo de ejercicios con fotos
+
+Al armar una rutina (panel y celular del socio), "Elegir del catálogo" abre un selector con **187 ejercicios en español**, cada uno con foto (posición inicial y final), buscador, filtro por **músculo** y por **equipamiento**; se pueden elegir varios a la vez. Primero salen los de la biblioteca del gimnasio (con su video). Las rutinas muestran la foto de cada ejercicio del catálogo. Escribir el nombre a mano sigue funcionando.
+
+- Datos: `src/lib/catalogo-ejercicios.ts` (id, nombre, músculo principal, secundarios y equipamiento). Se vincula por nombre, sin cambios en la base.
+- Fotos y datos: [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (dominio público). Las fotos se cargan desde el CDN jsDelivr; no ocupan lugar en la app ni en Supabase.
+- Para sumar ejercicios: agregar una fila en el catálogo con el id (carpeta) de esa base.
+
+### Músculos trabajados (figura del cuerpo)
+
+El socio ve un cuerpo de frente y de espalda con los músculos pintados según las series que hizo, más la lista ordenada (músculo y series):
+
+- **Durante el entrenamiento:** botón del muñeco arriba a la derecha; muestra solo las series marcadas como hechas.
+- **En su perfil:** "Ver mis músculos" en Tus entrenamientos, con período de 7 días, 30 días o 3 meses (función `qr_series_por_ejercicio`).
+
+Cada serie suma 1 al músculo principal del ejercicio y 0,5 a los de apoyo. Los ejercicios escritos a mano que no están en el catálogo no se pueden asignar a un músculo y se avisa cuántas series quedaron afuera. La figura sale de `src/lib/figura-cuerpo.ts` (polígonos de react-body-highlighter, MIT) y el cálculo de `src/lib/musculos.ts`.

@@ -4,7 +4,8 @@ import { useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { ArrowDown, ArrowLeft, ArrowUp, BookmarkPlus, Plus, Trash2 } from "lucide-react"
+import { ArrowDown, ArrowLeft, ArrowUp, BookmarkPlus, LayoutGrid, Plus, Trash2 } from "lucide-react"
+import { SelectorEjercicio, type EjercicioElegido } from "@/components/shared/selector-ejercicio"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
@@ -59,6 +60,19 @@ export function RutinaEditor({ rutina, biblioteca }: { rutina?: Rutina; bibliote
   const [propios, setPropios] = useState(biblioteca)
   const porClave = new Map(propios.map((b) => [claveEjercicio(b.nombre), b]))
   const sugerencias = [...propios.map((b) => b.nombre), ...EJERCICIOS_BASE.map((b) => b.nombre).filter((n) => !porClave.has(claveEjercicio(n)))]
+
+  const [selector, setSelector] = useState<number | null>(null)
+  /** Suma los ejercicios elegidos del catálogo al día, reemplazando las filas que estaban vacías. */
+  const agregarElegidos = (di: number, elegidos: EjercicioElegido[]) => {
+    setDias((ds) =>
+      ds.map((d, i) => {
+        if (i !== di) return d
+        const llenos = d.ejercicios.filter((e) => e.nombre.trim() || e.series.trim() || e.repeticiones.trim() || e.descanso.trim() || e.nota.trim() || e.video.trim())
+        return { ...d, ejercicios: [...llenos, ...elegidos.map((e) => ({ ...ejercicioVacio(), nombre: e.nombre, video: e.video }))] }
+      }),
+    )
+    setSelector(null)
+  }
 
   const cambiarDia = (di: number, cambio: Partial<DiaForm>) => setDias((ds) => ds.map((d, i) => (i === di ? { ...d, ...cambio } : d)))
   const cambiarEjercicio = (di: number, ei: number, cambio: Partial<EjercicioForm>) =>
@@ -218,9 +232,14 @@ export function RutinaEditor({ rutina, biblioteca }: { rutina?: Rutina; bibliote
                   </div>
                 </div>
               ))}
-              <Button type="button" variant="outline" size="sm" className="self-start" onClick={() => cambiarDia(di, { ejercicios: [...dia.ejercicios, ejercicioVacio()] })}>
-                <Plus /> Agregar ejercicio
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" size="sm" onClick={() => setSelector(di)}>
+                  <LayoutGrid /> Elegir del catálogo
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => cambiarDia(di, { ejercicios: [...dia.ejercicios, ejercicioVacio()] })}>
+                  <Plus /> Agregar ejercicio
+                </Button>
+              </div>
             </div>
           </section>
         ))}
@@ -235,6 +254,8 @@ export function RutinaEditor({ rutina, biblioteca }: { rutina?: Rutina; bibliote
           <Plus /> Agregar día
         </Button>
       </div>
+
+      {selector !== null && <SelectorEjercicio biblioteca={propios} onAgregar={(el) => agregarElegidos(selector, el)} onCerrar={() => setSelector(null)} />}
 
       <datalist id="ejercicios-sugeridos">
         {sugerencias.map((n) => (

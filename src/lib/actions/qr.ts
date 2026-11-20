@@ -439,6 +439,18 @@ export async function cargarBiblioteca(token: string, dispositivo: string, pin: 
   return { ok: true, ejercicios: r.ejercicios ?? [] }
 }
 
+export type ResultadoMusculos = { ok: true; ejercicios: { nombre: string; series: number }[] } | { ok: false; codigo: string; mensaje: string }
+
+/** Series hechas por ejercicio en los últimos días: la app las cruza con el catálogo para saber qué músculos trabajó. */
+export async function cargarMusculos(token: string, dispositivo: string, pin: string, dias: 7 | 30 | 90): Promise<ResultadoMusculos> {
+  if (!esDispositivo(dispositivo) || !/^\d{4}$/.test(pin) || ![7, 30, 90].includes(dias)) return { ok: false, codigo: "DISPOSITIVO_DESCONOCIDO", mensaje: MENSAJES.DISPOSITIVO_DESCONOCIDO }
+  const sb = await supabaseServer()
+  const { data, error } = await sb.rpc("qr_series_por_ejercicio", { p_token: token, p_dispositivo: dispositivo, p_pin: pin, p_dias: dias })
+  const r = data as unknown as (CrudoPerfil & { ejercicios?: { nombre: string; series: number }[] }) | null
+  if (error || !r || !r.ok) return falloGeneral(error ? null : r)
+  return { ok: true, ejercicios: (r.ejercicios ?? []).map((e) => ({ nombre: String(e.nombre), series: Number(e.series) })) }
+}
+
 /** Mejor marca de cada ejercicio: fuerza estimada y mayor peso, con su fecha. */
 export async function cargarRecords(token: string, dispositivo: string, pin: string): Promise<ResultadoRecords> {
   if (!esDispositivo(dispositivo) || !/^\d{4}$/.test(pin)) return { ok: false, codigo: "DISPOSITIVO_DESCONOCIDO", mensaje: MENSAJES.DISPOSITIVO_DESCONOCIDO }

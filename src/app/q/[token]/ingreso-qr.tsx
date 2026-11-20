@@ -21,6 +21,7 @@ import {
   ingresarConDni,
   cargarHistorial,
   cargarProgreso,
+  cargarMusculos,
   cargarRecords,
   cargarBiblioteca,
   guardarRutinaPropia,
@@ -301,6 +302,7 @@ export function IngresoQR({ token, gymId, gymNombre, modoApp, marca }: { token: 
             onEmpezar={(rutina, diaIdx) => empezarEntrenamiento(vista, rutina, diaIdx)}
             onProgreso={() => cargarProgreso(token, vista.dispositivo, vista.pin)}
             onRecords={() => cargarRecords(token, vista.dispositivo, vista.pin)}
+            onMusculos={(dias) => cargarMusculos(token, vista.dispositivo, vista.pin, dias)}
             onCrearRutina={() => abrirEditor(vista, null)}
             onEditarRutina={(rutina) => abrirEditor(vista, rutina)}
             onEliminarRutina={async (rutina) => {

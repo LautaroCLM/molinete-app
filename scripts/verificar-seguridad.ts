@@ -289,6 +289,13 @@ async function main() {
   const perfil7 = ((await llamar5("qr_perfil", { p_pin: "4821" })) as unknown) as { entrenamientos?: unknown[]; entrenamientos_30?: number }
   chequeo("el perfil muestra los últimos entrenamientos", (perfil7.entrenamientos ?? []).length === 3 && perfil7.entrenamientos_30 === 3)
 
+  const musc = (await llamar5("qr_series_por_ejercicio", { p_pin: "4821", p_dias: 30 })) as unknown as { ok?: boolean; ejercicios?: { nombre: string; series: number }[] }
+  chequeo("«Músculos» devuelve las series por ejercicio de sus entrenamientos", musc.ok === true && (musc.ejercicios ?? []).reduce((t, e) => t + e.series, 0) === 8 && (musc.ejercicios ?? []).find((e) => e.nombre === "Press de banca")?.series === 5, JSON.stringify(musc.ejercicios))
+  chequeo("con un PIN incorrecto no se puede ver", ((await llamar5("qr_series_por_ejercicio", { p_pin: "0000", p_dias: 30 })).error ?? "") === "PIN_INCORRECTO")
+  const periodoMin = (await llamar5("qr_series_por_ejercicio", { p_pin: "4821", p_dias: 0 })) as unknown as { dias?: number }
+  chequeo("el período se acota a un rango razonable", periodoMin.dias === 1)
+  chequeo("sin sesión de socio no se puede llamar", !!(await anon.rpc("qr_series_por_ejercicio" as never, { p_token: "x", p_dispositivo: uuid(5), p_pin: "4821", p_dias: 30 } as never)).data && ((await anon.rpc("qr_series_por_ejercicio" as never, { p_token: "x", p_dispositivo: uuid(5), p_pin: "4821", p_dias: 30 } as never)).data as unknown as { ok?: boolean }).ok !== true)
+
   if (gymOtro) {
     const cruce5 = (await anon.rpc("qr_entrenamiento_guardar" as never, { p_token: gymOtro.qr_token, p_dispositivo: vinc5.dispositivo, p_pin: "4821", p_datos: sesion(uuid(9), [[60, 8]], [[80, 5]]) } as never)).data as unknown as R5
     chequeo("un celular de otro gimnasio no puede guardar", cruce5?.error === "DISPOSITIVO_DESCONOCIDO")

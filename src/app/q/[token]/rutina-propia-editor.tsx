@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { ArrowDown, ArrowLeft, ArrowUp, Plus, Trash2 } from "lucide-react"
+import { ArrowDown, ArrowLeft, ArrowUp, LayoutGrid, Plus, Trash2 } from "lucide-react"
+import { SelectorEjercicio, type EjercicioElegido } from "@/components/shared/selector-ejercicio"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { claveEjercicio, EJERCICIOS_BASE } from "@/lib/ejercicios-base"
@@ -58,6 +59,19 @@ export function RutinaPropiaEditor({
 
   const porClave = new Map(biblioteca.map((b) => [claveEjercicio(b.nombre), b]))
   const sugerencias = [...biblioteca.map((b) => b.nombre), ...EJERCICIOS_BASE.map((b) => b.nombre).filter((n) => !porClave.has(claveEjercicio(n)))]
+
+  const [selector, setSelector] = useState<number | null>(null)
+  /** Suma los ejercicios elegidos del catálogo al día, reemplazando las filas vacías y sin pasar de 40. */
+  const agregarElegidos = (di: number, elegidos: EjercicioElegido[]) => {
+    setDias((ds) =>
+      ds.map((d, i) => {
+        if (i !== di) return d
+        const llenos = d.ejercicios.filter((e) => e.nombre.trim() || e.series.trim() || e.repeticiones.trim() || e.descanso.trim() || e.nota.trim())
+        return { ...d, ejercicios: [...llenos, ...elegidos.map((e) => ({ ...vacio(), nombre: e.nombre, video: e.video }))].slice(0, 40) }
+      }),
+    )
+    setSelector(null)
+  }
 
   const cambiarDia = (di: number, cambio: Partial<DiaForm>) => setDias((ds) => ds.map((d, i) => (i === di ? { ...d, ...cambio } : d)))
   const cambiarEj = (di: number, ei: number, cambio: Partial<EjercicioForm>) =>
@@ -144,15 +158,22 @@ export function RutinaPropiaEditor({
               </div>
             ))}
           </div>
-          <Button type="button" variant="outline" className="mt-3" onClick={() => cambiarDia(di, { ejercicios: [...dia.ejercicios, vacio()] })} disabled={dia.ejercicios.length >= 40}>
-            <Plus /> Agregar ejercicio
-          </Button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button type="button" onClick={() => setSelector(di)} disabled={dia.ejercicios.length >= 40}>
+              <LayoutGrid /> Elegir del catálogo
+            </Button>
+            <Button type="button" variant="outline" onClick={() => cambiarDia(di, { ejercicios: [...dia.ejercicios, vacio()] })} disabled={dia.ejercicios.length >= 40}>
+              <Plus /> Agregar ejercicio
+            </Button>
+          </div>
         </section>
       ))}
 
       <Button type="button" variant="outline" className="self-start" disabled={dias.length >= 14} onClick={() => setDias((ds) => [...ds, { key: uid(), nombre: `Día ${LETRAS[ds.length] ?? ds.length + 1}`, ejercicios: [vacio()] }])}>
         <Plus /> Agregar día
       </Button>
+
+      {selector !== null && <SelectorEjercicio biblioteca={biblioteca} onAgregar={(el) => agregarElegidos(selector, el)} onCerrar={() => setSelector(null)} />}
 
       <datalist id="ejercicios-sugeridos-socio">
         {sugerencias.map((n) => (

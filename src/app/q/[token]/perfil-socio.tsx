@@ -3,14 +3,18 @@
 import { BotonVideo } from "@/components/shared/video-tecnica"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
-import { ArrowLeft, ChartLine, Delete, Dumbbell, Flame, IdCard, Mail, Pencil, Phone, Play, Plus, ShieldCheck, Trash2, Trophy } from "lucide-react"
+import { ArrowLeft, ChartLine, Delete, Dumbbell, Flame, IdCard, Mail, Pencil, Phone, PersonStanding, Play, Plus, ShieldCheck, Trash2, Trophy } from "lucide-react"
 import { Disco, ESTILO_ESTADO } from "@/components/shared/estado-badge"
 import { SocioAvatar } from "@/components/shared/socio-avatar"
 import { CalendarioAsistencias } from "@/features/socios/calendario-asistencias"
 import { fecha, num } from "@/lib/format"
-import type { PerfilSocio, ProgresoEjercicio, RecordEjercicio, ResultadoProgreso, ResultadoRecords, RutinaPerfil } from "@/lib/actions/qr"
+import type { PerfilSocio, ProgresoEjercicio, RecordEjercicio, ResultadoMusculos, ResultadoProgreso, ResultadoRecords, RutinaPerfil } from "@/lib/actions/qr"
+import { FiguraMusculos } from "@/components/shared/figura-musculos"
+import { musculosDeEjercicios } from "@/lib/musculos"
 import { GraficoProgreso } from "./grafico-progreso"
 import { cn } from "@/lib/utils"
+import { ejercicioPorNombre } from "@/lib/catalogo-ejercicios"
+import { Miniatura } from "@/components/shared/selector-ejercicio"
 
 /** Pantalla del PIN: elegirlo (primera vez, dos veces) o ingresarlo. */
 export function PinPantalla({
@@ -152,6 +156,7 @@ export function PerfilVista({
   onEmpezar,
   onProgreso,
   onRecords,
+  onMusculos,
   onCrearRutina,
   onEditarRutina,
   onEliminarRutina,
@@ -165,6 +170,7 @@ export function PerfilVista({
   onEmpezar?: (rutina: RutinaPerfil, diaIdx: number) => void
   onProgreso?: () => Promise<ResultadoProgreso>
   onRecords?: () => Promise<ResultadoRecords>
+  onMusculos?: (dias: 7 | 30 | 90) => Promise<ResultadoMusculos>
   onCrearRutina?: () => void
   onEditarRutina?: (rutina: RutinaPerfil) => void
   onEliminarRutina?: (rutina: RutinaPerfil) => Promise<void>
@@ -249,6 +255,7 @@ export function PerfilVista({
           </ul>
           {onProgreso && <SeccionProgreso onProgreso={onProgreso} />}
           {onRecords && <SeccionRecords onRecords={onRecords} />}
+          {onMusculos && <SeccionMusculos onMusculos={onMusculos} />}
         </section>
       )}
 
@@ -442,18 +449,21 @@ function RutinasConDatos({
           ) : (
             <ol className="mt-2 flex flex-col gap-2">
               {dia.ejercicios.map((e, i) => (
-                <li key={i} className="rounded-xl bg-muted/50 px-3.5 py-3">
-                  <p className="font-medium">
-                    <span className="mr-2 text-muted-foreground tabular-nums">{i + 1}.</span>
-                    {e.nombre}
-                  </p>
-                  {(e.series || e.repeticiones || e.descanso) && (
-                    <p className="mt-0.5 text-sm text-muted-foreground tabular-nums">
-                      {[e.series && `${e.series} series`, e.repeticiones && `${e.repeticiones} reps`, e.descanso && `descanso ${e.descanso}`].filter(Boolean).join(" · ")}
+                <li key={i} className="flex items-start gap-3 rounded-xl bg-muted/50 px-3.5 py-3">
+                  {ejercicioPorNombre(e.nombre) && <Miniatura id={ejercicioPorNombre(e.nombre)!.id} nombre={e.nombre} className="size-12" />}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">
+                      <span className="mr-2 text-muted-foreground tabular-nums">{i + 1}.</span>
+                      {e.nombre}
                     </p>
-                  )}
-                  {e.nota && <p className="mt-1 text-sm">{e.nota}</p>}
-                  {e.video && <BotonVideo url={e.video} nombre={e.nombre} className="mt-2" />}
+                    {(e.series || e.repeticiones || e.descanso) && (
+                      <p className="mt-0.5 text-sm text-muted-foreground tabular-nums">
+                        {[e.series && `${e.series} series`, e.repeticiones && `${e.repeticiones} reps`, e.descanso && `descanso ${e.descanso}`].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                    {e.nota && <p className="mt-1 text-sm">{e.nota}</p>}
+                    {e.video && <BotonVideo url={e.video} nombre={e.nombre} className="mt-2" />}
+                  </div>
                 </li>
               ))}
             </ol>
@@ -534,6 +544,73 @@ function SeccionProgreso({ onProgreso }: { onProgreso: () => Promise<ResultadoPr
 }
 
 /** "Ver mis récords": la mejor marca de cada ejercicio (fuerza estimada y mayor peso) con su fecha. */
+const PERIODOS_MUSCULOS = [
+  { dias: 7 as const, label: "7 días" },
+  { dias: 30 as const, label: "30 días" },
+  { dias: 90 as const, label: "3 meses" },
+]
+
+/** Figura del cuerpo con los músculos que trabajó en el período elegido. */
+function SeccionMusculos({ onMusculos }: { onMusculos: (dias: 7 | 30 | 90) => Promise<ResultadoMusculos> }) {
+  const [dias, setDias] = useState<7 | 30 | 90>(30)
+  const [abierto, setAbierto] = useState(false)
+  const [estado, setEstado] = useState<{ tipo: "cargando" } | { tipo: "listo"; datos: ReturnType<typeof musculosDeEjercicios> } | { tipo: "error"; mensaje: string }>({ tipo: "cargando" })
+
+  async function cargar(d: 7 | 30 | 90) {
+    setDias(d)
+    setEstado({ tipo: "cargando" })
+    const r = await onMusculos(d)
+    setEstado(r.ok ? { tipo: "listo", datos: musculosDeEjercicios(r.ejercicios) } : { tipo: "error", mensaje: r.mensaje })
+  }
+
+  if (!abierto) {
+    return (
+      <div className="mt-3">
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => {
+            setAbierto(true)
+            void cargar(dias)
+          }}
+        >
+          <PersonStanding className="size-4" /> Ver mis músculos
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-4 border-t pt-4">
+      <h3 className="flex items-center gap-2 font-semibold">
+        <PersonStanding className="size-4 text-primary" /> Músculos que trabajaste
+      </h3>
+      <div className="mt-3 flex gap-2" role="group" aria-label="Período">
+        {PERIODOS_MUSCULOS.map((p) => (
+          <button
+            key={p.dias}
+            type="button"
+            aria-pressed={dias === p.dias}
+            onClick={() => void cargar(p.dias)}
+            className={cn("rounded-full border px-3 py-1.5 text-sm font-medium transition-colors", dias === p.dias ? "border-primary bg-primary/15 text-foreground" : "text-muted-foreground hover:text-foreground")}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+      <div className="mt-4" aria-live="polite">
+        {estado.tipo === "cargando" && <p className="py-8 text-center text-sm text-muted-foreground">Cargando…</p>}
+        {estado.tipo === "error" && (
+          <p role="alert" className="text-sm font-medium text-bad">
+            {estado.mensaje}
+          </p>
+        )}
+        {estado.tipo === "listo" && (estado.datos.total === 0 ? <p className="py-6 text-center text-sm text-muted-foreground">No registraste entrenamientos en este período.</p> : <FiguraMusculos valores={estado.datos.valores} sinMusculo={estado.datos.sinMusculo} />)}
+      </div>
+    </div>
+  )
+}
+
 function SeccionRecords({ onRecords }: { onRecords: () => Promise<ResultadoRecords> }) {
   const [estado, setEstado] = useState<{ tipo: "cerrado" } | { tipo: "cargando" } | { tipo: "listo"; ejercicios: RecordEjercicio[] } | { tipo: "error"; mensaje: string }>({ tipo: "cerrado" })
   const kg = (n: number | null) => (n === null ? "—" : `${Math.round(n * 10) / 10}`.replace(".", ","))

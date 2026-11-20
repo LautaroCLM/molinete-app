@@ -15,6 +15,8 @@ Actualizar solo ante cambios significativos (no registrar comandos). Última act
 - **Diseño**: negro con verde, degradados, animaciones sutiles (respetan "reducir movimiento"), modo oscuro por defecto.
 - **Aviso de nueva versión**: si se publica la web con la pantalla abierta, aparece "Hay una nueva actualización" → Actualizar (`/api/version`).
 - **App para Android** (PWA instalable): service worker, pantalla sin conexión, íconos y botón "Instalar la app". Ver README.
+- **Músculos trabajados**: figura del cuerpo con series por músculo, en vivo y en el perfil del socio. Ver README.
+- **Catálogo de ejercicios con fotos** (187, filtros por músculo y equipamiento). Ver README. 
 - **Rutinas del gimnasio para todos los socios** (`rutinas.para_todos`). Ver README.
 - **Marca del gimnasio en la app del socio** (logo, color, bienvenida, ícono de la PWA). Ver README.
 - **Rutinas propias del socio** (privadas, hasta 10) y **Mis récords**. Ver README.

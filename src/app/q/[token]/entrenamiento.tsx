@@ -2,7 +2,9 @@
 
 import { BotonVideo } from "@/components/shared/video-tecnica"
 import { useEffect, useRef, useState, useTransition } from "react"
-import { Check, Minus, Plus, Trophy } from "lucide-react"
+import { Check, Minus, PersonStanding, Plus, Trophy } from "lucide-react"
+import { FiguraMusculos } from "@/components/shared/figura-musculos"
+import { musculosDeEjercicios } from "@/lib/musculos"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { aNumero, cantidadSeries, e1rm, reloj, repsSugeridas, segundosDescanso } from "@/lib/entrenamiento"
@@ -119,6 +121,7 @@ export function EntrenamientoVista({
     return b ?? { v: 1 as const, clienteId: crypto.randomUUID(), rutinaId: rutina.id, diaNombre: dia.nombre, inicio: Date.now(), ejercicios: armarEjercicios(rutina, diaIdx, historial) }
   })
   const [ejercicios, setEjercicios] = useState<EjercicioForm[]>(inicial.ejercicios)
+  const [verMusculos, setVerMusculos] = useState(false)
   const [error, setError] = useState<string>()
   const [confirmaSalir, setConfirmaSalir] = useState(false)
   const [resumen, setResumen] = useState<Extract<ResultadoGuardado, { ok: true }> | null>(null)
@@ -264,6 +267,7 @@ export function EntrenamientoVista({
     )
   }
 
+  const musculosHechos = musculosDeEjercicios(ejercicios.map((e) => ({ nombre: e.nombre, series: e.series.filter((s) => s.hecha).length })))
   const restante = finDescanso ? Math.max(0, Math.ceil((finDescanso - ahora) / 1000)) : 0
   const transcurrido = Math.max(0, Math.floor((ahora - inicial.inicio) / 1000))
 
@@ -285,10 +289,22 @@ export function EntrenamientoVista({
             Salir
           </button>
         )}
-        <span className="num-display text-2xl tabular-nums text-muted-foreground" aria-label="Tiempo de entrenamiento">
-          {reloj(transcurrido)}
-        </span>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant={verMusculos ? "secondary" : "ghost"} size="icon-sm" aria-label="Ver los músculos que estás trabajando" aria-expanded={verMusculos} onClick={() => setVerMusculos((v) => !v)}>
+            <PersonStanding />
+          </Button>
+          <span className="num-display text-2xl tabular-nums text-muted-foreground" aria-label="Tiempo de entrenamiento">
+            {reloj(transcurrido)}
+          </span>
+        </div>
       </div>
+
+      {verMusculos && (
+        <section className="rounded-2xl border bg-card p-4" aria-label="Músculos de este entrenamiento">
+          <h2 className="mb-3 text-sm font-semibold">Músculos de este entrenamiento</h2>
+          <FiguraMusculos valores={musculosHechos.valores} sinMusculo={musculosHechos.sinMusculo} />
+        </section>
+      )}
 
       <div>
         <h1 className="font-display text-3xl leading-tight font-semibold tracking-tight">{dia.nombre}</h1>

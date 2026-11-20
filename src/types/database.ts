@@ -804,6 +804,9 @@ isOneToOne: false
 "qr_rutina_guardar":
 { Args: { "p_dispositivo": string,"p_pin": string,"p_rutina": Json,"p_token": string }; Returns: Json
                            },
+"qr_series_por_ejercicio":
+{ Args: { "p_dias"?: number,"p_dispositivo": string,"p_pin": string,"p_token": string }; Returns: Json
+                           },
 "qr_vincular":
 { Args: { "p_dni": string,"p_token": string }; Returns: Json
                            },
