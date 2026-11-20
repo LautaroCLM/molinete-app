@@ -221,3 +221,7 @@ Desde su perfil (con PIN), el socio puede **armar sus propias rutinas** ("Crear 
 ### Marca del gimnasio en la app del socio
 
 En Configuración → Gimnasio, el dueño elige el **color principal** y una **frase de bienvenida**; el logo es el que ya sube ahí. La app del socio (`/q/<token>`) muestra el logo en el encabezado, repinta botones y acentos con el color, usa la frase en vez de "¡Buen entrenamiento!" y la repite en el perfil. La app instalada toma el logo como ícono (`/q/<token>/icono/<tamaño>`, PNG generado sobre el color) y el color como barra del sistema. Sin personalizar, queda la marca de Molinete. Datos: `gyms.color_acento`, `gyms.msg_bienvenida`; `qr_gimnasio` los devuelve.
+
+### Rutinas del gimnasio para todos los socios
+
+Al armar o editar una rutina, el personal puede activar **"Visible para todos los socios"**: todos los socios del gimnasio la ven en su perfil (etiqueta GIMNASIO) y pueden entrenarla, sin asignarla uno por uno. En Rutinas figura como "Para todos los socios"; si se archiva, deja de verse. Si además está asignada a un socio, le aparece una sola vez. Columna `rutinas.para_todos` (solo rutinas del gimnasio, no las propias de un socio).

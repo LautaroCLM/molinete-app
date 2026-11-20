@@ -559,6 +559,29 @@ async function main() {
   chequeo("el dueño de otro gimnasio no puede cambiarla", (marcaOtro.data ?? []).length === 0)
   await admin.from("gyms").update({ color_acento: null, msg_bienvenida: null }).eq("id", gymDemo.id)
 
+  // --- Rutinas del gimnasio visibles para todos ---
+  type PerfilRut = { rutinas?: { id: string; nombre: string; del_gimnasio: boolean; propia: boolean }[] }
+  const perfilDe = async () => ((await admin.rpc("_qr_perfil" as never, { p_socio: juan.id } as never)).data as unknown as PerfilRut).rutinas ?? []
+  const todos = await dueno.rpc("guardar_rutina", { p_rutina: { nombre: "Rutina abierta E2E", para_todos: true, dias: [dia("A"), dia("B")] } })
+  chequeo("el personal crea una rutina para todos los socios", !todos.error && !!todos.data, todos.error?.message)
+  const idTodos = todos.data as string
+  const visibles = (await perfilDe()).filter((r) => r.id === idTodos)
+  chequeo("el socio la ve en su perfil sin que se la asignen, marcada del gimnasio", visibles.length === 1 && visibles[0].del_gimnasio && !visibles[0].propia)
+  await dueno.rpc("asignar_rutina", { p_socio: juan.id, p_rutina: idTodos })
+  const unaVez = (await perfilDe()).filter((r) => r.id === idTodos)
+  chequeo("si además se la asignan aparece una sola vez (como asignada)", unaVez.length === 1 && !unaVez[0].del_gimnasio)
+  await admin.from("socio_rutinas").delete().eq("rutina_id", idTodos)
+  const sinMarca = await dueno.rpc("guardar_rutina", { p_rutina: { id: idTodos, nombre: "Rutina abierta E2E", para_todos: false, dias: [dia("A")] } })
+  chequeo("se puede sacar la marca", !sinMarca.error && (await perfilDe()).every((r) => r.id !== idTodos))
+  await dueno.rpc("guardar_rutina", { p_rutina: { id: idTodos, nombre: "Rutina abierta E2E", para_todos: true, dias: [dia("A")] } })
+  await dueno.rpc("archivar_rutina", { p_rutina: idTodos, p_activo: false })
+  chequeo("archivada deja de verse", (await perfilDe()).every((r) => r.id !== idTodos))
+  const propiaAbierta = await admin.from("rutinas").insert({ gym_id: gymDemo.id, socio_id: juan.id, nombre: "Propia abierta", para_todos: true })
+  chequeo("una rutina propia de un socio no puede ser para todos", !!propiaAbierta.error)
+  const ajenaTodos = await otro.rpc("guardar_rutina", { p_rutina: { id: idTodos, nombre: "Pisada", para_todos: false, dias: [dia("X")] } })
+  chequeo("el dueño de otro gimnasio no puede cambiarla", !!ajenaTodos.error)
+  await admin.from("rutinas").delete().eq("id", idTodos)
+
   // Limpieza del gimnasio de prueba
   if (nuevo.data) await admin.from("gyms").delete().eq("id", nuevo.data)
   const u = (await otro.auth.getUser()).data.user

@@ -203,6 +203,7 @@ export interface RutinaResumen {
   nombre: string
   descripcion: string
   activo: boolean
+  paraTodos: boolean
   dias: number
   ejercicios: number
   socios: number
@@ -213,6 +214,7 @@ type FilaRutina = {
   nombre: string
   descripcion: string
   activo: boolean
+  para_todos: boolean
   rutina_dias: { orden: number; nombre: string; rutina_ejercicios: { orden: number; nombre: string; series: string; repeticiones: string; descanso: string; nota: string; video_url: string }[] }[]
 }
 
@@ -222,6 +224,7 @@ function mapRutina(r: FilaRutina): Rutina {
     nombre: r.nombre,
     descripcion: r.descripcion,
     activo: r.activo,
+    paraTodos: r.para_todos,
     dias: [...r.rutina_dias]
       .sort((a, b) => a.orden - b.orden)
       .map((d) => ({
@@ -233,7 +236,7 @@ function mapRutina(r: FilaRutina): Rutina {
   }
 }
 
-const SELECT_RUTINA = "id, nombre, descripcion, activo, rutina_dias(orden, nombre, rutina_ejercicios(orden, nombre, series, repeticiones, descanso, nota, video_url))"
+const SELECT_RUTINA = "id, nombre, descripcion, activo, para_todos, rutina_dias(orden, nombre, rutina_ejercicios(orden, nombre, series, repeticiones, descanso, nota, video_url))"
 
 export async function getRutinas(): Promise<RutinaResumen[]> {
   const sb = await db()
@@ -250,6 +253,7 @@ export async function getRutinas(): Promise<RutinaResumen[]> {
       nombre: r.nombre,
       descripcion: r.descripcion,
       activo: r.activo,
+      paraTodos: r.paraTodos,
       dias: r.dias.length,
       ejercicios: r.dias.reduce((s, d) => s + d.ejercicios.length, 0),
       socios: cuenta.get(r.id) ?? 0,

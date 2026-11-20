@@ -362,7 +362,7 @@ function RutinasConDatos({
         <Dumbbell className="size-4 text-primary" /> Tu rutina
       </h2>
 
-      {(rutinas.length > 1 || rutinas.some((r) => r.propia)) && (
+      {(rutinas.length > 1 || rutinas.some((r) => r.propia || r.del_gimnasio)) && (
         <div className="mt-3 flex flex-wrap gap-2" role="tablist" aria-label="Tus rutinas">
           {rutinas.map((r, i) => (
             <button
@@ -377,6 +377,7 @@ function RutinasConDatos({
             >
               {r.nombre}
               {r.propia && <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[0.65rem] font-bold text-muted-foreground">MÍA</span>}
+              {r.del_gimnasio && <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[0.65rem] font-bold text-muted-foreground">GIMNASIO</span>}
             </button>
           ))}
         </div>
@@ -387,6 +388,7 @@ function RutinasConDatos({
           <p className="font-medium">{rutina.nombre}</p>
           {rutina.descripcion && <p className="text-sm text-muted-foreground">{rutina.descripcion}</p>}
           {rutina.propia && <p className="mt-0.5 text-xs text-muted-foreground">Armada por vos. Solo la ves vos.</p>}
+          {rutina.del_gimnasio && <p className="mt-0.5 text-xs text-muted-foreground">Rutina del gimnasio, para todos los socios.</p>}
         </div>
         {rutina.propia && onEditar && (
           <div className="flex shrink-0 items-center gap-1">

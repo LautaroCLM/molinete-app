@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { ArrowDown, ArrowLeft, ArrowUp, BookmarkPlus, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
 import { Field } from "@/components/shared/field"
 import { guardarEjercicioBiblioteca, guardarRutina } from "@/lib/actions"
 import { claveEjercicio, EJERCICIOS_BASE } from "@/lib/ejercicios-base"
@@ -46,6 +47,7 @@ export function RutinaEditor({ rutina, biblioteca }: { rutina?: Rutina; bibliote
   const router = useRouter()
   const [nombre, setNombre] = useState(rutina?.nombre ?? "")
   const [descripcion, setDescripcion] = useState(rutina?.descripcion ?? "")
+  const [paraTodos, setParaTodos] = useState(rutina?.paraTodos ?? false)
   const [dias, setDias] = useState<DiaForm[]>(() =>
     rutina?.dias.length
       ? rutina.dias.map((d) => ({ key: uid(), nombre: d.nombre, ejercicios: d.ejercicios.map((e) => ({ key: uid(), ...e })) }))
@@ -67,6 +69,7 @@ export function RutinaEditor({ rutina, biblioteca }: { rutina?: Rutina; bibliote
     const limpio = {
       nombre,
       descripcion,
+      para_todos: paraTodos,
       dias: dias.map((d) => ({
         nombre: d.nombre,
         ejercicios: d.ejercicios
@@ -98,6 +101,13 @@ export function RutinaEditor({ rutina, biblioteca }: { rutina?: Rutina; bibliote
         <Field label="Descripción (opcional)" htmlFor="rutina-desc">
           <Input id="rutina-desc" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Ej.: 3 días por semana, nivel inicial" maxLength={300} />
         </Field>
+        <label htmlFor="rutina-todos" className="flex items-start gap-3 rounded-lg border bg-muted/30 p-3 sm:col-span-2">
+          <Switch id="rutina-todos" checked={paraTodos} onCheckedChange={setParaTodos} className="mt-0.5" />
+          <span className="text-sm">
+            <span className="font-medium">Visible para todos los socios</span>
+            <span className="block text-muted-foreground">Todos la ven en su perfil y pueden entrenarla, sin que tengas que asignarla uno por uno.</span>
+          </span>
+        </label>
       </section>
 
       <div className="flex flex-col gap-4">

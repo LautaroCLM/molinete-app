@@ -176,6 +176,8 @@ export const ejercicioBibliotecaSchema = z.object({
 export const rutinaSchema = z.object({
   nombre: z.string().trim().min(2, "Ingresá el nombre de la rutina.").max(80, "El nombre es muy largo (hasta 80 letras)."),
   descripcion: texto(300, "La descripción es muy larga (hasta 300 letras)."),
+  /** Solo del personal: visible para todos los socios del gimnasio (la rutina propia del socio lo ignora). */
+  para_todos: z.boolean().default(false),
   dias: z
     .array(
       z.object({

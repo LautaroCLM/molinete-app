@@ -133,6 +133,8 @@ export interface RutinaPerfil {
   descripcion: string
   /** true si la armó el propio socio (privada); false si se la asignó el gimnasio. */
   propia: boolean
+  /** true si es una rutina del gimnasio abierta a todos los socios (no se la asignaron a este en particular). */
+  del_gimnasio: boolean
   /** Índice (desde 0) del día que le toca hoy, por rotación. */
   hoy: number
   dias: { nombre: string; ejercicios: { nombre: string; series: string; repeticiones: string; descanso: string; nota: string; video: string }[] }[]

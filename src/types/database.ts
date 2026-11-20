@@ -511,14 +511,14 @@ isOneToOne: false
                   ]
                 },"rutinas": {
                   Row: {
-                    "activo": boolean,"created_at": string,"descripcion": string,"gym_id": string,"id": string,"nombre": string,"socio_id": string | null,"updated_at": string
+                    "activo": boolean,"created_at": string,"descripcion": string,"gym_id": string,"id": string,"nombre": string,"para_todos": boolean,"socio_id": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "activo"?: boolean,"created_at"?: string,"descripcion"?: string,"gym_id": string,"id"?: string,"nombre": string,"socio_id"?: string | null,"updated_at"?: string
+                    "activo"?: boolean,"created_at"?: string,"descripcion"?: string,"gym_id": string,"id"?: string,"nombre": string,"para_todos"?: boolean,"socio_id"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "activo"?: boolean,"created_at"?: string,"descripcion"?: string,"gym_id"?: string,"id"?: string,"nombre"?: string,"socio_id"?: string | null,"updated_at"?: string
+                    "activo"?: boolean,"created_at"?: string,"descripcion"?: string,"gym_id"?: string,"id"?: string,"nombre"?: string,"para_todos"?: boolean,"socio_id"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     {

@@ -78,6 +78,7 @@ function TarjetaRutina({ r }: { r: RutinaResumen }) {
     <section className="surface flex flex-col gap-4 rounded-xl border bg-card p-5">
       <div className="min-w-0">
         <h2 className="truncate text-lg font-semibold">{r.nombre}</h2>
+        {r.paraTodos && <span className="mt-1 inline-block rounded-full bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">Para todos los socios</span>}
         {r.descripcion && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{r.descripcion}</p>}
       </div>
       <dl className="grid grid-cols-3 gap-2 text-sm">

@@ -210,5 +210,7 @@ export interface Rutina {
   nombre: string
   descripcion: string
   activo: boolean
+  /** La ven todos los socios del gimnasio sin asignarla. */
+  paraTodos: boolean
   dias: DiaRutina[]
 }
