@@ -203,3 +203,9 @@ Con un clic: abre WhatsApp (wa.me) con el mensaje escrito y registra quién avis
 - **Mensajes:** el dueño los edita en Configuración → "Mensajes de WhatsApp" (variables `{nombre}`, `{gimnasio}`, `{plan}`, `{cuando}`, `{vence}`); vacío = texto original.
 - "Avisado hace…" evita avisar dos veces al mismo socio (45 días de memoria).
 - La app de escritorio (0.1.1) abre estos enlaces en el navegador del sistema.
+
+### Biblioteca de ejercicios, videos de técnica e impresión de rutinas
+
+- **Videos:** cada ejercicio de una rutina puede llevar un enlace de **YouTube o Vimeo** (https; se valida en el formulario y en la base). El socio lo ve con **Ver técnica** en su perfil y durante el entrenamiento (YouTube se incrusta sin cookies; Vimeo con su reproductor).
+- **Biblioteca** (`/rutinas/biblioteca`, dueño y recepción): ejercicios propios del gimnasio con grupo y video. Al armar una rutina, el nombre sugiere la biblioteca y unos 70 ejercicios comunes (`src/lib/ejercicios-base.ts`); al elegir uno de la biblioteca se trae su video, y un ejercicio nuevo con video se puede guardar con un botón.
+- **Imprimir** (`/imprimir-rutina/<id>`, con `?socio=<id>` para ponerle el nombre): hoja A4 con cada día, ejercicios, series, repeticiones, descanso y casilleros para anotar los kg a mano. Botones en la lista de rutinas y en la ficha del socio.

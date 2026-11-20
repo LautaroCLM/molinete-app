@@ -1,5 +1,6 @@
 "use client"
 
+import { BotonVideo } from "@/components/shared/video-tecnica"
 import { useEffect, useRef, useState, useTransition } from "react"
 import { Check, Minus, Plus, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -20,6 +21,7 @@ interface EjercicioForm {
   planReps: string
   planDescanso: string
   nota: string
+  video?: string
   descanso: number
   series: SerieForm[]
 }
@@ -67,6 +69,7 @@ function armarEjercicios(rutina: RutinaPerfil, diaIdx: number, historial: Histor
       planReps: e.repeticiones,
       planDescanso: e.descanso,
       nota: e.nota,
+      video: e.video,
       descanso: segundosDescanso(e.descanso),
       series: Array.from({ length: cantidad }, (_, i) => {
         const base = h?.series[i] ?? h?.series[h.series.length - 1]
@@ -310,6 +313,7 @@ export function EntrenamientoVista({
             </div>
             {plan && <p className="mt-0.5 text-sm text-muted-foreground tabular-nums">{plan}</p>}
             {e.nota && <p className="mt-1 text-sm">{e.nota}</p>}
+            {e.video && <BotonVideo url={e.video} nombre={e.nombre} className="mt-2" />}
             {h && h.series.length > 0 && (
               <p className="mt-1 text-xs text-muted-foreground tabular-nums">
                 Última vez ({fecha(h.fecha)}): {h.series.map((s) => `${s.peso ?? "—"}×${s.reps ?? "—"}`).join(" · ")}

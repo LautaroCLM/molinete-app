@@ -149,6 +149,23 @@ export const ejercicioRutinaSchema = z.object({
   repeticiones: texto(40, "Las repeticiones son muy largas."),
   descanso: texto(40, "El descanso es muy largo."),
   nota: texto(300, "La nota es muy larga (hasta 300 letras)."),
+  video: z
+    .string()
+    .trim()
+    .max(300, "El enlace del video es muy largo.")
+    .refine((v) => v === "" || /^https:\/\/((www|m|music)\.)?(youtube\.com|youtu\.be|youtube-nocookie\.com|vimeo\.com|player\.vimeo\.com)\//i.test(v), "El video tiene que ser un enlace https de YouTube o Vimeo.")
+    .default(""),
+})
+
+export const ejercicioBibliotecaSchema = z.object({
+  nombre: z.string().trim().min(2, "Ingresá el nombre del ejercicio.").max(80, "El nombre es muy largo (hasta 80 letras)."),
+  grupo: z.string().trim().max(40, "El grupo es muy largo.").default(""),
+  video: z
+    .string()
+    .trim()
+    .max(300, "El enlace del video es muy largo.")
+    .refine((v) => v === "" || /^https:\/\/((www|m|music)\.)?(youtube\.com|youtu\.be|youtube-nocookie\.com|vimeo\.com|player\.vimeo\.com)\//i.test(v), "El video tiene que ser un enlace https de YouTube o Vimeo.")
+    .default(""),
 })
 
 export const rutinaSchema = z.object({

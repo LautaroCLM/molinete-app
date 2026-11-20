@@ -213,7 +213,7 @@ type FilaRutina = {
   nombre: string
   descripcion: string
   activo: boolean
-  rutina_dias: { orden: number; nombre: string; rutina_ejercicios: { orden: number; nombre: string; series: string; repeticiones: string; descanso: string; nota: string }[] }[]
+  rutina_dias: { orden: number; nombre: string; rutina_ejercicios: { orden: number; nombre: string; series: string; repeticiones: string; descanso: string; nota: string; video_url: string }[] }[]
 }
 
 function mapRutina(r: FilaRutina): Rutina {
@@ -228,12 +228,12 @@ function mapRutina(r: FilaRutina): Rutina {
         nombre: d.nombre,
         ejercicios: [...d.rutina_ejercicios]
           .sort((a, b) => a.orden - b.orden)
-          .map((e) => ({ nombre: e.nombre, series: e.series, repeticiones: e.repeticiones, descanso: e.descanso, nota: e.nota })),
+          .map((e) => ({ nombre: e.nombre, series: e.series, repeticiones: e.repeticiones, descanso: e.descanso, nota: e.nota, video: e.video_url })),
       })),
   }
 }
 
-const SELECT_RUTINA = "id, nombre, descripcion, activo, rutina_dias(orden, nombre, rutina_ejercicios(orden, nombre, series, repeticiones, descanso, nota))"
+const SELECT_RUTINA = "id, nombre, descripcion, activo, rutina_dias(orden, nombre, rutina_ejercicios(orden, nombre, series, repeticiones, descanso, nota, video_url))"
 
 export async function getRutinas(): Promise<RutinaResumen[]> {
   const sb = await db()
@@ -350,6 +350,20 @@ export async function getUltimosAvisos(): Promise<Record<string, string>> {
   const mapa: Record<string, string> = {}
   for (const f of filas) if (!mapa[f.socio_id]) mapa[f.socio_id] = f.fecha
   return mapa
+}
+
+// ---------- Biblioteca de ejercicios del gimnasio ----------
+export interface EjercicioBiblioteca {
+  id: string
+  nombre: string
+  grupo: string
+  video: string
+}
+
+export async function getBiblioteca(): Promise<EjercicioBiblioteca[]> {
+  const sb = await db()
+  const filas = await sb.from("biblioteca_ejercicios").select("id, nombre, grupo, video_url").order("nombre").then(chequear)
+  return filas.map((f) => ({ id: f.id, nombre: f.nombre, grupo: f.grupo, video: f.video_url }))
 }
 
 // ---------- Usuarios ----------

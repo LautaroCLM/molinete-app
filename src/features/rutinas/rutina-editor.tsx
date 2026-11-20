@@ -4,12 +4,14 @@ import { useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { ArrowDown, ArrowLeft, ArrowUp, Plus, Trash2 } from "lucide-react"
+import { ArrowDown, ArrowLeft, ArrowUp, BookmarkPlus, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Field } from "@/components/shared/field"
-import { guardarRutina } from "@/lib/actions"
+import { guardarEjercicioBiblioteca, guardarRutina } from "@/lib/actions"
+import { claveEjercicio, EJERCICIOS_BASE } from "@/lib/ejercicios-base"
 import { rutinaSchema } from "@/lib/schemas"
+import type { EjercicioBiblioteca } from "@/lib/data"
 import type { Rutina } from "@/types/domain"
 
 interface EjercicioForm {
@@ -19,6 +21,7 @@ interface EjercicioForm {
   repeticiones: string
   descanso: string
   nota: string
+  video: string
 }
 interface DiaForm {
   key: string
@@ -27,7 +30,7 @@ interface DiaForm {
 }
 
 const uid = () => crypto.randomUUID()
-const ejercicioVacio = (): EjercicioForm => ({ key: uid(), nombre: "", series: "", repeticiones: "", descanso: "", nota: "" })
+const ejercicioVacio = (): EjercicioForm => ({ key: uid(), nombre: "", series: "", repeticiones: "", descanso: "", nota: "", video: "" })
 const NOMBRES_DIA = "ABCDEFGHIJKLMN"
 
 function mover<T>(lista: T[], i: number, dir: -1 | 1): T[] {
@@ -39,7 +42,7 @@ function mover<T>(lista: T[], i: number, dir: -1 | 1): T[] {
 }
 
 /** Editor de una rutina: nombre, días y ejercicios escritos a mano. */
-export function RutinaEditor({ rutina }: { rutina?: Rutina }) {
+export function RutinaEditor({ rutina, biblioteca }: { rutina?: Rutina; biblioteca: EjercicioBiblioteca[] }) {
   const router = useRouter()
   const [nombre, setNombre] = useState(rutina?.nombre ?? "")
   const [descripcion, setDescripcion] = useState(rutina?.descripcion ?? "")
@@ -50,6 +53,10 @@ export function RutinaEditor({ rutina }: { rutina?: Rutina }) {
   )
   const [error, setError] = useState<string>()
   const [pendiente, start] = useTransition()
+  // Sugerencias al escribir: la biblioteca del gimnasio primero y después los ejercicios comunes.
+  const [propios, setPropios] = useState(biblioteca)
+  const porClave = new Map(propios.map((b) => [claveEjercicio(b.nombre), b]))
+  const sugerencias = [...propios.map((b) => b.nombre), ...EJERCICIOS_BASE.map((b) => b.nombre).filter((n) => !porClave.has(claveEjercicio(n)))]
 
   const cambiarDia = (di: number, cambio: Partial<DiaForm>) => setDias((ds) => ds.map((d, i) => (i === di ? { ...d, ...cambio } : d)))
   const cambiarEjercicio = (di: number, ei: number, cambio: Partial<EjercicioForm>) =>
@@ -63,8 +70,8 @@ export function RutinaEditor({ rutina }: { rutina?: Rutina }) {
       dias: dias.map((d) => ({
         nombre: d.nombre,
         ejercicios: d.ejercicios
-          .filter((e) => e.nombre.trim() || e.series.trim() || e.repeticiones.trim() || e.descanso.trim() || e.nota.trim())
-          .map(({ nombre: n, series, repeticiones, descanso, nota }) => ({ nombre: n, series, repeticiones, descanso, nota })),
+          .filter((e) => e.nombre.trim() || e.series.trim() || e.repeticiones.trim() || e.descanso.trim() || e.nota.trim() || e.video.trim())
+          .map(({ nombre: n, series, repeticiones, descanso, nota, video }) => ({ nombre: n, series, repeticiones, descanso, nota, video })),
       })),
     }
     const r = rutinaSchema.safeParse(limpio)
@@ -131,7 +138,19 @@ export function RutinaEditor({ rutina }: { rutina?: Rutina }) {
               {dia.ejercicios.map((ej, ei) => (
                 <div key={ej.key} className="rounded-lg border bg-muted/30 p-2.5">
                   <div className="grid gap-2 md:grid-cols-[1fr_5.5rem_6.5rem_6.5rem_6.5rem]">
-                    <Input aria-label="Ejercicio" value={ej.nombre} onChange={(e) => cambiarEjercicio(di, ei, { nombre: e.target.value })} placeholder="Ej.: Press de banca" maxLength={80} />
+                    <Input
+                      aria-label="Ejercicio"
+                      list="ejercicios-sugeridos"
+                      value={ej.nombre}
+                      onChange={(ev) => {
+                        const nombre = ev.target.value
+                        const guardado = porClave.get(claveEjercicio(nombre))
+                        // si elige uno de la biblioteca y todavía no tiene video, se lo trae
+                        cambiarEjercicio(di, ei, guardado && !ej.video ? { nombre, video: guardado.video } : { nombre })
+                      }}
+                      placeholder="Ej.: Press de banca"
+                      maxLength={80}
+                    />
                     <div className="grid grid-cols-3 gap-2 md:contents">
                       <Input aria-label="Series" value={ej.series} onChange={(e) => cambiarEjercicio(di, ei, { series: e.target.value })} placeholder="Series" maxLength={40} />
                       <Input aria-label="Repeticiones" value={ej.repeticiones} onChange={(e) => cambiarEjercicio(di, ei, { repeticiones: e.target.value })} placeholder="Reps" maxLength={40} />
@@ -149,14 +168,44 @@ export function RutinaEditor({ rutina }: { rutina?: Rutina }) {
                       </Button>
                     </div>
                   </div>
-                  <Input
-                    aria-label="Nota del ejercicio"
-                    value={ej.nota}
-                    onChange={(e) => cambiarEjercicio(di, ei, { nota: e.target.value })}
-                    placeholder="Nota (opcional): técnica, peso sugerido…"
-                    maxLength={300}
-                    className="mt-2 h-8 text-xs"
-                  />
+                  <div className="mt-2 grid gap-2 md:grid-cols-2">
+                    <Input
+                      aria-label="Nota del ejercicio"
+                      value={ej.nota}
+                      onChange={(e) => cambiarEjercicio(di, ei, { nota: e.target.value })}
+                      placeholder="Nota (opcional): técnica, peso sugerido…"
+                      maxLength={300}
+                      className="h-8 text-xs"
+                    />
+                    <div className="flex gap-1.5">
+                      <Input
+                        aria-label="Video de técnica del ejercicio"
+                        value={ej.video}
+                        onChange={(e) => cambiarEjercicio(di, ei, { video: e.target.value })}
+                        placeholder="Video de técnica (enlace de YouTube o Vimeo, opcional)"
+                        maxLength={300}
+                        inputMode="url"
+                        className="h-8 text-xs"
+                      />
+                      {ej.nombre.trim().length >= 2 && ej.video.trim() && porClave.get(claveEjercicio(ej.nombre))?.video !== ej.video.trim() && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon-sm"
+                          aria-label="Guardar este ejercicio y su video en la biblioteca"
+                          title="Guardar en la biblioteca para reutilizarlo"
+                          onClick={async () => {
+                            const r = await guardarEjercicioBiblioteca({ nombre: ej.nombre, grupo: porClave.get(claveEjercicio(ej.nombre))?.grupo ?? "", video: ej.video })
+                            if (!r.ok) return void toast.error(r.error)
+                            setPropios((p) => [...p.filter((b) => claveEjercicio(b.nombre) !== claveEjercicio(ej.nombre)), { id: ej.key, nombre: ej.nombre.trim(), grupo: porClave.get(claveEjercicio(ej.nombre))?.grupo ?? "", video: ej.video.trim() }])
+                            toast.success("Guardado en la biblioteca.")
+                          }}
+                        >
+                          <BookmarkPlus />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))}
               <Button type="button" variant="outline" size="sm" className="self-start" onClick={() => cambiarDia(di, { ejercicios: [...dia.ejercicios, ejercicioVacio()] })}>
@@ -176,6 +225,12 @@ export function RutinaEditor({ rutina }: { rutina?: Rutina }) {
           <Plus /> Agregar día
         </Button>
       </div>
+
+      <datalist id="ejercicios-sugeridos">
+        {sugerencias.map((n) => (
+          <option key={n} value={n} />
+        ))}
+      </datalist>
 
       <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center justify-end gap-3 border-t bg-background/90 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         {error && (

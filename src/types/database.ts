@@ -81,6 +81,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"biblioteca_ejercicios": {
+                  Row: {
+                    "created_at": string,"grupo": string,"gym_id": string,"id": string,"nombre": string,"video_url": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"grupo"?: string,"gym_id": string,"id"?: string,"nombre": string,"video_url"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"grupo"?: string,"gym_id"?: string,"id"?: string,"nombre"?: string,"video_url"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "biblioteca_ejercicios_gym_id_fkey"
+      columns: ["gym_id"]
+isOneToOne: false
+      referencedRelation: "gyms"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"cajas": {
                   Row: {
                     "apertura": string,"cierre": string | null,"gym_id": string,"id": string,"monto_contado": number | null,"monto_inicial": number,"observaciones": string,"usuario_id": string
@@ -465,14 +485,14 @@ isOneToOne: false
                   ]
                 },"rutina_ejercicios": {
                   Row: {
-                    "descanso": string,"dia_id": string,"gym_id": string,"id": string,"nombre": string,"nota": string,"orden": number,"repeticiones": string,"series": string
+                    "descanso": string,"dia_id": string,"gym_id": string,"id": string,"nombre": string,"nota": string,"orden": number,"repeticiones": string,"series": string,"video_url": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "descanso"?: string,"dia_id": string,"gym_id": string,"id"?: string,"nombre": string,"nota"?: string,"orden": number,"repeticiones"?: string,"series"?: string
+                    "descanso"?: string,"dia_id": string,"gym_id": string,"id"?: string,"nombre": string,"nota"?: string,"orden": number,"repeticiones"?: string,"series"?: string,"video_url"?: string
                   }
                   Update: {
-                    "descanso"?: string,"dia_id"?: string,"gym_id"?: string,"id"?: string,"nombre"?: string,"nota"?: string,"orden"?: number,"repeticiones"?: string,"series"?: string
+                    "descanso"?: string,"dia_id"?: string,"gym_id"?: string,"id"?: string,"nombre"?: string,"nota"?: string,"orden"?: number,"repeticiones"?: string,"series"?: string,"video_url"?: string
                   }
                   Relationships: [
                     {
@@ -648,6 +668,9 @@ isOneToOne: false
               "error": string,"gym_id": string,"socio_id": string
             }[]
                            },
+"_video_valido":
+{ Args: { "p_url": string }; Returns: boolean
+                           },
 "_yo":
 { Args: Record<PropertyKey, never>; Returns: {
               "activo": boolean,
@@ -705,11 +728,17 @@ isOneToOne: false
 "duplicar_rutina":
 { Args: { "p_rutina": string }; Returns: string
                            },
+"eliminar_ejercicio_biblioteca":
+{ Args: { "p_id": string }; Returns: undefined
+                           },
 "es_dueno":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "es_superadmin":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"guardar_ejercicio_biblioteca":
+{ Args: { "p_grupo": string,"p_nombre": string,"p_video": string }; Returns: string
                            },
 "guardar_rutina":
 { Args: { "p_rutina": Json }; Returns: string

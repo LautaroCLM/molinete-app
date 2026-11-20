@@ -365,6 +365,54 @@ async function main() {
   await admin.from("gyms").update({ msg_por_vencer: null, msg_vencida: null }).eq("id", gymDemo.id)
   await admin.from("recordatorios").delete().eq("gym_id", gymDemo.id)
 
+  console.log("\nVideos de técnica y biblioteca de ejercicios")
+  const conVideo = (video: string) => ({ nombre: "Rutina con video", descripcion: "", dias: [{ nombre: "Día A", ejercicios: [{ nombre: "Sentadilla", series: "4", repeticiones: "8", descanso: "90 s", nota: "", video }] }] })
+  const malos = ["http://www.youtube.com/watch?v=abc123", "https://evil.com/watch?v=abc", "javascript:alert(1)", "https://youtube.com.evil.com/watch?v=1", "https://www.youtube.com/watch?v=a b", "https://www.instagram.com/p/abc/"]
+  let rechazados = 0
+  for (const v of malos) if ((await sofia.rpc("guardar_rutina", { p_rutina: conVideo(v) })).error) rechazados++
+  chequeo("solo se aceptan videos https de YouTube o Vimeo", rechazados === malos.length, `${rechazados} de ${malos.length} rechazados`)
+  const buenos = ["https://www.youtube.com/watch?v=abc123", "https://youtu.be/abc123", "https://www.youtube.com/shorts/abc123", "https://vimeo.com/123456", ""]
+  let aceptados = 0
+  const idsVid: string[] = []
+  for (const v of buenos) { const r = await sofia.rpc("guardar_rutina", { p_rutina: conVideo(v) }); if (!r.error) { aceptados++; idsVid.push(r.data as string) } }
+  chequeo("acepta YouTube, Vimeo y también sin video", aceptados === buenos.length, `${aceptados} de ${buenos.length}`)
+  const conV = await admin.from("rutina_ejercicios").select("video_url").in("dia_id", ((await admin.from("rutina_dias").select("id").eq("rutina_id", idsVid[0])).data ?? []).map((d) => d.id))
+  chequeo("el video queda guardado en el ejercicio", conV.data?.[0]?.video_url === "https://www.youtube.com/watch?v=abc123")
+  const dup = await sofia.rpc("duplicar_rutina", { p_rutina: idsVid[0] })
+  const vDup = await admin.from("rutina_ejercicios").select("video_url").in("dia_id", ((await admin.from("rutina_dias").select("id").eq("rutina_id", dup.data as string)).data ?? []).map((d) => d.id))
+  chequeo("duplicar la rutina copia el video", !dup.error && vDup.data?.[0]?.video_url === "https://www.youtube.com/watch?v=abc123")
+  const mano = await admin.from("rutina_ejercicios").update({ video_url: "https://evil.com/x" }).eq("video_url", "https://www.youtube.com/watch?v=abc123")
+  chequeo("ni siquiera con acceso directo se guarda un video de otro sitio (restricción en la tabla)", !!mano.error)
+
+  // El perfil del socio trae el video del ejercicio
+  await sofia.rpc("asignar_rutina", { p_socio: juan.id, p_rutina: idsVid[0] })
+  const vinc9 = (await anon.rpc("qr_vincular", { p_token: tokenNuevo, p_dni: "40112908" })).data as { dispositivo: string }
+  const base9 = { p_token: tokenNuevo, p_dispositivo: vinc9.dispositivo }
+  await anon.rpc("qr_pin_crear" as never, { ...base9, p_pin: "4821" } as never)
+  const perfil9 = ((await anon.rpc("qr_perfil" as never, { ...base9, p_pin: "4821" } as never)).data as unknown) as { rutinas?: { dias: { ejercicios: { video: string }[] }[] }[] }
+  chequeo("el perfil del socio incluye el video de cada ejercicio", perfil9.rutinas?.[0]?.dias[0]?.ejercicios[0]?.video === "https://www.youtube.com/watch?v=abc123")
+
+  // Biblioteca
+  const e1 = await sofia.rpc("guardar_ejercicio_biblioteca", { p_nombre: "Hip thrust", p_grupo: "Glúteos", p_video: "https://youtu.be/abc" })
+  chequeo("recepción agrega un ejercicio a la biblioteca", !e1.error && !!e1.data, e1.error?.message)
+  const e2 = await dueno.rpc("guardar_ejercicio_biblioteca", { p_nombre: "HIP THRUST", p_grupo: "Piernas", p_video: "" })
+  chequeo("el mismo nombre (sin importar mayúsculas) se actualiza, no se duplica", !e2.error && e2.data === e1.data && ((await admin.from("biblioteca_ejercicios").select("id").eq("gym_id", gymDemo.id)).data ?? []).length === 1)
+  chequeo("rechaza un video de otro sitio", !!(await sofia.rpc("guardar_ejercicio_biblioteca", { p_nombre: "Remo", p_grupo: "", p_video: "https://evil.com/x" })).error)
+  chequeo("rechaza un nombre vacío", !!(await sofia.rpc("guardar_ejercicio_biblioteca", { p_nombre: " ", p_grupo: "", p_video: "" })).error)
+  chequeo("el personal lee la biblioteca de su gimnasio", ((await sofia.from("biblioteca_ejercicios").select("id")).data ?? []).length === 1)
+  chequeo("otro gimnasio y sin sesión no la ven", ((await otro.from("biblioteca_ejercicios").select("id")).data ?? []).length === 0 && ((await anon.from("biblioteca_ejercicios").select("id")).data ?? []).length === 0)
+  chequeo("no se escribe directo en la tabla", !!(await sofia.from("biblioteca_ejercicios").insert({ gym_id: gymDemo.id, nombre: "Directo" })).error)
+  chequeo("sin sesión no se usan las funciones", !!(await anon.rpc("guardar_ejercicio_biblioteca", { p_nombre: "X", p_grupo: "", p_video: "" })).error)
+  await otro.rpc("eliminar_ejercicio_biblioteca", { p_id: e1.data as string })
+  chequeo("el dueño de otro gimnasio no puede borrar ejercicios ajenos", ((await admin.from("biblioteca_ejercicios").select("id")).data ?? []).length === 1)
+  await sofia.rpc("eliminar_ejercicio_biblioteca", { p_id: e1.data as string })
+  chequeo("recepción borra un ejercicio de la biblioteca", ((await admin.from("biblioteca_ejercicios").select("id")).data ?? []).length === 0)
+
+  await admin.from("rutinas").delete().eq("gym_id", gymDemo.id).like("nombre", "Rutina con video")
+  await admin.from("rutinas").delete().eq("gym_id", gymDemo.id).like("nombre", "Copia de Rutina con video")
+  await admin.from("socio_pins").delete().eq("socio_id", juan.id)
+  await admin.from("socio_dispositivos").delete().eq("socio_id", juan.id)
+
   console.log("\nAnular cobros y ventas")
   const planMensual = (await admin.from("planes").select("id, precio").eq("gym_id", gymDemo.id).eq("tipo", "mensual").eq("activo", true).limit(1).single()).data!
   const sociosTodos = (await admin.from("socios").select("id").eq("gym_id", gymDemo.id).eq("activo", true).not("vencimiento", "is", null).limit(1).single()).data!

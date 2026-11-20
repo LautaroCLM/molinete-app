@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Dumbbell, Plus } from "lucide-react"
+import { BookOpen, Dumbbell, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { EmptyState, PageHeader, Panel } from "@/components/shared/page-header"
 import { AccionesRutina } from "@/features/rutinas/acciones-rutina"
@@ -19,11 +19,18 @@ export default async function RutinasPage() {
         titulo="Rutinas"
         descripcion="Armalas una vez y asignalas a cada socio. Cada socio ve en su perfil qué día le toca hoy."
         acciones={
-          <Button asChild size="lg">
-            <Link href="/rutinas/nueva">
-              <Plus /> Nueva rutina
-            </Link>
-          </Button>
+          <>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/rutinas/biblioteca">
+                <BookOpen /> Biblioteca de ejercicios
+              </Link>
+            </Button>
+            <Button asChild size="lg">
+              <Link href="/rutinas/nueva">
+                <Plus /> Nueva rutina
+              </Link>
+            </Button>
+          </>
         }
       />
 

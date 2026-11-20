@@ -3,7 +3,7 @@
 import { useTransition } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { Archive, ArchiveRestore, Copy, Pencil } from "lucide-react"
+import { Archive, ArchiveRestore, Copy, Pencil, Printer } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { archivarRutina, duplicarRutina } from "@/lib/actions"
 
@@ -16,6 +16,11 @@ export function AccionesRutina({ id, nombre, activo }: { id: string; nombre: str
         <Link href={`/rutinas/${id}`}>
           <Pencil /> Editar
         </Link>
+      </Button>
+      <Button asChild variant="outline" size="sm">
+        <a href={`/imprimir-rutina/${id}`} target="_blank" rel="noopener noreferrer">
+          <Printer /> Imprimir
+        </a>
       </Button>
       <Button
         variant="outline"

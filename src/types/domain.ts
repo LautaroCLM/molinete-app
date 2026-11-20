@@ -192,6 +192,8 @@ export interface EjercicioRutina {
   repeticiones: string
   descanso: string
   nota: string
+  /** Enlace a un video de técnica (YouTube o Vimeo); vacío si no tiene. */
+  video: string
 }
 
 export interface DiaRutina {

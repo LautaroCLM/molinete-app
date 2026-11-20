@@ -132,7 +132,7 @@ export interface RutinaPerfil {
   descripcion: string
   /** Índice (desde 0) del día que le toca hoy, por rotación. */
   hoy: number
-  dias: { nombre: string; ejercicios: { nombre: string; series: string; repeticiones: string; descanso: string; nota: string }[] }[]
+  dias: { nombre: string; ejercicios: { nombre: string; series: string; repeticiones: string; descanso: string; nota: string; video: string }[] }[]
 }
 
 export interface EntrenamientoResumen {

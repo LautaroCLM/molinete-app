@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { Dumbbell, Plus, X } from "lucide-react"
+import { Dumbbell, Plus, Printer, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -57,6 +57,11 @@ export function RutinasSocio({
                 </p>
                 <p className="text-xs text-muted-foreground">Desde el {fecha(r.asignadaEn)}</p>
               </div>
+              <Button asChild variant="ghost" size="icon-sm">
+                <a href={`/imprimir-rutina/${r.id}?socio=${socioId}`} target="_blank" rel="noopener noreferrer" aria-label={`Imprimir ${r.nombre}`} title="Imprimir con su nombre">
+                  <Printer />
+                </a>
+              </Button>
               <Button
                 variant="ghost"
                 size="icon-sm"

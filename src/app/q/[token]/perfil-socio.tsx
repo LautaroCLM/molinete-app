@@ -1,5 +1,6 @@
 "use client"
 
+import { BotonVideo } from "@/components/shared/video-tecnica"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { ArrowLeft, ChartLine, Delete, Dumbbell, Flame, IdCard, Mail, Phone, Play, ShieldCheck, Trophy } from "lucide-react"
@@ -365,6 +366,7 @@ function SeccionRutinas({ rutinas, onEmpezar, pendiente }: { rutinas: RutinaPerf
                     </p>
                   )}
                   {e.nota && <p className="mt-1 text-sm">{e.nota}</p>}
+                  {e.video && <BotonVideo url={e.video} nombre={e.nombre} className="mt-2" />}
                 </li>
               ))}
             </ol>

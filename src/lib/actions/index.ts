@@ -19,6 +19,7 @@ import {
   cierreCajaSchema,
   cobroSchema,
   contrasenaSchema,
+  ejercicioBibliotecaSchema,
   gimnasioSchema,
   loginSchema,
   mensajesWhatsAppSchema,
@@ -60,7 +61,7 @@ function traducir(error: { message?: string; code?: string; details?: string | n
     return "Ese dato ya existe."
   }
   if (error.code === "42501") return ERRORES.SIN_PERMISO
-  if (msg.includes("RUTINA_INVALIDA") && error.details) return error.details
+  if ((msg.includes("RUTINA_INVALIDA") || msg.includes("EJERCICIO_INVALIDO")) && error.details) return error.details
   const clave = Object.keys(ERRORES).find((k) => msg.includes(k))
   if (clave === "SIN_STOCK" && error.details) return `${ERRORES.SIN_STOCK} de ${error.details}.`
   return clave ? ERRORES[clave] : "Algo salió mal. Probá de nuevo."
@@ -404,6 +405,35 @@ async function llamarRutina(fn: "archivar_rutina" | "asignar_rutina" | "quitar_r
     await getSesion()
     const sb = await supabaseServer()
     const { error } = await sb.rpc(fn as never, args as never)
+    if (error) return { ok: false, error: traducir(error) }
+  } catch (e) {
+    return { ok: false, error: traducir(e as Error) }
+  }
+  refrescar()
+  return { ok: true }
+}
+
+// ---------- Biblioteca de ejercicios ----------
+export async function guardarEjercicioBiblioteca(datos: unknown): Promise<ResultadoAccion> {
+  const r = ejercicioBibliotecaSchema.safeParse(datos)
+  if (!r.success) return invalido(r)!
+  try {
+    await getSesion()
+    const sb = await supabaseServer()
+    const { error } = await sb.rpc("guardar_ejercicio_biblioteca", { p_nombre: r.data.nombre, p_grupo: r.data.grupo, p_video: r.data.video })
+    if (error) return { ok: false, error: traducir(error) }
+  } catch (e) {
+    return { ok: false, error: traducir(e as Error) }
+  }
+  refrescar()
+  return { ok: true }
+}
+
+export async function eliminarEjercicioBiblioteca(id: string): Promise<ResultadoAccion> {
+  try {
+    await getSesion()
+    const sb = await supabaseServer()
+    const { error } = await sb.rpc("eliminar_ejercicio_biblioteca", { p_id: id })
     if (error) return { ok: false, error: traducir(error) }
   } catch (e) {
     return { ok: false, error: traducir(e as Error) }
