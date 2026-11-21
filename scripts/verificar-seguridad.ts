@@ -589,6 +589,25 @@ async function main() {
   chequeo("el dueño de otro gimnasio no puede cambiarla", !!ajenaTodos.error)
   await admin.from("rutinas").delete().eq("id", idTodos)
 
+  // --- Músculo de los ejercicios propios del gimnasio ---
+  type PerfilMusc = { biblioteca_musculos?: { nombre: string; musculo: string }[] }
+  const musculosPerfil = async () => ((await admin.rpc("_qr_perfil" as never, { p_socio: juan.id } as never)).data as unknown as PerfilMusc).biblioteca_musculos ?? []
+  const conMusculo = await dueno.rpc("guardar_ejercicio_biblioteca", { p_nombre: "Ejercicio Propio E2E", p_grupo: "Glúteos", p_video: "", p_musculo: "gluteos" })
+  chequeo("el dueño guarda un ejercicio propio con su músculo", !conMusculo.error && !!conMusculo.data, conMusculo.error?.message)
+  chequeo("el músculo queda guardado", (await admin.from("biblioteca_ejercicios").select("musculo").eq("id", conMusculo.data as string).single()).data?.musculo === "gluteos")
+  chequeo("el perfil del socio trae el músculo de los ejercicios del gimnasio", (await musculosPerfil()).some((m) => m.nombre === "Ejercicio Propio E2E" && m.musculo === "gluteos"))
+  const sinMusc = await dueno.rpc("guardar_ejercicio_biblioteca", { p_nombre: "Ejercicio Sin Musculo E2E", p_grupo: "", p_video: "" })
+  chequeo("un ejercicio sin músculo se guarda y no figura en el perfil", !sinMusc.error && (await musculosPerfil()).every((m) => m.nombre !== "Ejercicio Sin Musculo E2E"))
+  chequeo("rechaza un músculo que no existe", !!(await dueno.rpc("guardar_ejercicio_biblioteca", { p_nombre: "Ejercicio Malo E2E", p_grupo: "", p_video: "", p_musculo: "cola" })).error)
+  chequeo("la base también lo rechaza si se escribe directo", !!(await admin.from("biblioteca_ejercicios").update({ musculo: "cola" }).eq("id", conMusculo.data as string)).error)
+  const recepMusc = await sofia.rpc("guardar_ejercicio_biblioteca", { p_nombre: "Ejercicio Recepcion E2E", p_grupo: "", p_video: "", p_musculo: "hombros" })
+  chequeo("recepción también puede asignar el músculo", !recepMusc.error, recepMusc.error?.message)
+  chequeo("el dueño de otro gimnasio no ve esos ejercicios", ((await otro.from("biblioteca_ejercicios").select("id").ilike("nombre", "%E2E")).data ?? []).length === 0)
+  const ajeno = await otro.rpc("guardar_ejercicio_biblioteca", { p_nombre: "Ejercicio Propio E2E", p_grupo: "", p_video: "", p_musculo: "pecho" })
+  chequeo("y lo que guarda no pisa el de este gimnasio", !ajeno.error && (await admin.from("biblioteca_ejercicios").select("musculo").eq("id", conMusculo.data as string).single()).data?.musculo === "gluteos")
+  chequeo("sin sesión no se puede guardar un ejercicio", !!(await anon.rpc("guardar_ejercicio_biblioteca", { p_nombre: "Ejercicio Anon E2E", p_grupo: "", p_video: "", p_musculo: "pecho" })).error)
+  await admin.from("biblioteca_ejercicios").delete().ilike("nombre", "%E2E")
+
   // Limpieza del gimnasio de prueba
   if (nuevo.data) await admin.from("gyms").delete().eq("id", nuevo.data)
   const u = (await otro.auth.getUser()).data.user

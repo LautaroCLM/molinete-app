@@ -219,9 +219,11 @@ export function RutinaEditor({ rutina, biblioteca }: { rutina?: Rutina; bibliote
                           aria-label="Guardar este ejercicio y su video en la biblioteca"
                           title="Guardar en la biblioteca para reutilizarlo"
                           onClick={async () => {
-                            const r = await guardarEjercicioBiblioteca({ nombre: ej.nombre, grupo: porClave.get(claveEjercicio(ej.nombre))?.grupo ?? "", video: ej.video })
+                            // Si ya estaba en la biblioteca se conservan su grupo y su músculo (solo se actualiza el video).
+                            const previo = porClave.get(claveEjercicio(ej.nombre))
+                            const r = await guardarEjercicioBiblioteca({ nombre: ej.nombre, grupo: previo?.grupo ?? "", musculo: previo?.musculo ?? "", video: ej.video })
                             if (!r.ok) return void toast.error(r.error)
-                            setPropios((p) => [...p.filter((b) => claveEjercicio(b.nombre) !== claveEjercicio(ej.nombre)), { id: ej.key, nombre: ej.nombre.trim(), grupo: porClave.get(claveEjercicio(ej.nombre))?.grupo ?? "", video: ej.video.trim() }])
+                            setPropios((p) => [...p.filter((b) => claveEjercicio(b.nombre) !== claveEjercicio(ej.nombre)), { id: ej.key, nombre: ej.nombre.trim(), grupo: previo?.grupo ?? "", musculo: previo?.musculo ?? null, video: ej.video.trim() }])
                             toast.success("Guardado en la biblioteca.")
                           }}
                         >

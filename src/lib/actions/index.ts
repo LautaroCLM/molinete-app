@@ -421,7 +421,7 @@ export async function guardarEjercicioBiblioteca(datos: unknown): Promise<Result
   try {
     await getSesion()
     const sb = await supabaseServer()
-    const { error } = await sb.rpc("guardar_ejercicio_biblioteca", { p_nombre: r.data.nombre, p_grupo: r.data.grupo, p_video: r.data.video })
+    const { error } = await sb.rpc("guardar_ejercicio_biblioteca", { p_nombre: r.data.nombre, p_grupo: r.data.grupo, p_video: r.data.video, p_musculo: r.data.musculo || undefined })
     if (error) return { ok: false, error: traducir(error) }
   } catch (e) {
     return { ok: false, error: traducir(e as Error) }

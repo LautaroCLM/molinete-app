@@ -10,7 +10,7 @@ import { CalendarioAsistencias } from "@/features/socios/calendario-asistencias"
 import { fecha, num } from "@/lib/format"
 import type { PerfilSocio, ProgresoEjercicio, RecordEjercicio, ResultadoMusculos, ResultadoProgreso, ResultadoRecords, RutinaPerfil } from "@/lib/actions/qr"
 import { FiguraMusculos } from "@/components/shared/figura-musculos"
-import { musculosDeEjercicios } from "@/lib/musculos"
+import { musculosDeEjercicios, type MusculoPropio } from "@/lib/musculos"
 import { GraficoProgreso } from "./grafico-progreso"
 import { cn } from "@/lib/utils"
 import { ejercicioPorNombre } from "@/lib/catalogo-ejercicios"
@@ -255,7 +255,7 @@ export function PerfilVista({
           </ul>
           {onProgreso && <SeccionProgreso onProgreso={onProgreso} />}
           {onRecords && <SeccionRecords onRecords={onRecords} />}
-          {onMusculos && <SeccionMusculos onMusculos={onMusculos} />}
+          {onMusculos && <SeccionMusculos onMusculos={onMusculos} propios={perfil.bibliotecaMusculos} />}
         </section>
       )}
 
@@ -554,7 +554,7 @@ const PERIODOS_MUSCULOS = [
 ]
 
 /** Figura del cuerpo con los músculos que trabajó en el período elegido. */
-function SeccionMusculos({ onMusculos }: { onMusculos: (dias: 7 | 30 | 90) => Promise<ResultadoMusculos> }) {
+function SeccionMusculos({ onMusculos, propios }: { onMusculos: (dias: 7 | 30 | 90) => Promise<ResultadoMusculos>; propios: MusculoPropio[] }) {
   const [dias, setDias] = useState<7 | 30 | 90>(30)
   const [abierto, setAbierto] = useState(false)
   const [estado, setEstado] = useState<{ tipo: "cargando" } | { tipo: "listo"; datos: ReturnType<typeof musculosDeEjercicios> } | { tipo: "error"; mensaje: string }>({ tipo: "cargando" })
@@ -563,7 +563,7 @@ function SeccionMusculos({ onMusculos }: { onMusculos: (dias: 7 | 30 | 90) => Pr
     setDias(d)
     setEstado({ tipo: "cargando" })
     const r = await onMusculos(d)
-    setEstado(r.ok ? { tipo: "listo", datos: musculosDeEjercicios(r.ejercicios) } : { tipo: "error", mensaje: r.mensaje })
+    setEstado(r.ok ? { tipo: "listo", datos: musculosDeEjercicios(r.ejercicios, propios) } : { tipo: "error", mensaje: r.mensaje })
   }
 
   if (!abierto) {

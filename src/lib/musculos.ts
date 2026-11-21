@@ -1,19 +1,29 @@
-import { ejercicioPorNombre, type MusculoId } from "@/lib/catalogo-ejercicios"
+import { musculosDeNombre, type MusculoId } from "@/lib/catalogo-ejercicios"
+import { claveEjercicio } from "@/lib/ejercicios-base"
 
 export type SeriesPorMusculo = Partial<Record<MusculoId, number>>
 
+/** Músculo principal que el gimnasio le asignó a un ejercicio propio de su biblioteca. */
+export type MusculoPropio = { nombre: string; musculo: MusculoId }
+
 /**
  * Cuántas series estimulan a cada músculo. Cada serie cuenta 1 para el músculo principal del ejercicio
- * y 0,5 para los de apoyo. Los ejercicios que no están en el catálogo no se pueden asignar a un músculo.
+ * y 0,5 para los de apoyo. Se usa primero el catálogo de la app y, si el ejercicio no está, el músculo que
+ * el gimnasio le puso en su biblioteca (solo el principal). Los demás no se pueden asignar a un músculo.
  */
-export function musculosDeEjercicios(items: { nombre: string; series: number }[]): { valores: SeriesPorMusculo; sinMusculo: number; total: number } {
+export function musculosDeEjercicios(
+  items: { nombre: string; series: number }[],
+  propios: MusculoPropio[] = [],
+): { valores: SeriesPorMusculo; sinMusculo: number; total: number } {
+  const delGimnasio = new Map(propios.map((p) => [claveEjercicio(p.nombre), p.musculo]))
   const valores: SeriesPorMusculo = {}
   let sinMusculo = 0
   let total = 0
   for (const it of items) {
     if (it.series <= 0) continue
     total += it.series
-    const e = ejercicioPorNombre(it.nombre)
+    const propio = delGimnasio.get(claveEjercicio(it.nombre))
+    const e = musculosDeNombre(it.nombre) ?? (propio ? { musculo: propio, secundarios: [] as MusculoId[] } : undefined)
     if (!e) {
       sinMusculo += it.series
       continue

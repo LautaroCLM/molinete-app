@@ -1,6 +1,7 @@
 /**
  * Validaciones compartidas entre formularios (cliente) y acciones del servidor.
  */
+import { esMusculo } from "@/lib/catalogo-ejercicios"
 import { z } from "zod"
 
 export type ResultadoAccion<T = undefined> = { ok: true; data?: T } | { ok: false; error: string }
@@ -165,6 +166,8 @@ export const ejercicioRutinaSchema = z.object({
 export const ejercicioBibliotecaSchema = z.object({
   nombre: z.string().trim().min(2, "Ingresá el nombre del ejercicio.").max(80, "El nombre es muy largo (hasta 80 letras)."),
   grupo: z.string().trim().max(40, "El grupo es muy largo.").default(""),
+  /** Músculo principal (id del catálogo): hace que el ejercicio cuente en la figura del cuerpo del socio. Vacío = sin asignar. */
+  musculo: z.string().trim().refine((v) => v === "" || esMusculo(v), "Elegí un músculo de la lista.").default(""),
   video: z
     .string()
     .trim()

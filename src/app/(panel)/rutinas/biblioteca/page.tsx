@@ -13,7 +13,7 @@ export default async function BibliotecaPage() {
       <Link href="/rutinas" className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" /> Rutinas
       </Link>
-      <PageHeader titulo="Biblioteca de ejercicios" descripcion="Tus ejercicios con su grupo y video de técnica. Se sugieren al escribir en el armado de rutinas." />
+      <PageHeader titulo="Biblioteca de ejercicios" descripcion="Tus ejercicios con su músculo y video de técnica. Se sugieren al escribir en el armado de rutinas." />
       <BibliotecaEjercicios ejercicios={ejercicios} />
     </>
   )

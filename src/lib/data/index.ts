@@ -12,6 +12,7 @@ import { differenceInCalendarDays, format, getDay, parseISO, startOfDay, startOf
 import { supabaseServer } from "@/lib/supabase/server"
 import { calcularEstado, type EstadoSocio } from "@/lib/domain/cuota"
 import { normalizar } from "@/lib/format"
+import { esMusculo, type MusculoId } from "@/lib/catalogo-ejercicios"
 import {
   mapCaja,
   mapGym,
@@ -361,13 +362,15 @@ export interface EjercicioBiblioteca {
   id: string
   nombre: string
   grupo: string
+  /** Músculo principal asignado por el gimnasio; null = sin asignar. */
+  musculo: MusculoId | null
   video: string
 }
 
 export async function getBiblioteca(): Promise<EjercicioBiblioteca[]> {
   const sb = await db()
-  const filas = await sb.from("biblioteca_ejercicios").select("id, nombre, grupo, video_url").order("nombre").then(chequear)
-  return filas.map((f) => ({ id: f.id, nombre: f.nombre, grupo: f.grupo, video: f.video_url }))
+  const filas = await sb.from("biblioteca_ejercicios").select("id, nombre, grupo, video_url, musculo").order("nombre").then(chequear)
+  return filas.map((f) => ({ id: f.id, nombre: f.nombre, grupo: f.grupo, musculo: esMusculo(f.musculo) ? f.musculo : null, video: f.video_url }))
 }
 
 // ---------- Usuarios ----------

@@ -4,7 +4,7 @@ import { BotonVideo } from "@/components/shared/video-tecnica"
 import { useEffect, useRef, useState, useTransition } from "react"
 import { Check, Minus, PersonStanding, Plus, Trophy } from "lucide-react"
 import { FiguraMusculos } from "@/components/shared/figura-musculos"
-import { musculosDeEjercicios } from "@/lib/musculos"
+import { musculosDeEjercicios, type MusculoPropio } from "@/lib/musculos"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { aNumero, cantidadSeries, e1rm, reloj, repsSugeridas, segundosDescanso } from "@/lib/entrenamiento"
@@ -102,6 +102,7 @@ export function EntrenamientoVista({
   rutina,
   diaIdx,
   historial,
+  bibliotecaMusculos,
   onGuardar,
   onSalir,
   onTerminado,
@@ -111,6 +112,8 @@ export function EntrenamientoVista({
   rutina: RutinaPerfil
   diaIdx: number
   historial: Historial
+  /** Músculo de los ejercicios propios del gimnasio, para la figura del cuerpo. */
+  bibliotecaMusculos: MusculoPropio[]
   onGuardar: (datos: DatosEntrenamiento) => Promise<ResultadoGuardado>
   onSalir: () => void
   onTerminado: () => void
@@ -267,7 +270,7 @@ export function EntrenamientoVista({
     )
   }
 
-  const musculosHechos = musculosDeEjercicios(ejercicios.map((e) => ({ nombre: e.nombre, series: e.series.filter((s) => s.hecha).length })))
+  const musculosHechos = musculosDeEjercicios(ejercicios.map((e) => ({ nombre: e.nombre, series: e.series.filter((s) => s.hecha).length })), bibliotecaMusculos)
   const restante = finDescanso ? Math.max(0, Math.ceil((finDescanso - ahora) / 1000)) : 0
   const transcurrido = Math.max(0, Math.floor((ahora - inicial.inicio) / 1000))
 

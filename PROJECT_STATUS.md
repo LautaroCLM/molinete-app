@@ -4,7 +4,7 @@ Actualizar solo ante cambios significativos (no registrar comandos). Última act
 
 ## Implementado
 - **Panel** (dueño y recepción): inicio, socios, asistencias, caja, inventario, reportes (solo dueño) y configuración (solo dueño). Modo claro y oscuro, desktop-first, preparado para PWA (manifest e ícono).
-- **Base de datos** (Supabase): esquema multi-gimnasio con RLS, reglas de dinero y stock en funciones SQL atómicas, auditoría automática. Migraciones en `supabase/migrations` (20, todas aplicadas en local y en la nube).
+- **Base de datos** (Supabase): esquema multi-gimnasio con RLS, reglas de dinero y stock en funciones SQL atómicas, auditoría automática. Migraciones en `supabase/migrations` (21, todas aplicadas en local y en la nube).
 - **Autenticación**: login, recuperación de contraseña, invitación de usuarios por email. **Sin registro público**: el administrador de la plataforma crea gimnasios, dueños y empleados (con contraseña) desde el panel `/admin`; el dueño no crea usuarios, solo los ve y los desactiva.
 - **Ingreso con QR**: página pública `/q/<token>`, celular recordado, solo nombre de pila y estado de cuota; configuración y cartel imprimible (con el logo del gimnasio) en Configuración → Ingreso con QR.
 - **Accesibilidad**: pantallas del socio y selector de ejercicios auditados con axe (sin violaciones en celular, tema oscuro y claro), objetivos táctiles de 40 px o más y foco atrapado en los diálogos.
@@ -26,7 +26,7 @@ Actualizar solo ante cambios significativos (no registrar comandos). Última act
 - **Marca del gimnasio en la app del socio** (logo, color, bienvenida, ícono de la PWA). Ver README.
 - **Rutinas del gimnasio para todos los socios** (`rutinas.para_todos`). Ver README.
 - **Catálogo de ejercicios con fotos** (187, filtros por músculo y equipamiento). Ver README.
-- **Músculos trabajados**: figura del cuerpo con series por músculo, en vivo y en el perfil del socio. Ver README.
+- **Músculos trabajados**: figura del cuerpo con series por músculo, en vivo y en el perfil del socio; los ejercicios propios del gimnasio cuentan si tienen músculo asignado en su biblioteca. Ver README.
 
 ## Publicación
 - App: https://molinete-pi.vercel.app (Vercel, cuenta lautaroclm, región gru1).

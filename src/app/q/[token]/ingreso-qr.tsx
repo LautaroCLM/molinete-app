@@ -340,6 +340,7 @@ export function IngresoQR({ token, gymId, gymNombre, modoApp, marca }: { token: 
             rutina={vista.rutina}
             diaIdx={vista.diaIdx}
             historial={vista.historial}
+            bibliotecaMusculos={vista.perfil.bibliotecaMusculos}
             onGuardar={(datos) => guardarEntrenamiento(token, vista.dispositivo, vista.pin, datos)}
             onSalir={() => setVista({ tipo: "perfil", dispositivo: vista.dispositivo, r: vista.r, perfil: vista.perfil, pin: vista.pin })}
             onTerminado={() => volverAlPerfil(vista)}

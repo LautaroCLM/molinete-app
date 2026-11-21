@@ -257,3 +257,27 @@ const POR_NOMBRE = new Map(CATALOGO.map((e) => [norm(e.nombre), e]))
 
 /** Busca un ejercicio del catálogo por su nombre (sin importar tildes ni mayúsculas). */
 export const ejercicioPorNombre = (nombre: string) => POR_NOMBRE.get(norm(nombre))
+
+/** ¿Es un id de músculo válido? (los datos de la base se validan antes de usarlos). */
+export const esMusculo = (x: unknown): x is MusculoId => MUSCULOS.some((m) => m.id === x)
+
+/** Ejercicios de la lista de sugerencias de las rutinas que no tienen foto en el catálogo pero sí un músculo conocido. */
+const SIN_FOTO: Record<string, { musculo: MusculoId; secundarios: MusculoId[] }> = {
+  "press en maquina": { musculo: "pecho", secundarios: ["triceps", "hombros"] },
+  hiperextensiones: { musculo: "lumbares", secundarios: ["gluteos", "isquiotibiales"] },
+  "elevaciones frontales": { musculo: "hombros", secundarios: [] },
+  "extension de triceps sobre la cabeza": { musculo: "triceps", secundarios: [] },
+  "sentadilla bulgara": { musculo: "cuadriceps", secundarios: ["gluteos"] },
+  "zancadas caminando": { musculo: "cuadriceps", secundarios: ["gluteos"] },
+  "elevacion de talones (gemelos)": { musculo: "pantorrillas", secundarios: [] },
+  "sentadilla sumo": { musculo: "cuadriceps", secundarios: ["gluteos", "aductores"] },
+  "abduccion de cadera con banda": { musculo: "abductores", secundarios: ["gluteos"] },
+  "elevacion de piernas": { musculo: "abdominales", secundarios: [] },
+  "rueda abdominal": { musculo: "abdominales", secundarios: [] },
+}
+
+/** Músculos de un ejercicio conocido por la app (catálogo o lista de sugerencias), por su nombre. */
+export const musculosDeNombre = (nombre: string): { musculo: MusculoId; secundarios: MusculoId[] } | undefined => {
+  const e = POR_NOMBRE.get(norm(nombre))
+  return e ? { musculo: e.musculo, secundarios: e.secundarios } : SIN_FOTO[norm(nombre)]
+}

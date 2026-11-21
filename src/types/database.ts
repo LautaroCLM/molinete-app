@@ -83,14 +83,14 @@ isOneToOne: false
                   ]
                 },"biblioteca_ejercicios": {
                   Row: {
-                    "created_at": string,"grupo": string,"gym_id": string,"id": string,"nombre": string,"video_url": string
+                    "created_at": string,"grupo": string,"gym_id": string,"id": string,"musculo": string | null,"nombre": string,"video_url": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"grupo"?: string,"gym_id": string,"id"?: string,"nombre": string,"video_url"?: string
+                    "created_at"?: string,"grupo"?: string,"gym_id": string,"id"?: string,"musculo"?: string | null,"nombre": string,"video_url"?: string
                   }
                   Update: {
-                    "created_at"?: string,"grupo"?: string,"gym_id"?: string,"id"?: string,"nombre"?: string,"video_url"?: string
+                    "created_at"?: string,"grupo"?: string,"gym_id"?: string,"id"?: string,"musculo"?: string | null,"nombre"?: string,"video_url"?: string
                   }
                   Relationships: [
                     {
@@ -744,7 +744,7 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "guardar_ejercicio_biblioteca":
-{ Args: { "p_grupo": string,"p_nombre": string,"p_video": string }; Returns: string
+{ Args: { "p_grupo": string,"p_musculo"?: string,"p_nombre": string,"p_video": string }; Returns: string
                            },
 "guardar_rutina":
 { Args: { "p_rutina": Json }; Returns: string

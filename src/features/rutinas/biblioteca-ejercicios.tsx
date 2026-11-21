@@ -11,13 +11,12 @@ import { Field } from "@/components/shared/field"
 import { Panel } from "@/components/shared/page-header"
 import { BotonVideo } from "@/components/shared/video-tecnica"
 import { eliminarEjercicioBiblioteca, guardarEjercicioBiblioteca } from "@/lib/actions"
+import { etiquetaMusculo, MUSCULOS, musculosDeNombre, type MusculoId } from "@/lib/catalogo-ejercicios"
 import { claveEjercicio, EJERCICIOS_BASE } from "@/lib/ejercicios-base"
 import { ejercicioBibliotecaSchema } from "@/lib/schemas"
 import type { EjercicioBiblioteca } from "@/lib/data"
 
-const GRUPOS = Array.from(new Set(EJERCICIOS_BASE.map((e) => e.grupo)))
-
-/** Ejercicios propios del gimnasio: nombre, grupo y video de técnica. Se sugieren al armar rutinas. */
+/** Ejercicios propios del gimnasio: nombre, músculo y video de técnica. Se sugieren al armar rutinas. */
 export function BibliotecaEjercicios({ ejercicios }: { ejercicios: EjercicioBiblioteca[] }) {
   const [q, setQ] = useState("")
   const [editando, setEditando] = useState<EjercicioBiblioteca | "nuevo" | null>(null)
@@ -27,7 +26,7 @@ export function BibliotecaEjercicios({ ejercicios }: { ejercicios: EjercicioBibl
   return (
     <Panel
       titulo="Tus ejercicios"
-      descripcion={`Además de estos, al armar una rutina se sugieren ${EJERCICIOS_BASE.length} ejercicios comunes. Agregá acá los tuyos y su video para reutilizarlos.`}
+      descripcion={`Además de estos, al armar una rutina se sugieren ${EJERCICIOS_BASE.length} ejercicios comunes. Agregá acá los tuyos, con su músculo y su video: el músculo hace que cuenten en la figura del cuerpo de tus socios.`}
       accion={
         <Button onClick={() => setEditando("nuevo")}>
           <Plus /> Agregar ejercicio
@@ -48,7 +47,7 @@ export function BibliotecaEjercicios({ ejercicios }: { ejercicios: EjercicioBibl
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="pl-5 text-xs">Ejercicio</TableHead>
-              <TableHead className="hidden text-xs sm:table-cell">Grupo</TableHead>
+              <TableHead className="hidden text-xs sm:table-cell">Músculo</TableHead>
               <TableHead className="text-xs">Video</TableHead>
               <TableHead className="pr-5" />
             </TableRow>
@@ -64,7 +63,7 @@ export function BibliotecaEjercicios({ ejercicios }: { ejercicios: EjercicioBibl
               lista.map((e) => (
                 <TableRow key={e.id}>
                   <TableCell className="pl-5 font-medium">{e.nombre}</TableCell>
-                  <TableCell className="hidden text-muted-foreground sm:table-cell">{e.grupo || "—"}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{celdaMusculo(e)}</TableCell>
                   <TableCell>{e.video ? <BotonVideo url={e.video} nombre={e.nombre} /> : <span className="text-muted-foreground">—</span>}</TableCell>
                   <TableCell className="pr-5 text-right">
                     <Button variant="ghost" size="icon-sm" aria-label={`Editar ${e.nombre}`} onClick={() => setEditando(e)}>
@@ -82,12 +81,24 @@ export function BibliotecaEjercicios({ ejercicios }: { ejercicios: EjercicioBibl
   )
 }
 
+/** Músculo del ejercicio: el del catálogo de la app si es uno conocido; si no, el que le asignó el gimnasio. Sin ninguno, un aviso. */
+function celdaMusculo(e: EjercicioBiblioteca) {
+  const conocido = musculosDeNombre(e.nombre)?.musculo ?? e.musculo
+  if (conocido) return <span className="text-muted-foreground">{etiquetaMusculo(conocido)}</span>
+  return (
+    <span title="No cuenta en la figura del cuerpo de los socios. Editalo para elegir un músculo." className="inline-flex rounded-full bg-warn-soft px-2 py-0.5 text-xs font-semibold text-warn">
+      Sin músculo
+    </span>
+  )
+}
+
 function FormularioEjercicio({ ejercicio, cerrar }: { ejercicio: EjercicioBiblioteca | null; cerrar: () => void }) {
   const [nombre, setNombre] = useState(ejercicio?.nombre ?? "")
-  const [grupo, setGrupo] = useState(ejercicio?.grupo ?? "")
+  const [musculo, setMusculo] = useState<MusculoId | "">(ejercicio?.musculo ?? "")
   const [video, setVideo] = useState(ejercicio?.video ?? "")
   const [error, setError] = useState<string>()
   const [pendiente, start] = useTransition()
+  const conocido = musculosDeNombre(nombre)
 
   return (
     <Dialog open onOpenChange={(o) => !o && cerrar()}>
@@ -101,7 +112,9 @@ function FormularioEjercicio({ ejercicio, cerrar }: { ejercicio: EjercicioBiblio
           className="flex flex-col gap-4"
           onSubmit={(e) => {
             e.preventDefault()
-            const r = ejercicioBibliotecaSchema.safeParse({ nombre, grupo, video })
+            // Con músculo elegido, el grupo pasa a ser su nombre; si no, se conserva el grupo que ya tenía (por ejemplo "Cardio").
+            const grupo = musculo ? etiquetaMusculo(musculo) : (ejercicio?.grupo ?? "")
+            const r = ejercicioBibliotecaSchema.safeParse({ nombre, grupo, musculo, video })
             if (!r.success) return setError(r.error.issues[0]?.message)
             setError(undefined)
             start(async () => {
@@ -120,14 +133,23 @@ function FormularioEjercicio({ ejercicio, cerrar }: { ejercicio: EjercicioBiblio
               ))}
             </datalist>
           </Field>
-          <Field label="Grupo muscular (opcional)" htmlFor="ej-grupo">
-            <Input id="ej-grupo" list="grupos-musculares" value={grupo} onChange={(e) => setGrupo(e.target.value)} placeholder="Ej.: Glúteos" maxLength={40} />
-            <datalist id="grupos-musculares">
-              {GRUPOS.map((g) => (
-                <option key={g} value={g} />
-              ))}
-            </datalist>
-          </Field>
+          {conocido ? (
+            <p className="rounded-lg bg-muted/60 px-3 py-2.5 text-sm text-muted-foreground">
+              Este ejercicio ya está en el catálogo de la app: trabaja <strong className="text-foreground">{etiquetaMusculo(conocido.musculo)}</strong>
+              {conocido.secundarios.length > 0 && ` (y ayudan ${conocido.secundarios.map((m) => etiquetaMusculo(m).toLowerCase()).join(", ")})`}.
+            </p>
+          ) : (
+            <Field label="Músculo principal (opcional)" htmlFor="ej-musculo" hint="Hace que este ejercicio cuente en la figura del cuerpo de tus socios.">
+              <select id="ej-musculo" value={musculo} onChange={(e) => setMusculo(e.target.value as MusculoId | "")} className="h-9 w-full rounded-lg border bg-background px-2.5 text-sm">
+                <option value="">Sin asignar</option>
+                {MUSCULOS.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
           <Field label="Video de técnica (opcional)" htmlFor="ej-video">
             <Input id="ej-video" value={video} onChange={(e) => setVideo(e.target.value)} placeholder="https://www.youtube.com/watch?v=…" inputMode="url" maxLength={300} />
           </Field>

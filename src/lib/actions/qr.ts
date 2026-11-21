@@ -8,6 +8,8 @@ import { format, parseISO } from "date-fns"
 import { supabaseServer } from "@/lib/supabase/server"
 import { calcularEstado } from "@/lib/domain/cuota"
 import { rutinaSchema } from "@/lib/schemas"
+import { esMusculo } from "@/lib/catalogo-ejercicios"
+import type { MusculoPropio } from "@/lib/musculos"
 import { revalidatePath } from "next/cache"
 import type { EstadoCuota, TipoPlan } from "@/types/domain"
 
@@ -172,6 +174,8 @@ export interface PerfilSocio {
   entrenamientos30: number
   /** Semanas seguidas (lunes a domingo) con al menos una asistencia. */
   rachaSemanas: number
+  /** Músculo de los ejercicios propios del gimnasio (no están en el catálogo de la app). */
+  bibliotecaMusculos: MusculoPropio[]
   /** Últimos pagos, sin montos. */
   pagos: { fecha: string; plan: string | null; hasta: string | null }[]
   dni: string | null
@@ -198,6 +202,7 @@ interface CrudoPerfil extends Crudo {
   entrenamientos?: EntrenamientoResumen[]
   entrenamientos_30?: number
   racha_semanas?: number
+  biblioteca_musculos?: { nombre: string; musculo: string }[]
   dni?: string | null
   telefono?: string | null
   email?: string | null
@@ -244,6 +249,7 @@ function aPerfil(r: CrudoPerfil | null): ResultadoPerfil {
       entrenamientos: r.entrenamientos ?? [],
       entrenamientos30: r.entrenamientos_30 ?? 0,
       rachaSemanas: r.racha_semanas ?? 0,
+      bibliotecaMusculos: (r.biblioteca_musculos ?? []).flatMap((b) => (esMusculo(b.musculo) ? [{ nombre: b.nombre, musculo: b.musculo }] : [])),
       dni: r.dni ?? null,
       telefono: r.telefono ?? null,
       email: r.email ?? null,
