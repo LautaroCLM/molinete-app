@@ -220,7 +220,7 @@ Desde su perfil (con PIN), el socio puede **armar sus propias rutinas** ("Crear 
 
 ### Marca del gimnasio en la app del socio
 
-En Configuración → Gimnasio, el dueño elige el **color principal** y una **frase de bienvenida**; el logo es el que ya sube ahí. La app del socio (`/q/<token>`) muestra el logo en el encabezado, repinta botones y acentos con el color, usa la frase en vez de "¡Buen entrenamiento!" y la repite en el perfil. La app instalada toma el logo como ícono (`/q/<token>/icono/<tamaño>`, PNG generado sobre el color) y el color como barra del sistema. Sin personalizar, queda la marca de Molinete. Datos: `gyms.color_acento`, `gyms.msg_bienvenida`; `qr_gimnasio` los devuelve.
+En Configuración → Gimnasio, el dueño elige el **color principal** y una **frase de bienvenida**; el logo es el que ya sube ahí. La app del socio (`/q/<token>`) muestra el logo en el encabezado, repinta botones y acentos con el color, usa la frase en vez de "¡Buen entrenamiento!" y la repite en el perfil. La app instalada toma el logo como ícono (`/q/<token>/icono/<tamaño>`, PNG generado sobre el color) y el color como barra del sistema. El cartel QR imprimible también lleva el logo del gimnasio arriba del nombre y el marco del código en su color. El ícono se arma como PNG con `sharp` (el logo se sube como WebP). Sin personalizar, queda la marca de Molinete. Datos: `gyms.color_acento`, `gyms.msg_bienvenida`; `qr_gimnasio` los devuelve.
 
 ### Rutinas del gimnasio para todos los socios
 

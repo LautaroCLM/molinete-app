@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 import { LogoMarca } from "@/components/layout/logo"
+import { COLOR_RE } from "@/lib/color"
 import { getConfigQR, getSesion } from "@/lib/data"
 import { puede } from "@/lib/permissions"
 import { qrSvg, urlIngreso } from "@/lib/qr"
@@ -20,10 +21,18 @@ export default async function CartelQRPage() {
         <BotonImprimir />
       </div>
       <article className="mx-auto flex aspect-[210/297] w-full max-w-[210mm] flex-col items-center bg-white px-[14mm] py-[16mm] text-center text-[#161a22] shadow-sm print:shadow-none">
+        {gym.logoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element -- imagen de Storage ya achicada al subirla
+          <img src={gym.logoUrl} alt="" className="mb-[4mm] size-[28mm] rounded-[5mm] object-cover" />
+        )}
         <p className="font-display text-[11mm] leading-tight font-semibold">{gym.nombre}</p>
         <h1 className="mt-[8mm] font-display text-[19mm] leading-[0.95] font-bold tracking-tight">Registrá tu ingreso</h1>
         <p className="mt-[5mm] max-w-[150mm] text-[6mm] leading-snug">Escaneá el código con la cámara de tu celular cada vez que llegues.</p>
-        <div className="mt-[10mm] w-[110mm] rounded-[6mm] border-[1.2mm] border-[#161a22] p-[5mm] [&_svg]:h-auto [&_svg]:w-full" dangerouslySetInnerHTML={{ __html: svg }} />
+        <div
+          className="mt-[10mm] w-[110mm] rounded-[6mm] border-[1.2mm] border-[#161a22] p-[5mm] [&_svg]:h-auto [&_svg]:w-full"
+          style={gym.colorAcento && COLOR_RE.test(gym.colorAcento) ? { borderColor: gym.colorAcento } : undefined}
+          dangerouslySetInnerHTML={{ __html: svg }}
+        />
         <ol className="mt-[10mm] flex w-full max-w-[160mm] flex-col gap-[3mm] text-left text-[5mm] leading-snug">
           <li>
             <strong>La primera vez</strong> escribí tu DNI. Tu celular queda recordado.
