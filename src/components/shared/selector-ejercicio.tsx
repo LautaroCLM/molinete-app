@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { Check, ChevronDown, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { CATALOGO, EQUIPOS, MUSCULOS, etiquetaEquipo, etiquetaMusculo, fotoEjercicio, type EquipoId, type MusculoId } from "@/lib/catalogo-ejercicios"
 import { claveEjercicio } from "@/lib/ejercicios-base"
 import { cn } from "@/lib/utils"
@@ -42,6 +43,7 @@ export function Miniatura({ id, nombre, className }: { id?: string; nombre: stri
 /**
  * Selector de ejercicios con foto, buscador y filtros por músculo y equipamiento.
  * Muestra primero los de la biblioteca del gimnasio (con su video) y después el catálogo.
+ * Usa el diálogo del sistema: atrapa el foco, cierra con Escape y devuelve el foco a quien lo abrió.
  */
 export function SelectorEjercicio({
   biblioteca,
@@ -58,18 +60,8 @@ export function SelectorEjercicio({
   const [elegidos, setElegidos] = useState<string[]>([])
   const [abierto, setAbierto] = useState<string | null>(null)
   const entrada = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    entrada.current?.focus()
-    const alTeclear = (e: KeyboardEvent) => e.key === "Escape" && onCerrar()
-    document.addEventListener("keydown", alTeclear)
-    const previo = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.removeEventListener("keydown", alTeclear)
-      document.body.style.overflow = previo
-    }
-  }, [onCerrar])
+  // Quien tenía el foco al abrir (el botón "Elegir del catálogo"): al cerrar se lo devolvemos, porque este diálogo no usa DialogTrigger.
+  const [disparador] = useState<HTMLElement | null>(() => (typeof document === "undefined" ? null : (document.activeElement as HTMLElement | null)))
 
   const items = useMemo<Item[]>(() => {
     const video = new Map(biblioteca.map((b) => [claveEjercicio(b.nombre), b.video]))
@@ -107,24 +99,32 @@ export function SelectorEjercicio({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/60 sm:items-center sm:p-6" onClick={onCerrar}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Elegir ejercicios"
-        onClick={(e) => e.stopPropagation()}
-        className="flex w-full flex-col bg-background sm:max-h-[min(46rem,100%)] sm:max-w-xl sm:rounded-2xl sm:border sm:shadow-2xl"
+    <Dialog open onOpenChange={(abierto) => !abierto && onCerrar()}>
+      <DialogContent
+        showCloseButton={false}
+        onOpenAutoFocus={(e) => {
+          e.preventDefault()
+          entrada.current?.focus()
+        }}
+        onCloseAutoFocus={(e) => {
+          e.preventDefault()
+          disparador?.focus()
+        }}
+        className="top-0 left-0 flex h-dvh max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none bg-background p-0 sm:top-1/2 sm:left-1/2 sm:h-[min(46rem,92dvh)] sm:max-w-xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:shadow-2xl"
       >
-        <header className="flex items-center gap-2 border-b px-4 py-3">
-          <h2 className="flex-1 text-base font-semibold">Elegir ejercicios</h2>
-          <Button type="button" variant="ghost" size="icon-sm" aria-label="Cerrar" onClick={onCerrar}>
-            <X />
-          </Button>
+        <header className="flex items-center gap-2 border-b py-1 pr-2 pl-4">
+          <DialogTitle className="flex-1 text-base font-semibold">Elegir ejercicios</DialogTitle>
+          <DialogDescription className="sr-only">Buscá por nombre, filtrá por músculo o equipamiento y marcá uno o más ejercicios para agregarlos.</DialogDescription>
+          <DialogClose asChild>
+            <Button type="button" variant="ghost" size="icon" className="size-11" aria-label="Cerrar">
+              <X />
+            </Button>
+          </DialogClose>
         </header>
 
         <div className="flex flex-col gap-3 px-4 pt-3">
           <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               ref={entrada}
               type="search"
@@ -132,7 +132,7 @@ export function SelectorEjercicio({
               onChange={(e) => setBuscar(e.target.value)}
               placeholder="Buscar ejercicio"
               aria-label="Buscar ejercicio"
-              className="h-11 w-full rounded-lg border bg-muted/40 pr-3 pl-9 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-12 w-full rounded-lg border bg-muted/40 pr-3 pl-9 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
@@ -147,17 +147,22 @@ export function SelectorEjercicio({
             ))}
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            Equipamiento
-            <select value={equipo} onChange={(e) => setEquipo(e.target.value as EquipoId | "")} className="h-9 flex-1 rounded-lg border bg-background px-2 text-sm text-foreground">
-              <option value="">Todo</option>
-              {EQUIPOS.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="flex items-center gap-3">
+            <label className="flex flex-1 items-center gap-2 text-sm text-muted-foreground">
+              Equipamiento
+              <select value={equipo} onChange={(e) => setEquipo(e.target.value as EquipoId | "")} className="h-11 min-w-0 flex-1 rounded-lg border bg-background px-2 text-sm text-foreground">
+                <option value="">Todo</option>
+                {EQUIPOS.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p role="status" className="shrink-0 text-sm text-muted-foreground tabular-nums">
+              {visibles.length} {visibles.length === 1 ? "ejercicio" : "ejercicios"}
+            </p>
+          </div>
         </div>
 
         <ul className="mt-2 flex-1 overflow-y-auto border-t" aria-label="Ejercicios">
@@ -165,10 +170,11 @@ export function SelectorEjercicio({
           {visibles.map((i) => {
             const marcado = elegidos.includes(i.clave)
             const expandido = abierto === i.clave
+            const idDetalle = `detalle-${i.clave.replace(/[^a-z0-9]+/g, "-")}`
             return (
               <li key={i.clave} className="border-b last:border-b-0">
-                <div className="flex items-center gap-3 px-4 py-2.5">
-                  <button type="button" onClick={() => alternar(i.clave)} aria-pressed={marcado} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                <div className="flex items-center gap-1 pr-2 pl-4">
+                  <button type="button" onClick={() => alternar(i.clave)} aria-pressed={marcado} className="flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 text-left">
                     <Miniatura id={i.foto} nombre={i.nombre} className="size-12" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{i.nombre}</span>
@@ -177,18 +183,27 @@ export function SelectorEjercicio({
                         {i.video && !i.propio && " · con video"}
                       </span>
                     </span>
-                    <span className={cn("grid size-6 shrink-0 place-items-center rounded-full border-2", marcado ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40")}>
+                    <span aria-hidden className={cn("grid size-6 shrink-0 place-items-center rounded-full border-2", marcado ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40")}>
                       {marcado && <Check className="size-4" strokeWidth={3} />}
                     </span>
                   </button>
                   {i.foto && (
-                    <Button type="button" variant="ghost" size="icon-sm" aria-label={`Ver cómo se hace ${i.nombre}`} aria-expanded={expandido} onClick={() => setAbierto(expandido ? null : i.clave)}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-11"
+                      aria-label={`Ver cómo se hace ${i.nombre}`}
+                      aria-expanded={expandido}
+                      aria-controls={idDetalle}
+                      onClick={() => setAbierto(expandido ? null : i.clave)}
+                    >
                       <ChevronDown className={cn("transition-transform", expandido && "rotate-180")} />
                     </Button>
                   )}
                 </div>
                 {expandido && i.foto && (
-                  <div className="px-4 pb-3">
+                  <div id={idDetalle} className="px-4 pb-3">
                     <div className="grid grid-cols-2 gap-2">
                       {([0, 1] as const).map((n) => (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -203,13 +218,13 @@ export function SelectorEjercicio({
           })}
         </ul>
 
-        <footer className="border-t px-4 py-3">
+        <footer className="border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <Button type="button" size="lg" className="h-12 w-full text-base" disabled={elegidos.length === 0} onClick={agregar}>
             {elegidos.length === 0 ? "Elegí uno o más ejercicios" : `Agregar ${elegidos.length} ${elegidos.length === 1 ? "ejercicio" : "ejercicios"}`}
           </Button>
         </footer>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -219,7 +234,7 @@ function Chip({ activo, onClick, children }: { activo: boolean; onClick: () => v
       type="button"
       aria-pressed={activo}
       onClick={onClick}
-      className={cn("shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors", activo ? "border-primary bg-primary/15 text-foreground" : "text-muted-foreground hover:text-foreground")}
+      className={cn("min-h-10 shrink-0 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors", activo ? "border-primary bg-primary/15 text-foreground" : "text-muted-foreground hover:text-foreground")}
     >
       {children}
     </button>

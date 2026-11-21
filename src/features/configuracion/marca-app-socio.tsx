@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { Check } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,24 +34,34 @@ export function MarcaAppSocio({ gym }: { gym: Gym }) {
       >
         <Field label="Color principal" htmlFor="marca-color">
           <div className="flex flex-wrap items-center gap-2">
-            {COLORES_SUGERIDOS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                aria-label={`Usar el color ${c}`}
-                aria-pressed={color.toLowerCase() === c}
-                onClick={() => setColor(c)}
-                className={cn("size-9 rounded-full border-2 border-transparent outline-offset-2 transition-transform active:scale-95", color.toLowerCase() === c && "border-foreground")}
-                style={{ background: c }}
-              />
-            ))}
+            <div role="group" aria-label="Colores sugeridos" className="flex flex-wrap items-center gap-2">
+              {COLORES_SUGERIDOS.map((c) => {
+                const elegido = color.toLowerCase() === c.hex
+                return (
+                  <button
+                    key={c.hex}
+                    type="button"
+                    aria-label={c.nombre}
+                    aria-pressed={elegido}
+                    onClick={() => setColor(c.hex)}
+                    className={cn(
+                      "grid size-10 place-items-center rounded-full border-2 border-transparent ring-1 ring-foreground/20 outline-offset-2 transition-transform active:scale-95",
+                      elegido && "border-background ring-2 ring-foreground",
+                    )}
+                    style={{ background: c.hex, color: textoSobre(c.hex) }}
+                  >
+                    {elegido && <Check aria-hidden className="size-5" strokeWidth={3} />}
+                  </button>
+                )
+              })}
+            </div>
             <input
               id="marca-color"
               type="color"
               value={valido ? color : "#15803d"}
               onChange={(e) => setColor(e.target.value)}
               aria-label="Elegir otro color"
-              className="h-9 w-12 cursor-pointer rounded-md border bg-transparent p-0.5"
+              className="h-10 w-14 cursor-pointer rounded-md border bg-transparent p-0.5"
             />
             {color && (
               <Button type="button" variant="ghost" size="sm" onClick={() => setColor("")}>

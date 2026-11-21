@@ -277,20 +277,20 @@ export function EntrenamientoVista({
         {confirmaSalir ? (
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">¿Descartar este entrenamiento?</span>
-            <button onClick={salir} className="font-semibold text-bad underline underline-offset-4">
+            <button onClick={salir} className="inline-flex min-h-11 items-center px-2 font-semibold text-bad underline underline-offset-4">
               Descartar
             </button>
-            <button onClick={() => setConfirmaSalir(false)} className="font-semibold underline underline-offset-4">
+            <button onClick={() => setConfirmaSalir(false)} className="inline-flex min-h-11 items-center px-2 font-semibold underline underline-offset-4">
               Seguir
             </button>
           </div>
         ) : (
-          <button onClick={() => setConfirmaSalir(true)} className="text-sm text-muted-foreground underline underline-offset-4">
+          <button onClick={() => setConfirmaSalir(true)} className="-ml-2 inline-flex min-h-11 items-center px-2 text-sm text-muted-foreground underline underline-offset-4">
             Salir
           </button>
         )}
         <div className="flex items-center gap-2">
-          <Button type="button" variant={verMusculos ? "secondary" : "ghost"} size="icon-sm" aria-label="Ver los músculos que estás trabajando" aria-expanded={verMusculos} onClick={() => setVerMusculos((v) => !v)}>
+          <Button type="button" variant={verMusculos ? "secondary" : "ghost"} size="icon" className="size-10" aria-label="Ver los músculos que estás trabajando" aria-expanded={verMusculos} aria-controls="musculos-entrenamiento" onClick={() => setVerMusculos((v) => !v)}>
             <PersonStanding />
           </Button>
           <span className="num-display text-2xl tabular-nums text-muted-foreground" aria-label="Tiempo de entrenamiento">
@@ -300,7 +300,7 @@ export function EntrenamientoVista({
       </div>
 
       {verMusculos && (
-        <section className="rounded-2xl border bg-card p-4" aria-label="Músculos de este entrenamiento">
+        <section id="musculos-entrenamiento" className="rounded-2xl border bg-card p-4" aria-label="Músculos de este entrenamiento">
           <h2 className="mb-3 text-sm font-semibold">Músculos de este entrenamiento</h2>
           <FiguraMusculos valores={musculosHechos.valores} sinMusculo={musculosHechos.sinMusculo} />
         </section>
@@ -381,10 +381,10 @@ export function EntrenamientoVista({
             </div>
 
             <div className="mt-3 flex gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => agregarSerie(ei)} disabled={e.series.length >= 20}>
+              <Button type="button" variant="outline" size="lg" onClick={() => agregarSerie(ei)} disabled={e.series.length >= 20}>
                 <Plus /> Serie
               </Button>
-              <Button type="button" variant="ghost" size="sm" onClick={() => quitarSerie(ei)} disabled={e.series.length <= 1}>
+              <Button type="button" variant="ghost" size="lg" onClick={() => quitarSerie(ei)} disabled={e.series.length <= 1}>
                 <Minus /> Quitar
               </Button>
             </div>
@@ -394,22 +394,25 @@ export function EntrenamientoVista({
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 px-5 pt-3 pb-4 backdrop-blur">
         <div className="mx-auto flex max-w-md flex-col gap-3">
+          <p role="status" className="sr-only">
+            {avisoFin && restante === 0 ? "Terminó el descanso. A entrenar." : ""}
+          </p>
           {(restante > 0 || avisoFin) && (
-            <div role="status" aria-live="polite" className="flex items-center justify-between gap-3 rounded-xl bg-muted px-4 py-2.5">
+            <div className="flex items-center justify-between gap-3 rounded-xl bg-muted px-4 py-2">
               {restante > 0 ? (
                 <>
-                  <span>
+                  <span className="flex flex-col leading-none">
                     <span className="text-xs text-muted-foreground">Descanso</span>
-                    <span className="num-display ml-2 text-2xl tabular-nums">{reloj(restante)}</span>
+                    <span className="num-display mt-1 text-2xl tabular-nums">{reloj(restante)}</span>
                   </span>
                   <span className="flex items-center gap-1">
-                    <Button type="button" variant="outline" size="sm" onClick={() => ajustarDescanso(-15)}>
+                    <Button type="button" variant="outline" className="h-11 px-3 text-sm" aria-label="−15 s: restar tiempo de descanso" onClick={() => ajustarDescanso(-15)}>
                       −15 s
                     </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={() => ajustarDescanso(15)}>
+                    <Button type="button" variant="outline" className="h-11 px-3 text-sm" aria-label="+15 s: sumar tiempo de descanso" onClick={() => ajustarDescanso(15)}>
                       +15 s
                     </Button>
-                    <Button type="button" variant="ghost" size="sm" onClick={saltarDescanso}>
+                    <Button type="button" variant="ghost" className="h-11 px-3 text-sm" onClick={saltarDescanso}>
                       Saltar
                     </Button>
                   </span>

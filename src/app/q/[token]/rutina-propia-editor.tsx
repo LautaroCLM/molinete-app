@@ -99,7 +99,7 @@ export function RutinaPropiaEditor({
 
   return (
     <div className="flex flex-1 flex-col gap-4 pb-28">
-      <button onClick={onCancelar} className="inline-flex items-center gap-1.5 self-start text-sm text-muted-foreground hover:text-foreground">
+      <button onClick={onCancelar} className="-my-2 inline-flex min-h-11 items-center gap-1.5 self-start pr-3 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" /> Cancelar
       </button>
 
@@ -117,7 +117,7 @@ export function RutinaPropiaEditor({
         <section key={dia.key} className="rounded-2xl border bg-card p-4">
           <div className="flex items-center gap-2">
             <Input aria-label={`Nombre del día ${di + 1}`} value={dia.nombre} onChange={(e) => cambiarDia(di, { nombre: e.target.value })} placeholder="Ej.: Día A · Pecho" maxLength={60} className="h-11 font-semibold" />
-            <Button type="button" variant="ghost" size="icon" aria-label="Quitar el día" disabled={dias.length === 1} onClick={() => setDias((ds) => ds.filter((_, i) => i !== di))}>
+            <Button type="button" variant="ghost" size="icon" className="size-11 shrink-0" aria-label="Quitar el día" disabled={dias.length === 1} onClick={() => setDias((ds) => ds.filter((_, i) => i !== di))}>
               <Trash2 />
             </Button>
           </div>
@@ -143,15 +143,15 @@ export function RutinaPropiaEditor({
                   <Input aria-label="Repeticiones" value={ej.repeticiones} onChange={(e) => cambiarEj(di, ei, { repeticiones: e.target.value })} placeholder="Reps" maxLength={40} className="h-11 text-center" />
                   <Input aria-label="Descanso" value={ej.descanso} onChange={(e) => cambiarEj(di, ei, { descanso: e.target.value })} placeholder="Descanso" maxLength={40} className="h-11 text-center" />
                 </div>
-                <div className="mt-2 flex items-center gap-2">
-                  <Input aria-label="Nota" value={ej.nota} onChange={(e) => cambiarEj(di, ei, { nota: e.target.value })} placeholder="Nota (opcional)" maxLength={300} className="h-9 text-sm" />
-                  <Button type="button" variant="ghost" size="icon-sm" aria-label="Subir el ejercicio" disabled={ei === 0} onClick={() => cambiarDia(di, { ejercicios: mover(dia.ejercicios, ei, -1) })}>
+                <div className="mt-2 flex items-center gap-1">
+                  <Input aria-label="Nota" value={ej.nota} onChange={(e) => cambiarEj(di, ei, { nota: e.target.value })} placeholder="Nota (opcional)" maxLength={300} className="h-10 min-w-0 text-sm" />
+                  <Button type="button" variant="ghost" size="icon" className="size-10 shrink-0" aria-label="Subir el ejercicio" disabled={ei === 0} onClick={() => cambiarDia(di, { ejercicios: mover(dia.ejercicios, ei, -1) })}>
                     <ArrowUp />
                   </Button>
-                  <Button type="button" variant="ghost" size="icon-sm" aria-label="Bajar el ejercicio" disabled={ei === dia.ejercicios.length - 1} onClick={() => cambiarDia(di, { ejercicios: mover(dia.ejercicios, ei, 1) })}>
+                  <Button type="button" variant="ghost" size="icon" className="size-10 shrink-0" aria-label="Bajar el ejercicio" disabled={ei === dia.ejercicios.length - 1} onClick={() => cambiarDia(di, { ejercicios: mover(dia.ejercicios, ei, 1) })}>
                     <ArrowDown />
                   </Button>
-                  <Button type="button" variant="ghost" size="icon-sm" aria-label="Quitar el ejercicio" onClick={() => cambiarDia(di, { ejercicios: dia.ejercicios.filter((_, j) => j !== ei) })}>
+                  <Button type="button" variant="ghost" size="icon" className="size-10 shrink-0" aria-label="Quitar el ejercicio" onClick={() => cambiarDia(di, { ejercicios: dia.ejercicios.filter((_, j) => j !== ei) })}>
                     <Trash2 />
                   </Button>
                 </div>
@@ -159,17 +159,17 @@ export function RutinaPropiaEditor({
             ))}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button type="button" onClick={() => setSelector(di)} disabled={dia.ejercicios.length >= 40}>
+            <Button type="button" size="lg" onClick={() => setSelector(di)} disabled={dia.ejercicios.length >= 40}>
               <LayoutGrid /> Elegir del catálogo
             </Button>
-            <Button type="button" variant="outline" onClick={() => cambiarDia(di, { ejercicios: [...dia.ejercicios, vacio()] })} disabled={dia.ejercicios.length >= 40}>
+            <Button type="button" size="lg" variant="outline" onClick={() => cambiarDia(di, { ejercicios: [...dia.ejercicios, vacio()] })} disabled={dia.ejercicios.length >= 40}>
               <Plus /> Agregar ejercicio
             </Button>
           </div>
         </section>
       ))}
 
-      <Button type="button" variant="outline" className="self-start" disabled={dias.length >= 14} onClick={() => setDias((ds) => [...ds, { key: uid(), nombre: `Día ${LETRAS[ds.length] ?? ds.length + 1}`, ejercicios: [vacio()] }])}>
+      <Button type="button" size="lg" variant="outline" className="self-start" disabled={dias.length >= 14} onClick={() => setDias((ds) => [...ds, { key: uid(), nombre: `Día ${LETRAS[ds.length] ?? ds.length + 1}`, ejercicios: [vacio()] }])}>
         <Plus /> Agregar día
       </Button>
 

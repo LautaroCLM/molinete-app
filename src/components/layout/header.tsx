@@ -138,8 +138,8 @@ function MenuUsuario() {
       <DropdownMenuTrigger asChild>
         <button
           className="ml-1 flex items-center gap-2.5 rounded-lg p-1 pr-2 text-left transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none"
-          aria-label="Menú de usuario"
         >
+          <span className="sr-only">Menú de usuario</span>
           <Avatar className="size-8">
             <AvatarFallback className="bg-accent text-xs font-semibold text-accent-foreground">{iniciales(usuario)}</AvatarFallback>
           </Avatar>

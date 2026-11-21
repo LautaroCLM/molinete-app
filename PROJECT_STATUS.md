@@ -1,12 +1,13 @@
 # Molinete: estado del proyecto
 
-Actualizar solo ante cambios significativos (no registrar comandos). Última actualización: 2026-11-12.
+Actualizar solo ante cambios significativos (no registrar comandos). Última actualización: 2026-11-20.
 
 ## Implementado
 - **Panel** (dueño y recepción): inicio, socios, asistencias, caja, inventario, reportes (solo dueño) y configuración (solo dueño). Modo claro y oscuro, desktop-first, preparado para PWA (manifest e ícono).
-- **Base de datos** (Supabase): esquema multi-gimnasio con RLS, reglas de dinero y stock en funciones SQL atómicas, auditoría automática. Migraciones en `supabase/migrations` (10, todas aplicadas en local y en la nube).
+- **Base de datos** (Supabase): esquema multi-gimnasio con RLS, reglas de dinero y stock en funciones SQL atómicas, auditoría automática. Migraciones en `supabase/migrations` (20, todas aplicadas en local y en la nube).
 - **Autenticación**: login, recuperación de contraseña, invitación de usuarios por email. **Sin registro público**: el administrador de la plataforma crea gimnasios, dueños y empleados (con contraseña) desde el panel `/admin`; el dueño no crea usuarios, solo los ve y los desactiva.
-- **Ingreso con QR**: página pública `/q/<token>`, celular recordado, solo nombre de pila y estado de cuota; configuración y cartel imprimible en Configuración → Ingreso con QR.
+- **Ingreso con QR**: página pública `/q/<token>`, celular recordado, solo nombre de pila y estado de cuota; configuración y cartel imprimible (con el logo del gimnasio) en Configuración → Ingreso con QR.
+- **Accesibilidad**: pantallas del socio y selector de ejercicios auditados con axe (sin violaciones en celular, tema oscuro y claro), objetivos táctiles de 40 px o más y foco atrapado en los diálogos.
 - **Seguridad verificada**: `npm run verificar` (permisos por rol, aislamiento entre gimnasios, QR, panel de administración, logo en Storage, anulaciones).
 - **Anular cobros y ventas** (solo dueño) deshace sus efectos: el socio vuelve a su cuota anterior y la venta repone el stock (los cobros se anulan del último al primero).
 - **Logo del gimnasio**: lo sube el dueño en Configuración (Storage, bucket `logos`); se ve en el menú y la barra. Sin logo, iniciales.
@@ -15,17 +16,17 @@ Actualizar solo ante cambios significativos (no registrar comandos). Última act
 - **Diseño**: negro con verde, degradados, animaciones sutiles (respetan "reducir movimiento"), modo oscuro por defecto.
 - **Aviso de nueva versión**: si se publica la web con la pantalla abierta, aparece "Hay una nueva actualización" → Actualizar (`/api/version`).
 - **App para Android** (PWA instalable): service worker, pantalla sin conexión, íconos y botón "Instalar la app". Ver README.
-- **Músculos trabajados**: figura del cuerpo con series por músculo, en vivo y en el perfil del socio. Ver README.
-- **Catálogo de ejercicios con fotos** (187, filtros por músculo y equipamiento). Ver README. 
-- **Rutinas del gimnasio para todos los socios** (`rutinas.para_todos`). Ver README.
-- **Marca del gimnasio en la app del socio** (logo, color, bienvenida, ícono de la PWA). Ver README.
-- **Rutinas propias del socio** (privadas, hasta 10) y **Mis récords**. Ver README.
-- **Videos de técnica, biblioteca de ejercicios e impresión de rutinas**. Ver README.
-- **Avisos de cuota por WhatsApp**: botón Avisar con mensaje editable y registro de avisos. Ver README.
-- **Progreso**: racha semanal y gráfico por ejercicio para el socio; panel de entrenamientos en la ficha para el personal. Ver README.
-- **Registro de entrenamientos del socio**: series con peso y repeticiones, temporizador de descanso, récords y borrador. Ver README.
 - **App del socio** (PWA desde el QR): instalable, abre su perfil con PIN y rutina sin registrar asistencia. Ver README.
 - **App de escritorio para Windows** (`desktop/`, Tauri): ventana que carga la web publicada, con aviso de actualización del instalador. Ver README.
+- **Registro de entrenamientos del socio**: series con peso y repeticiones, temporizador de descanso, récords y borrador. Ver README.
+- **Progreso**: racha semanal y gráfico por ejercicio para el socio; panel de entrenamientos en la ficha para el personal. Ver README.
+- **Avisos de cuota por WhatsApp**: botón Avisar con mensaje editable y registro de avisos. Ver README.
+- **Videos de técnica, biblioteca de ejercicios e impresión de rutinas**. Ver README.
+- **Rutinas propias del socio** (privadas, hasta 10) y **Mis récords**. Ver README.
+- **Marca del gimnasio en la app del socio** (logo, color, bienvenida, ícono de la PWA). Ver README.
+- **Rutinas del gimnasio para todos los socios** (`rutinas.para_todos`). Ver README.
+- **Catálogo de ejercicios con fotos** (187, filtros por músculo y equipamiento). Ver README.
+- **Músculos trabajados**: figura del cuerpo con series por músculo, en vivo y en el perfil del socio. Ver README.
 
 ## Publicación
 - App: https://molinete-pi.vercel.app (Vercel, cuenta lautaroclm, región gru1).

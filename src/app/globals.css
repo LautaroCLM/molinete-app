@@ -103,7 +103,7 @@
 
   --ok: #13804f;
   --ok-soft: #dff3e8;
-  --warn: #9a6a00;
+  --warn: #8f6200;
   --warn-soft: #fcefc7;
   --bad: #c22f37;
   --bad-soft: #fbe2e3;
@@ -268,4 +268,10 @@
     transition-duration: 0.01ms !important;
     animation-delay: 0ms !important;
   }
+}
+
+/* Avisos (Sonner): el botón de cerrar mide 24 px, el mínimo de WCAG 2.2 para objetivos táctiles. */
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-close-button] {
+  width: 24px;
+  height: 24px;
 }

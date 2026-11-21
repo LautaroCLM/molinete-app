@@ -87,7 +87,7 @@ export function PinPantalla({
   return (
     <div className="flex flex-1 flex-col">
       {onVolver && (
-        <button onClick={onVolver} className="inline-flex items-center gap-1.5 self-start text-sm text-muted-foreground hover:text-foreground">
+        <button onClick={onVolver} className="-my-2 inline-flex min-h-11 items-center gap-1.5 self-start pr-3 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" /> Volver
         </button>
       )}
@@ -186,7 +186,7 @@ export function PerfilVista({
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <button onClick={onVolver} className="inline-flex items-center gap-1.5 self-start text-sm text-muted-foreground hover:text-foreground">
+      <button onClick={onVolver} className="-my-2 inline-flex min-h-11 items-center gap-1.5 self-start pr-3 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" /> {etiquetaVolver}
       </button>
 
@@ -294,8 +294,10 @@ export function PerfilVista({
           <dl className="mt-2 flex flex-col gap-2.5 text-sm">
             {datos.map((d) => (
               <div key={d.etiqueta} className="flex items-center gap-3">
-                <span className="text-muted-foreground">{d.icono}</span>
-                <dt className="w-16 text-muted-foreground">{d.etiqueta}</dt>
+                <dt className="flex w-28 shrink-0 items-center gap-3 text-muted-foreground">
+                  {d.icono}
+                  {d.etiqueta}
+                </dt>
                 <dd className="font-medium tabular-nums">{d.valor}</dd>
               </div>
             ))}
@@ -380,7 +382,7 @@ function RutinasConDatos({
                 setRi(i)
                 setConfirmando(false)
               }}
-              className={cn("rounded-full border px-3 py-1.5 text-sm font-medium transition-colors", i === ri ? "border-primary bg-primary/15 text-foreground" : "text-muted-foreground hover:text-foreground")}
+              className={cn("min-h-10 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors", i === ri ? "border-primary bg-primary/15 text-foreground" : "text-muted-foreground hover:text-foreground")}
             >
               {r.nombre}
               {r.propia && <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[0.65rem] font-bold text-muted-foreground">MÍA</span>}
@@ -399,10 +401,10 @@ function RutinasConDatos({
         </div>
         {rutina.propia && onEditar && (
           <div className="flex shrink-0 items-center gap-1">
-            <Button type="button" variant="ghost" size="icon-sm" aria-label="Editar mi rutina" onClick={() => onEditar(rutina)}>
+            <Button type="button" variant="ghost" size="icon" className="size-10" aria-label="Editar mi rutina" onClick={() => onEditar(rutina)}>
               <Pencil />
             </Button>
-            <Button type="button" variant="ghost" size="icon-sm" aria-label="Eliminar mi rutina" onClick={() => setConfirmando(true)}>
+            <Button type="button" variant="ghost" size="icon" className="size-10" aria-label="Eliminar mi rutina" onClick={() => setConfirmando(true)}>
               <Trash2 />
             </Button>
           </div>
@@ -411,10 +413,10 @@ function RutinasConDatos({
       {confirmando && rutina.propia && onEliminar && (
         <div role="alert" className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-bad/30 bg-bad-soft px-3 py-2.5 text-sm">
           <span className="flex-1 font-medium text-bad">¿Eliminar “{rutina.nombre}”? No se puede deshacer.</span>
-          <Button type="button" size="sm" variant="destructive" disabled={pendiente} onClick={async () => { await onEliminar(rutina); setConfirmando(false) }}>
+          <Button type="button" size="lg" variant="destructive" disabled={pendiente} onClick={async () => { await onEliminar(rutina); setConfirmando(false) }}>
             Eliminar
           </Button>
-          <Button type="button" size="sm" variant="outline" onClick={() => setConfirmando(false)}>
+          <Button type="button" size="lg" variant="outline" onClick={() => setConfirmando(false)}>
             Cancelar
           </Button>
         </div>
@@ -432,7 +434,7 @@ function RutinasConDatos({
                 role="tab"
                 aria-selected={i === di}
                 onClick={() => setElegidos((e) => ({ ...e, [rutina.id]: i }))}
-                className={cn("rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors", i === di ? "border-primary bg-primary/15 text-foreground" : "text-muted-foreground hover:text-foreground")}
+                className={cn("min-h-10 rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors", i === di ? "border-primary bg-primary/15 text-foreground" : "text-muted-foreground hover:text-foreground")}
               >
                 {d.nombre}
                 {i === rutina.hoy && <span className="ml-1.5 rounded-full bg-primary px-1.5 py-0.5 text-[0.65rem] font-bold text-primary-foreground">HOY</span>}
@@ -478,7 +480,7 @@ function RutinasConDatos({
         <p className="mt-3 text-sm text-muted-foreground">Esta rutina todavía no tiene días cargados.</p>
       )}
       {onCrear && propias < 10 && (
-        <Button type="button" variant="outline" className="mt-4 w-full" onClick={onCrear} disabled={pendiente}>
+        <Button type="button" size="lg" variant="outline" className="mt-4 w-full" onClick={onCrear} disabled={pendiente}>
           <Plus className="size-4" /> Crear mi propia rutina
         </Button>
       )}
@@ -496,6 +498,7 @@ function SeccionProgreso({ onProgreso }: { onProgreso: () => Promise<ResultadoPr
       <div className="mt-3">
         <Button
           variant="outline"
+          size="lg"
           className="w-full"
           disabled={estado.tipo === "cargando"}
           onClick={async () => {
@@ -530,7 +533,7 @@ function SeccionProgreso({ onProgreso }: { onProgreso: () => Promise<ResultadoPr
                 role="tab"
                 aria-selected={i === elegido}
                 onClick={() => setElegido(i)}
-                className={cn("rounded-full border px-3 py-1.5 text-sm font-medium transition-colors", i === elegido ? "border-primary bg-primary/15 text-foreground" : "text-muted-foreground hover:text-foreground")}
+                className={cn("min-h-10 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors", i === elegido ? "border-primary bg-primary/15 text-foreground" : "text-muted-foreground hover:text-foreground")}
               >
                 {e.nombre}
               </button>
@@ -568,6 +571,7 @@ function SeccionMusculos({ onMusculos }: { onMusculos: (dias: 7 | 30 | 90) => Pr
       <div className="mt-3">
         <Button
           variant="outline"
+          size="lg"
           className="w-full"
           onClick={() => {
             setAbierto(true)
@@ -592,7 +596,7 @@ function SeccionMusculos({ onMusculos }: { onMusculos: (dias: 7 | 30 | 90) => Pr
             type="button"
             aria-pressed={dias === p.dias}
             onClick={() => void cargar(p.dias)}
-            className={cn("rounded-full border px-3 py-1.5 text-sm font-medium transition-colors", dias === p.dias ? "border-primary bg-primary/15 text-foreground" : "text-muted-foreground hover:text-foreground")}
+            className={cn("min-h-10 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors", dias === p.dias ? "border-primary bg-primary/15 text-foreground" : "text-muted-foreground hover:text-foreground")}
           >
             {p.label}
           </button>
@@ -620,6 +624,7 @@ function SeccionRecords({ onRecords }: { onRecords: () => Promise<ResultadoRecor
       <div className="mt-3">
         <Button
           variant="outline"
+          size="lg"
           className="w-full"
           disabled={estado.tipo === "cargando"}
           onClick={async () => {

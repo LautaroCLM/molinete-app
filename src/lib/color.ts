@@ -27,4 +27,13 @@ export function estiloAcento(hex: string | null | undefined): Record<string, str
   }
 }
 
-export const COLORES_SUGERIDOS = ["#15803d", "#0e7490", "#1d4ed8", "#7c3aed", "#be123c", "#ea580c", "#ca8a04", "#111827"]
+export const COLORES_SUGERIDOS = [
+  { hex: "#15803d", nombre: "Verde" },
+  { hex: "#0e7490", nombre: "Turquesa" },
+  { hex: "#1d4ed8", nombre: "Azul" },
+  { hex: "#7c3aed", nombre: "Violeta" },
+  { hex: "#be123c", nombre: "Rojo" },
+  { hex: "#ea580c", nombre: "Naranja" },
+  { hex: "#ca8a04", nombre: "Amarillo" },
+  { hex: "#111827", nombre: "Negro" },
+]

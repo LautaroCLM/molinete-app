@@ -22,7 +22,7 @@ export function CalendarioAsistencias({ fechas, semanas = 12 }: { fechas: string
           </span>
         ))}
       </div>
-      <div className="flex flex-1 justify-between gap-1 overflow-x-auto">
+      <div tabIndex={0} role="group" aria-label="Calendario de asistencias de las últimas semanas" className="flex flex-1 justify-between gap-1 overflow-x-auto focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
         {columnas.map((col, i) => (
           <div key={i} className="flex flex-col gap-1">
             <span className="h-4 text-[0.65rem] text-muted-foreground">
